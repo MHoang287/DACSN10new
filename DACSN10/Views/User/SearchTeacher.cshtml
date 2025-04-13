@@ -1,0 +1,29 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+<div class="container mt-5">
+    <h2>Tìm kiếm giảng viên</h2>
+    <form method="get" class="mb-4">
+        <div class="input-group">
+            <input type="text" name="keyword" class="form-control" placeholder="Nhập tên giảng viên..." />
+            <button class="btn btn-outline-secondary" type="submit">Tìm kiếm</button>
+        </div>
+    </form>
+
+    <div class="row">
+        @for (int i = 1; i <= 2; i++)
+        {
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Giảng viên @i</h5>
+                        <p class="card-text">Email: teacher@domain.com</p>
+                        <a href="#" class="btn btn-primary">Xem khóa học</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

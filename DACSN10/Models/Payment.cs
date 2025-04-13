@@ -6,7 +6,7 @@
         public decimal SoTien { get; set; }
         public DateTime NgayThanhToan { get; set; }
         public string PhuongThucThanhToan { get; set; }
-        public string Status { get; set; }
+        public PaymentStatus Status { get; set; }
 
         public int CourseID { get; set; }
         public Course Course { get; set; }

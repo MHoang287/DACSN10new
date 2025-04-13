@@ -1,0 +1,27 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+<div class="container mt-5">
+    <h2>Bài đã nộp</h2>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Bài tập</th>
+                <th>Ngày nộp</th>
+                <th>File nộp</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 1; i <= 3; i++)
+            {
+                <tr>
+                    <td>Bài tập @i</td>
+                    <td>@DateTime.Now.AddDays(-i).ToShortDateString()</td>
+                    <td>@($"file_baitap_{i}.docx")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
