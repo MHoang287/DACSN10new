@@ -6,7 +6,7 @@
         public string TenBaiHoc { get; set; }
         public string NoiDung { get; set; }
         public int ThoiLuong { get; set; }
-
+        public string VideoUrl { get; set; }
         public int CourseID { get; set; }
         public Course Course { get; set; }
     }
