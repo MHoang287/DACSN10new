@@ -1,0 +1,24 @@
+﻿@model DACSN10.Models.Course
+@{
+    ViewData["Title"] = "Chi tiết khóa học";
+}
+<h2>@Model.TenKhoaHoc</h2>
+<p>@Model.MoTa</p>
+<p><strong>Giá:</strong> @Model.Gia.ToString("N0") VNĐ</p>
+<p><strong>Ngày tạo:</strong> @Model.NgayTao.ToString("dd/MM/yyyy")</p>
+<form method="post" action="/Course/Enroll">
+    <input type="hidden" name="courseId" value="@Model.CourseID" />
+    <button class="btn btn-success">Đăng ký học</button>
+</form>
+<form method="post" action="/Course/AddToFavorite">
+    <input type="hidden" name="courseId" value="@Model.CourseID" />
+    <button class="btn btn-outline-danger mt-2">Thêm vào yêu thích</button>
+</form>
+
+<h4 class="mt-4">Danh sách bài học</h4>
+<ul>
+    @foreach (var lesson in Model.Lessons)
+    {
+        <li>@lesson.TenBaiHoc</li>
+    }
+</ul>

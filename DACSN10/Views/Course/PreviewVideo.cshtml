@@ -1,0 +1,10 @@
+﻿@model DACSN10.Models.Lesson
+@{
+    ViewData["Title"] = "Xem trước bài giảng";
+}
+<h3>@Model.TenBaiHoc</h3>
+<video class="w-100" controls>
+    <source src="@Model.VideoUrl" type="video/mp4">
+    Trình duyệt không hỗ trợ video.
+</video>
+<p>@Model.NoiDung</p>
