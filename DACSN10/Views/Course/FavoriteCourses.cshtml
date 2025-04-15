@@ -1,0 +1,24 @@
+﻿@model List<DACSN10.Models.Course>
+@{
+    ViewData["Title"] = "Khóa học yêu thích";
+}
+<h2>Khóa học yêu thích</h2>
+@if (!Model.Any())
+{
+    <p>Bạn chưa thêm khóa học nào vào yêu thích.</p>
+}
+else
+{
+    <ul class="list-group">
+        @foreach (var c in Model)
+        {
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                @c.TenKhoaHoc
+                <form method="post" action="/Course/RemoveFromFavorite">
+                    <input type="hidden" name="courseId" value="@c.CourseID" />
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Bỏ yêu thích</button>
+                </form>
+            </li>
+        }
+    </ul>
+}

@@ -1,0 +1,27 @@
+﻿@model List<DACSN10.Models.Course>
+@{
+    ViewData["Title"] = "Kết quả tìm kiếm";
+}
+<h2 class="mb-4">Kết quả tìm kiếm</h2>
+@if (!Model.Any())
+{
+    <p>Không tìm thấy khóa học phù hợp.</p>
+}
+else
+{
+    <div class="row">
+        @foreach (var course in Model)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">@course.TenKhoaHoc</h5>
+                        <p class="card-text">@course.MoTa?.Substring(0, Math.Min(course.MoTa.Length, 100))...</p>
+                        <p class="text-primary fw-bold">Giá: @course.Gia.ToString("N0") VNĐ</p>
+                        <a href="/Course/Details/@course.CourseID" class="btn btn-primary">Xem chi tiết</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
