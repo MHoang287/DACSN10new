@@ -12,46 +12,61 @@
                 <h2 class="text-center mb-4">Đăng nhập hệ thống</h2>
                 <hr />
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-                
+
                 <div class="form-floating mb-3">
                     <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" />
                     <label asp-for="Input.Email" class="form-label">Email</label>
                     <span asp-validation-for="Input.Email" class="text-danger"></span>
                 </div>
-                
+
                 <div class="form-floating mb-3">
                     <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" />
                     <label asp-for="Input.Password" class="form-label">Mật khẩu</label>
                     <span asp-validation-for="Input.Password" class="text-danger"></span>
                 </div>
-                
+
                 <div class="form-check mb-3">
                     <input class="form-check-input" asp-for="Input.RememberMe" />
                     <label class="form-check-label" asp-for="Input.RememberMe">
                         @Html.DisplayNameFor(m => m.Input.RememberMe)
                     </label>
                 </div>
-                
+
                 <div class="mb-3">
                     <button id="login-submit" type="submit" class="w-100 btn btn-primary btn-lg">Đăng nhập</button>
                 </div>
-                
-                <div class="text-center">
-                    <p>
-                        <a id="forgot-password" asp-page="./ForgotPassword">Quên mật khẩu?</a>
-                    </p>
-                    <p>
-                        <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Đăng ký tài khoản mới</a>
-                    </p>
-                    <p>
-                        <a id="resend-confirmation" asp-page="./ResendEmailConfirmation">Gửi lại email xác nhận</a>
-                    </p>
-                </div>
             </form>
+
+            <div class="text-center mt-3 card shadow-sm p-4">
+                <p>Hoặc đăng nhập với:</p>
+                <form asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                    <button type="submit" class="btn btn-danger" name="provider" value="Google" title="Đăng nhập bằng Google">
+                        <i class="bi bi-google me-2"></i>Google
+                    </button>
+                </form>
+            </div>
+
+            <div class="text-center mt-3 card shadow-sm p-4">
+                <p>
+                    <a id="forgot-password" asp-page="./ForgotPassword">Quên mật khẩu?</a>
+                </p>
+                <p>
+                    <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Đăng ký tài khoản mới</a>
+                </p>
+                <p>
+                    <a id="resend-confirmation" asp-page="./ResendEmailConfirmation">Gửi lại email xác nhận</a>
+                </p>
+            </div>
         </section>
     </div>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    @if (TempData.ContainsKey("StoreLoginInfo"))
+    {
+        <script>
+            @Html.Raw(TempData["StoreLoginInfo"])
+        </script>
+    }
 }

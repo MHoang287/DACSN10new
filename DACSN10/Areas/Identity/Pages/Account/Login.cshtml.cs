@@ -18,11 +18,13 @@ namespace DACSN10.Areas.Identity.Pages.Account
     {
         private readonly SignInManager<User> _signInManager;
         private readonly ILogger<LoginModel> _logger;
+        private readonly UserManager<User> _userManager;
 
-        public LoginModel(SignInManager<User> signInManager, ILogger<LoginModel> logger)
+        public LoginModel(SignInManager<User> signInManager, ILogger<LoginModel> logger, UserManager<User> userManager)
         {
             _signInManager = signInManager;
             _logger = logger;
+            _userManager = userManager;
         }
 
         [BindProperty]
@@ -60,8 +62,10 @@ namespace DACSN10.Areas.Identity.Pages.Account
 
             returnUrl ??= Url.Content("~/");
 
+            // Xóa cookie xác thực bên ngoài đã tồn tại
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
 
+            // Lấy danh sách nhà cung cấp đăng nhập bên ngoài
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
             ReturnUrl = returnUrl;
@@ -71,14 +75,31 @@ namespace DACSN10.Areas.Identity.Pages.Account
         {
             returnUrl ??= Url.Content("~/");
 
+            // Lấy danh sách nhà cung cấp đăng nhập bên ngoài
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
             if (ModelState.IsValid)
             {
-                var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+                // Kiểm tra tài khoản trước khi đăng nhập
+                var user = await _userManager.FindByEmailAsync(Input.Email);
+                if (user != null && user.TrangThai != "Active")
+                {
+                    ModelState.AddModelError(string.Empty, "Tài khoản đã bị khóa hoặc chưa được kích hoạt.");
+                    return Page();
+                }
+
+                // Đăng nhập với mật khẩu
+                var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: true);
                 if (result.Succeeded)
                 {
-                    _logger.LogInformation("Người dùng đã đăng nhập.");
+                    _logger.LogInformation("Người dùng đã đăng nhập thành công.");
+
+                    // Lưu thông tin đăng nhập vào localStorage (nếu cần)
+                    TempData["StoreLoginInfo"] = $@"
+                        localStorage.setItem('email', '{Input.Email}');
+                        // Không lưu mật khẩu và các thông tin nhạy cảm
+                    ";
+
                     return LocalRedirect(returnUrl);
                 }
                 if (result.RequiresTwoFactor)
@@ -97,7 +118,17 @@ namespace DACSN10.Areas.Identity.Pages.Account
                 }
             }
 
+            // Nếu có lỗi, hiển thị lại form
             return Page();
+        }
+
+        // Thêm phương thức xử lý đăng nhập bên ngoài
+        public IActionResult OnPostExternalLogin(string provider, string returnUrl = null)
+        {
+            // Yêu cầu chuyển hướng đến nhà cung cấp đăng nhập bên ngoài
+            var redirectUrl = Url.Page("./ExternalLogin", pageHandler: "Callback", values: new { returnUrl });
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+            return new ChallengeResult(provider, properties);
         }
     }
 }

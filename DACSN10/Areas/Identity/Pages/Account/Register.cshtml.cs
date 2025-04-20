@@ -78,16 +78,27 @@ namespace DACSN10.Areas.Identity.Pages.Account
         public async Task OnGetAsync(string returnUrl = null)
         {
             ReturnUrl = returnUrl;
+            // Lấy danh sách nhà cung cấp đăng nhập bên ngoài
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
+
+            // Lấy danh sách nhà cung cấp đăng nhập bên ngoài
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
             if (ModelState.IsValid)
             {
+                // Kiểm tra email đã tồn tại chưa
+                var existingUser = await _userManager.FindByEmailAsync(Input.Email);
+                if (existingUser != null)
+                {
+                    ModelState.AddModelError(string.Empty, "Email này đã được sử dụng.");
+                    return Page();
+                }
+
                 var user = new User
                 {
                     UserName = Input.Email,
@@ -102,7 +113,12 @@ namespace DACSN10.Areas.Identity.Pages.Account
 
                 if (result.Succeeded)
                 {
-                    // Đảm bảo role tồn tại
+                    // Đảm bảo role tồn tại và gán cho người dùng
+                    if (!await _roleManager.RoleExistsAsync(RoleNames.User))
+                    {
+                        await _roleManager.CreateAsync(new IdentityRole(RoleNames.User));
+                    }
+
                     await _userManager.AddToRoleAsync(user, RoleNames.User);
 
                     _logger.LogInformation("Đã tạo tài khoản mới.");
@@ -135,7 +151,17 @@ namespace DACSN10.Areas.Identity.Pages.Account
                 }
             }
 
+            // Nếu có lỗi, hiển thị lại form
             return Page();
+        }
+
+        // Thêm phương thức xử lý đăng ký bên ngoài
+        public IActionResult OnPostExternalLogin(string provider, string returnUrl = null)
+        {
+            // Yêu cầu chuyển hướng đến nhà cung cấp đăng nhập bên ngoài
+            var redirectUrl = Url.Page("./ExternalLogin", pageHandler: "Callback", values: new { returnUrl });
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+            return new ChallengeResult(provider, properties);
         }
 
         private IUserEmailStore<User> GetEmailStore()

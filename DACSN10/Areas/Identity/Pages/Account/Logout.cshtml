@@ -19,3 +19,11 @@
         }
     }
 </header>
+@section Scripts {
+    @if (TempData.ContainsKey("ClearStorageScript"))
+    {
+        <script>
+            @Html.Raw(TempData["ClearStorageScript"])
+        </script>
+    }
+}

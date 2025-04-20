@@ -10,9 +10,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Authentication;
 
 namespace DACSN10.Areas.Identity.Pages.Account
 {
+    [AllowAnonymous]
     public class LogoutModel : PageModel
     {
         private readonly SignInManager<User> _signInManager;
@@ -28,14 +30,33 @@ namespace DACSN10.Areas.Identity.Pages.Account
         {
             await _signInManager.SignOutAsync();
             _logger.LogInformation("User logged out.");
+
+            // Xóa tất cả cookie xác thực
+            await HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
+            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+            await HttpContext.SignOutAsync(IdentityConstants.TwoFactorUserIdScheme);
+
+            // Thêm script để xóa localStorage và sessionStorage
+            TempData["ClearStorageScript"] = @"
+                localStorage.clear();
+                sessionStorage.clear();
+        
+                // Xóa tất cả cookies
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = cookies[i];
+                    var eqPos = cookie.indexOf('=');
+                    var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+                    document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;';
+                }
+            ";
+
             if (returnUrl != null)
             {
                 return LocalRedirect(returnUrl);
             }
             else
             {
-                // This needs to be a redirect so that the browser performs a new
-                // request and the identity for the user gets updated.
                 return RedirectToPage();
             }
         }

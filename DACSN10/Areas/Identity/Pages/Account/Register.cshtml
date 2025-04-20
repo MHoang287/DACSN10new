@@ -6,7 +6,7 @@
 
 <div class="row">
     <div class="col-md-6 mx-auto">
-        <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+        <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="card shadow-sm p-4">
             <h2 class="text-center mb-4">Tạo tài khoản mới</h2>
             <hr />
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
@@ -23,8 +23,6 @@
                 <span asp-validation-for="Input.HoTen" class="text-danger"></span>
             </div>
 
-            <!-- Đã xóa phần chọn LoaiNguoiDung -->
-
             <div class="form-floating mb-3">
                 <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" />
                 <label asp-for="Input.Password">Mật khẩu</label>
@@ -39,6 +37,19 @@
 
             <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Đăng ký</button>
         </form>
+
+        <div class="text-center mt-3 card shadow-sm p-4">
+            <p>Hoặc đăng nhập với:</p>
+            <form asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                <button type="submit" class="btn btn-danger" name="provider" value="Google" title="Đăng nhập bằng Google">
+                    <i class="bi bi-google me-2"></i>Google
+                </button>
+            </form>
+        </div>
+
+        <div class="text-center mt-3 card shadow-sm p-4">
+            <p>Đã có tài khoản? <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl">Đăng nhập</a></p>
+        </div>
     </div>
 </div>
 
