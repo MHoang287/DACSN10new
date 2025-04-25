@@ -1,12 +1,10 @@
 ﻿@{
-    ViewData["Title"] = "Tiến độ học tập";
+    ViewData["Title"] = "Tiến độ khóa học";
     var progress = ViewBag.Progress;
     var courseId = ViewBag.CourseID;
 }
-<h2>Tiến độ học tập</h2>
-<div class="progress my-3">
-    <div class="progress-bar" role="progressbar" style="width: @progress%">
-        @progress%
-    </div>
+<h2>Tiến độ khóa học</h2>
+<div class="progress">
+    <div class="progress-bar" role="progressbar" style="width: @progress%" aria-valuenow="@progress" aria-valuemin="0" aria-valuemax="100">@progress%</div>
 </div>
-<a href="/Course/Details/@courseId" class="btn btn-primary">Quay lại khóa học</a>
+<a href="@Url.Action("Details", new { id = courseId })" class="btn btn-primary mt-3">Quay lại</a>

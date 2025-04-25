@@ -1,24 +1,84 @@
 ﻿@model DACSN10.Models.Course
 @{
-    ViewData["Title"] = "Chi tiết khóa học";
+    ViewData["Title"] = @Model.TenKhoaHoc;
 }
 <h2>@Model.TenKhoaHoc</h2>
-<p>@Model.MoTa</p>
-<p><strong>Giá:</strong> @Model.Gia.ToString("N0") VNĐ</p>
-<p><strong>Ngày tạo:</strong> @Model.NgayTao.ToString("dd/MM/yyyy")</p>
-<form method="post" action="/Course/Enroll">
-    <input type="hidden" name="courseId" value="@Model.CourseID" />
-    <button class="btn btn-success">Đăng ký học</button>
-</form>
-<form method="post" action="/Course/AddToFavorite">
-    <input type="hidden" name="courseId" value="@Model.CourseID" />
-    <button class="btn btn-outline-danger mt-2">Thêm vào yêu thích</button>
-</form>
+<div class="card">
+    <div class="card-body">
+        <p><strong>Mô tả:</strong> @Model.MoTa</p>
+        <p><strong>Giá:</strong> @Model.Gia.ToString("C")</p>
+        <p><strong>Giảng viên:</strong> @Model.User?.UserName</p>
+        <p><strong>Danh mục:</strong> @string.Join(", ", Model.CourseCategories.Select(cc => cc.Category.Name))</p>
+        <h5>Bài học</h5>
+        <ul>
+            @foreach (var lesson in Model.Lessons)
+            {
+                <li>@lesson.TenBaiHoc (Duration: @lesson.ThoiLuong minutes)</li>
+            }
+        </ul>
+        <div class="mt-3">
+            <button class="btn btn-success enroll-btn" data-course-id="@Model.CourseID">Đăng ký ngay</button>
+            <button class="btn btn-warning favorite-btn" data-course-id="@Model.CourseID">Lưu vào mục ưa thích</button>
+            <a href="@Url.Action("PreviewVideo", new { courseId = Model.CourseID })" class="btn btn-info">Xem trước video</a>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $(".enroll-btn").click(function () {
+                var courseId = $(this).data("course-id");
+                Swal.fire({
+                    title: "Confirm Enrollment",
+                    text: "Do you want to enroll in this course?",
+                    icon: "question",
+                    showCancelButton: true,
+                    confirmButtonText: "Enroll"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: "@Url.Action("Enroll")",
+                            type: "POST",
+                            data: { courseId: courseId },
+                            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                            success: function (response) {
+                                Swal.fire("Success!", response.message, "success").then(() => {
+                                    window.location.href = "@Url.Action("MyCourses")";
+                                });
+                            },
+                            error: function () {
+                                Swal.fire("Error", "Failed to enroll in the course.", "error");
+                            }
+                        });
+                    }
+                });
+            });
 
-<h4 class="mt-4">Danh sách bài học</h4>
-<ul>
-    @foreach (var lesson in Model.Lessons)
-    {
-        <li>@lesson.TenBaiHoc</li>
-    }
-</ul>
+            $(".favorite-btn").click(function () {
+                var courseId = $(this).data("course-id");
+                Swal.fire({
+                    title: "Add to Favorites",
+                    text: "Do you want to add this course to your favorites?",
+                    icon: "question",
+                    showCancelButton: true,
+                    confirmButtonText: "Add"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: "@Url.Action("AddToFavorite")",
+                            type: "POST",
+                            data: { courseId: courseId },
+                            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                            success: function (response) {
+                                Swal.fire("Success!", response.message, "success");
+                            },
+                            error: function () {
+                                Swal.fire("Error", "Failed to add to favorites.", "error");
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+}

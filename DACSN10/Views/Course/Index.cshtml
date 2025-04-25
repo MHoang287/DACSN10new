@@ -1,22 +1,40 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model List<DACSN10.Models.Course>
 @{
+    ViewData["Title"] = "Khóa học";
+    var page = ViewBag.Page;
+    var pageSize = ViewBag.PageSize;
+    var totalCourses = ViewBag.TotalCourses;
+    var totalPages = (int)Math.Ceiling((double)totalCourses / pageSize);
 }
-<div class="container mt-5">
-    <h2 class="mb-4">Danh sách khóa học</h2>
-    <div class="row row-cols-1 row-cols-md-3 g-4">
-        @for (int i = 1; i <= 6; i++)
-        {
-            <div class="col">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">Khóa học @i</h5>
-                        <p class="card-text">Mô tả ngắn về khóa học @i.</p>
-                        <a href="#" class="btn btn-primary">Xem chi tiết</a>
-                    </div>
+<h2>Khóa học</h2>
+<div class="row">
+    @foreach (var course in Model)
+    {
+        <div class="col-md-4 mb-4">
+            <div class="card course-card">
+                <div class="card-body">
+                    <h5 class="card-title">@course.TenKhoaHoc</h5>
+                    <p class="card-text">@course.MoTa</p>
+                    <p class="card-text"><strong>Price:</strong> @course.Gia.ToString("C")</p>
+                    <a href="@Url.Action("Details", new { id = course.CourseID })" class="btn btn-primary">Xem chi tiết</a>
                 </div>
             </div>
-        }
-    </div>
+        </div>
+    }
 </div>
+<nav>
+    <ul class="pagination">
+        <li class="page-item @(page == 1 ? "disabled" : "")">
+            <a class="page-link" href="@Url.Action("Index", new { page = page - 1 })">Trước</a>
+        </li>
+        @for (int i = 1; i <= totalPages; i++)
+        {
+            <li class="page-item @(i == page ? "active" : "")">
+                <a class="page-link" href="@Url.Action("Index", new { page = i })">@i</a>
+            </li>
+        }
+        <li class="page-item @(page == totalPages ? "disabled" : "")">
+            <a class="page-link" href="@Url.Action("Index", new { page = page + 1 })">Tiếp theo</a>
+        </li>
+    </ul>
+</nav>

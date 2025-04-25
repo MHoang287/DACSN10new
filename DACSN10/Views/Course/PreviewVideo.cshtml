@@ -1,10 +1,11 @@
 ﻿@model DACSN10.Models.Lesson
 @{
     ViewData["Title"] = "Xem trước bài giảng";
+    // Convert Google Drive URL to embed format (e.g., https://drive.google.com/file/d/FILE_ID/view -> https://drive.google.com/file/d/FILE_ID/preview)
+    var embedUrl = Model.VideoUrl.Replace("/view", "/preview");
 }
-<h3>@Model.TenBaiHoc</h3>
-<video class="w-100" controls>
-    <source src="@Model.VideoUrl" type="video/mp4">
-    Trình duyệt không hỗ trợ video.
-</video>
-<p>@Model.NoiDung</p>
+<h2>Preview: @Model.TenBaiHoc</h2>
+<div class="ratio ratio-16x9">
+    <iframe src="@embedUrl" allowfullscreen></iframe>
+</div>
+<a href="@Url.Action("Details", new { id = Model.CourseID })" class="btn btn-primary mt-3">Quay lại</a>

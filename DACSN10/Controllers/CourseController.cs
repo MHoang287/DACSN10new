@@ -53,7 +53,7 @@ namespace DACSN10.Controllers
                 .OrderByDescending(c => c.NgayTao)
                 .Take(10)
                 .ToListAsync();
-            return View(courses);
+            return View(courses); // <-- Tự động tìm View có tên NewCourses.cshtml
         }
 
         // 4. Search by name
@@ -211,7 +211,11 @@ namespace DACSN10.Controllers
             var enrollment = await _context.Enrollments
                 .AsNoTracking()
                 .FirstOrDefaultAsync(e => e.UserID == userId && e.CourseID == courseId);
-            if (enrollment == null) return NotFound("Enrollment not found.");
+            if (enrollment == null)
+            {
+                ViewBag.ErrorMessage = "Bạn chưa đăng ký khóa học nào";
+                return View("EnrollmentNotFound");
+            }
             ViewBag.Progress = enrollment.Progress;
             ViewBag.CourseID = courseId;
             return View();

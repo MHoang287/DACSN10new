@@ -2,10 +2,10 @@
 @{
     ViewData["Title"] = "Kết quả tìm kiếm";
 }
-<h2 class="mb-4">Kết quả tìm kiếm</h2>
+<h2>Search Results</h2>
 @if (!Model.Any())
 {
-    <p>Không tìm thấy khóa học phù hợp.</p>
+    <p>Không có khóa học nào được tìm thấy.</p>
 }
 else
 {
@@ -13,12 +13,12 @@ else
         @foreach (var course in Model)
         {
             <div class="col-md-4 mb-4">
-                <div class="card h-100">
+                <div class="card course-card">
                     <div class="card-body">
                         <h5 class="card-title">@course.TenKhoaHoc</h5>
-                        <p class="card-text">@course.MoTa?.Substring(0, Math.Min(course.MoTa.Length, 100))...</p>
-                        <p class="text-primary fw-bold">Giá: @course.Gia.ToString("N0") VNĐ</p>
-                        <a href="/Course/Details/@course.CourseID" class="btn btn-primary">Xem chi tiết</a>
+                        <p class="card-text">@course.MoTa</p>
+                        <p class="card-text"><strong>Price:</strong> @course.Gia.ToString("C")</p>
+                        <a href="@Url.Action("Details", new { id = course.CourseID })" class="btn btn-primary">Xem chi tiết</a>
                     </div>
                 </div>
             </div>
