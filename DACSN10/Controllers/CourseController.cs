@@ -1,10 +1,15 @@
+Ôªøusing Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using DACSN10.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using System.Threading.Tasks;
 using System.Linq;
+using System;
 
 namespace DACSN10.Controllers
 {
+    [Authorize] // Require authentication for most actions
     public class CourseController : Controller
     {
         private readonly AppDbContext _context;
@@ -14,92 +19,119 @@ namespace DACSN10.Controllers
             _context = context;
         }
 
-        // 1. KhÛa h?c ph? bi?n
-        public IActionResult PopularCourses()
+        // 1. View all courses (with pagination)
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 12)
         {
-            var courses = _context.Courses
+            var courses = await _context.Courses
+                .AsNoTracking()
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalCourses = await _context.Courses.CountAsync();
+            return View(courses);
+        }
+
+        // 2. Popular courses
+        public async Task<IActionResult> PopularCourses()
+        {
+            var courses = await _context.Courses
+                .AsNoTracking()
                 .Include(c => c.Enrollments)
                 .OrderByDescending(c => c.Enrollments.Count)
                 .Take(10)
-                .ToList();
-
+                .ToListAsync();
             return View(courses);
         }
 
-        // 2. KhÛa h?c m?i
-        public IActionResult NewCourses()
+        // 3. New courses
+        public async Task<IActionResult> NewCourses()
         {
-            var courses = _context.Courses
+            var courses = await _context.Courses
+                .AsNoTracking()
                 .OrderByDescending(c => c.NgayTao)
                 .Take(10)
-                .ToList();
-
+                .ToListAsync();
             return View(courses);
         }
 
-        // 3. TÏm theo tÍn
-        public IActionResult SearchByName(string keyword)
+        // 4. Search by name
+        public async Task<IActionResult> SearchByName(string keyword)
         {
-            var result = _context.Courses
-                .Where(c => c.TenKhoaHoc.Contains(keyword))
-                .ToList();
-
+            if (string.IsNullOrWhiteSpace(keyword))
+                return View("SearchResult", new List<Course>());
+            var result = await _context.Courses
+                .AsNoTracking()
+                .Where(c => c.TenKhoaHoc.ToLower().Contains(keyword.ToLower()))
+                .ToListAsync();
+            ViewBag.Keyword = keyword;
             return View("SearchResult", result);
         }
 
-        // 4. TÏm theo ch? ?? (gi? s? ChuDe l‡ 1 tr??ng riÍng)
-        public IActionResult SearchByTopic(string topic)
+        // 5. Search by topic (using MoTa as per model)
+        public async Task<IActionResult> SearchByTopic(string topic)
         {
-            var result = _context.Courses
-                .Where(c => c.MoTa.Contains(topic))
-                .ToList();
-
+            if (string.IsNullOrWhiteSpace(topic))
+                return View("SearchResult", new List<Course>());
+            var result = await _context.Courses
+                .AsNoTracking()
+                .Where(c => c.MoTa.ToLower().Contains(topic.ToLower()))
+                .ToListAsync();
+            ViewBag.Topic = topic;
             return View("SearchResult", result);
         }
 
-        // 5. TÏm theo danh m?c
-        public IActionResult SearchByCategory(int categoryId)
+        // 6. Search by category
+        public async Task<IActionResult> SearchByCategory(int categoryId)
         {
-            var result = _context.CourseCategories
+            var result = await _context.CourseCategories
+                .AsNoTracking()
                 .Include(cc => cc.Course)
                 .Where(cc => cc.CategoryID == categoryId)
                 .Select(cc => cc.Course)
-                .ToList();
-
+                .ToListAsync();
+            ViewBag.CategoryId = categoryId;
             return View("SearchResult", result);
         }
 
-        // 6. Chi ti?t khÛa h?c
-        public IActionResult Details(int id)
+        // 7. Course details
+        public async Task<IActionResult> Details(int id)
         {
-            var course = _context.Courses
+            var course = await _context.Courses
+                .AsNoTracking()
                 .Include(c => c.User)
                 .Include(c => c.Lessons)
                 .Include(c => c.CourseCategories).ThenInclude(cc => cc.Category)
-                .FirstOrDefault(c => c.CourseID == id);
-
-            if (course == null) return NotFound();
+                .FirstOrDefaultAsync(c => c.CourseID == id);
+            if (course == null) return NotFound("Course not found.");
             return View(course);
         }
 
-        // 7. Xem tr??c video b‡i gi?ng (l?y b‡i ??u tiÍn)
-        public IActionResult PreviewVideo(int courseId)
+        // 8. Preview video (first lesson)
+        public async Task<IActionResult> PreviewVideo(int courseId)
         {
-            var lesson = _context.Lessons
+            var lesson = await _context.Lessons
+                .AsNoTracking()
                 .Where(l => l.CourseID == courseId)
                 .OrderBy(l => l.LessonID)
-                .FirstOrDefault();
-
+                .FirstOrDefaultAsync();
+            if (lesson == null) return NotFound("No lessons found for this course.");
             return View(lesson);
         }
 
-        // 8. ??ng k˝ khÛa h?c
+        // 9. Enroll in a course
         [HttpPost]
-        public IActionResult Enroll(int courseId)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Enroll(int courseId)
         {
-            var userId = User.Identity.Name;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId)) return Unauthorized("User not authenticated.");
 
-            var exists = _context.Enrollments.Any(e => e.UserID == userId && e.CourseID == courseId);
+            if (!await _context.Courses.AnyAsync(c => c.CourseID == courseId))
+                return NotFound("Course not found.");
+
+            var exists = await _context.Enrollments.AnyAsync(e => e.UserID == userId && e.CourseID == courseId);
             if (!exists)
             {
                 _context.Enrollments.Add(new Enrollment
@@ -107,24 +139,28 @@ namespace DACSN10.Controllers
                     CourseID = courseId,
                     UserID = userId,
                     EnrollDate = DateTime.Now,
-                    TrangThai = "?„ ??ng k˝",
+                    TrangThai = "ƒê√£ ƒëƒÉng k√Ω",
                     Progress = 0
                 });
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
             }
-
-            return RedirectToAction("MyCourses");
+            return Json(new { success = true, message = "Enrolled successfully!" });
         }
 
-        // 9. Theo dıi gi?ng viÍn (?„ cÛ trong UserController)
+        // 10. Follow teacher (assumed to be in UserController, not implemented here)
 
-        // 10. ThÍm v‡o yÍu thÌch
+        // 11. Add to favorites
         [HttpPost]
-        public IActionResult AddToFavorite(int courseId)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddToFavorite(int courseId)
         {
-            var userId = User.Identity.Name;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId)) return Unauthorized("User not authenticated.");
 
-            var exists = _context.FavoriteCourses.Any(f => f.CourseID == courseId && f.UserID == userId);
+            if (!await _context.Courses.AnyAsync(c => c.CourseID == courseId))
+                return NotFound("Course not found.");
+
+            var exists = await _context.FavoriteCourses.AnyAsync(f => f.CourseID == courseId && f.UserID == userId);
             if (!exists)
             {
                 _context.FavoriteCourses.Add(new FavoriteCourse
@@ -132,77 +168,66 @@ namespace DACSN10.Controllers
                     CourseID = courseId,
                     UserID = userId
                 });
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
             }
-
-            return RedirectToAction("Details", new { id = courseId });
+            return Json(new { success = true, message = "Added to favorites!" });
         }
 
-        // 11. B? kh?i yÍu thÌch
+        // 12. Remove from favorites
         [HttpPost]
-        public IActionResult RemoveFromFavorite(int courseId)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveFromFavorite(int courseId)
         {
-            var userId = User.Identity.Name;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId)) return Unauthorized("User not authenticated.");
 
-            var fav = _context.FavoriteCourses
-                .FirstOrDefault(f => f.CourseID == courseId && f.UserID == userId);
+            var fav = await _context.FavoriteCourses
+                .FirstOrDefaultAsync(f => f.CourseID == courseId && f.UserID == userId);
             if (fav != null)
             {
                 _context.FavoriteCourses.Remove(fav);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
             }
-
-            return RedirectToAction("FavoriteCourses");
+            return Json(new { success = true, message = "Removed from favorites!" });
         }
 
-        // 12. Danh s·ch khÛa h?c ?„ ??ng k˝
-        public IActionResult MyCourses()
+        // 13. View enrolled courses
+        public async Task<IActionResult> MyCourses()
         {
-            var userId = User.Identity.Name;
-
-            var courses = _context.Enrollments
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var courses = await _context.Enrollments
+                .AsNoTracking()
                 .Include(e => e.Course)
                 .Where(e => e.UserID == userId)
                 .Select(e => e.Course)
-                .ToList();
-
+                .ToListAsync();
             return View(courses);
         }
 
-        // 13. Ti?n ?? ho‡n th‡nh
-        public IActionResult Progress(int courseId)
+        // 14. View course progress
+        public async Task<IActionResult> Progress(int courseId)
         {
-            var userId = User.Identity.Name;
-
-            var enrollment = _context.Enrollments
-                .FirstOrDefault(e => e.UserID == userId && e.CourseID == courseId);
-
-            if (enrollment == null) return NotFound();
-
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var enrollment = await _context.Enrollments
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.UserID == userId && e.CourseID == courseId);
+            if (enrollment == null) return NotFound("Enrollment not found.");
             ViewBag.Progress = enrollment.Progress;
             ViewBag.CourseID = courseId;
-
             return View();
         }
 
-        // 14. Danh s·ch khÛa h?c yÍu thÌch
-        public IActionResult FavoriteCourses()
+        // 15. View favorite courses
+        public async Task<IActionResult> FavoriteCourses()
         {
-            var userId = User.Identity.Name;
-
-            var favs = _context.FavoriteCourses
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var favs = await _context.FavoriteCourses
+                .AsNoTracking()
                 .Include(f => f.Course)
                 .Where(f => f.UserID == userId)
                 .Select(f => f.Course)
-                .ToList();
-
+                .ToListAsync();
             return View(favs);
-        }
-
-        public IActionResult Index()
-        {
-            var allCourses = _context.Courses.ToList();
-            return View(allCourses);
         }
     }
 }
