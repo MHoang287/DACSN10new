@@ -3,12 +3,25 @@
     ViewData["Title"] = "Khóa học của tôi";
 }
 <h2>Khóa học của tôi</h2>
-<ul class="list-group">
-    @foreach (var c in Model)
-    {
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-            @c.TenKhoaHoc
-            <a href="/Course/Details/@c.CourseID" class="btn btn-sm btn-primary">Xem</a>
-        </li>
-    }
-</ul>
+@if (!Model.Any())
+{
+    <p>Bạn chưa đăng ký bất kỳ khóa học nào.</p>
+}
+else
+{
+    <div class="row">
+        @foreach (var course in Model)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card course-card">
+                    <div class="card-body">
+                        <h5 class="card-title">@course.TenKhoaHoc</h5>
+                        <p class="card-text">@course.MoTa</p>
+                        <a href="@Url.Action("Progress", new { courseId = course.CourseID })" class="btn btn-info">Xem tiến độ</a>
+                        <a href="@Url.Action("Details", new { id = course.CourseID })" class="btn btn-primary">Xem chi tiết</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

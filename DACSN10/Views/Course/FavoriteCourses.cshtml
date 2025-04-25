@@ -5,20 +5,56 @@
 <h2>Khóa học yêu thích</h2>
 @if (!Model.Any())
 {
-    <p>Bạn chưa thêm khóa học nào vào yêu thích.</p>
+    <p>Bạn chưa thêm khóa học yêu thích</p>
 }
 else
 {
-    <ul class="list-group">
-        @foreach (var c in Model)
+    <div class="row">
+        @foreach (var course in Model)
         {
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                @c.TenKhoaHoc
-                <form method="post" action="/Course/RemoveFromFavorite">
-                    <input type="hidden" name="courseId" value="@c.CourseID" />
-                    <button type="submit" class="btn btn-sm btn-outline-danger">Bỏ yêu thích</button>
-                </form>
-            </li>
+            <div class="col-md-4 mb-4">
+                <div class="card course-card">
+                    <div class="card-body">
+                        <h5 class="card-title">@course.TenKhoaHoc</h5>
+                        <p class="card-text">@course.MoTa</p>
+                        <a href="@Url.Action("Details", new { id = course.CourseID })" class="btn btn-primary">Xem chi tiết</a>
+                        <button class="btn btn-danger remove-favorite-btn" data-course-id="@course.CourseID">Xóa</button>
+                    </div>
+                </div>
+            </div>
         }
-    </ul>
+    </div>
+}
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $(".remove-favorite-btn").click(function () {
+                var courseId = $(this).data("course-id");
+                Swal.fire({
+                    title: "Remove from Favorites",
+                    text: "Do you want to remove this course from your favorites?",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonText: "Remove"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: "@Url.Action("RemoveFromFavorite")",
+                            type: "POST",
+                            data: { courseId: courseId },
+                            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                            success: function (response) {
+                                Swal.fire("Success!", response.message, "success").then(() => {
+                                    location.reload();
+                                });
+                            },
+                            error: function () {
+                                Swal.fire("Error", "Failed to remove from favorites.", "error");
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    </script>
 }

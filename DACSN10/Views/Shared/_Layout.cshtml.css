@@ -15,6 +15,7 @@ body {
 /* ======= Navbar Custom ======= */
 .navbar {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: #1b263b !important; /* Dark blue for e-learning theme */
 }
 
 .navbar-brand {
@@ -22,38 +23,94 @@ body {
     font-size: 1.6rem;
     display: flex;
     align-items: center;
+    color: #fff !important;
 }
 
 .navbar .nav-link {
     font-weight: 500;
     padding: 0.5rem 1rem;
+    color: #adb5bd !important;
     transition: color 0.2s ease;
 }
 
-    .navbar .nav-link:hover {
+    .navbar .nav-link:hover,
+    .navbar .nav-link.active {
         color: #0d6efd !important;
     }
 
 .navbar .form-control {
     border-radius: 0.5rem;
+    border: 1px solid #ced4da;
 }
 
 .navbar .btn-outline-light {
     border-radius: 0.5rem;
     margin-left: 0.5rem;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
+
+    .navbar .btn-outline-light:hover {
+        background-color: #fff;
+        color: #1b263b;
+    }
+
+.navbar .dropdown-menu {
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar .dropdown-item {
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+}
+
+    .navbar .dropdown-item:hover {
+        background-color: #f8f9fa;
+        color: #0d6efd;
+    }
 
 /* ======= Buttons ======= */
 .btn-primary {
-    background-color: #1b6ec2;
-    border-color: #1861ac;
+    background-color: #0d6efd;
+    border-color: #0d6efd;
     border-radius: 0.5rem;
     padding: 0.5rem 1.5rem;
+    font-weight: 500;
 }
 
     .btn-primary:hover {
-        background-color: #155a9e;
-        border-color: #134e8a;
+        background-color: #0b5ed7;
+        border-color: #0a58ca;
+    }
+
+.btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+    .btn-success:hover {
+        background-color: #218838;
+        border-color: #1e7e34;
+    }
+
+.btn-warning {
+    background-color: #ffc107;
+    border-color: #ffc107;
+}
+
+    .btn-warning:hover {
+        background-color: #e0a800;
+        border-color: #d39e00;
+    }
+
+.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+    .btn-danger:hover {
+        background-color: #c82333;
+        border-color: #bd2130;
     }
 
 .btn-outline-light {
@@ -64,28 +121,46 @@ body {
 
     .btn-outline-light:hover {
         background-color: #fff;
-        color: #1b6ec2;
+        color: #1b263b;
     }
 
-/* ======= Cards ======= */
-.card {
+/* ======= Course Cards ======= */
+.course-card {
     border: none;
     border-radius: 1rem;
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    transition: transform 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-    .card:hover {
+    .course-card:hover {
         transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .course-card .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1b263b;
+    }
+
+    .course-card .card-text {
+        font-size: 0.9rem;
+        color: #6c757d;
     }
 
 /* ======= Footer ======= */
 footer {
-    background-color: #343a40;
-    color: #fff;
+    background-color: #1b263b;
+    color: #adb5bd;
     font-size: 0.9rem;
-    padding: 2rem 0;
+    padding: 3rem 0;
 }
+
+    footer h5 {
+        color: #fff;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
 
     footer a {
         color: #adb5bd;
@@ -98,23 +173,43 @@ footer {
         }
 
     footer .social-icons i {
-        font-size: 1.2rem;
-        margin: 0 0.5rem;
+        font-size: 1.5rem;
+        margin: 0 0.75rem;
+        transition: color 0.2s ease;
+    }
+
+        footer .social-icons i:hover {
+            color: #0d6efd;
+        }
+
+    footer hr {
+        border-color: #adb5bd;
     }
 
 /* ======= Forms ======= */
 .form-label {
     font-weight: 600;
+    color: #1b263b;
 }
 
 input, textarea, select {
-    border-radius: 0.5rem;
+    border-radius: 0.5rem !important;
+    border: 1px solid #ced4da;
 }
 
-/* ======= Table Custom ======= */
-.table th {
-    background-color: #e9ecef;
-    font-weight: 600;
+    input:focus, textarea:focus, select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+
+/* ======= Progress Bar ======= */
+.progress {
+    border-radius: 0.5rem;
+    height: 1.5rem;
+}
+
+.progress-bar {
+    background-color: #0d6efd;
 }
 
 /* ======= Responsive Adjustments ======= */
@@ -125,6 +220,16 @@ input, textarea, select {
 
     .navbar .nav-link {
         padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .navbar .form-control {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .navbar .btn-outline-light {
+        width: 100%;
     }
 
     footer .row {
@@ -133,5 +238,27 @@ input, textarea, select {
 
     footer .social-icons {
         margin-top: 1rem;
+    }
+
+    .course-card .card-title {
+        font-size: 1.1rem;
+    }
+
+    .course-card .card-text {
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .navbar .dropdown-menu {
+        width: 100%;
+    }
+
+    footer h5 {
+        font-size: 1.1rem;
+    }
+
+    footer p, footer ul li {
+        font-size: 0.85rem;
     }
 }

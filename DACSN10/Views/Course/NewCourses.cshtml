@@ -1,20 +1,35 @@
-﻿@model List<DACSN10.Models.Course>
+﻿@model IEnumerable<DACSN10.Models.Course>
+
 @{
     ViewData["Title"] = "Khóa học mới";
+    var isEmpty = !Model.Any();
 }
-<h2 class="mb-4">Khóa học mới</h2>
-<div class="row">
-    @foreach (var course in Model)
-    {
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title">@course.TenKhoaHoc</h5>
-                    <p class="card-text">@course.MoTa?.Substring(0, Math.Min(course.MoTa.Length, 100))...</p>
-                    <p class="text-primary fw-bold">Giá: @course.Gia.ToString("N0") VNĐ</p>
-                    <a href="/Course/Details/@course.CourseID" class="btn btn-primary">Xem chi tiết</a>
+
+<h2 class="mb-4">@ViewData["Title"]</h2>
+
+@if (isEmpty)
+{
+    <div class="text-center mt-5">
+        <img src="https://cdn-icons-png.flaticon.com/512/4076/4076500.png" width="150" />
+        <h4 class="mt-3">Hiện chưa có khóa học nào mới được thêm.</h4>
+        <p>Hãy quay lại sau để xem các khóa học mới hấp dẫn!</p>
+    </div>
+}
+else
+{
+    <div class="row">
+        @foreach (var course in Model)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">@course.TenKhoaHoc</h5>
+                        <p class="card-text">@course.MoTa</p>
+                        <p class="card-text"><strong>Giá:</strong> @course.Gia.ToString("N0") đ</p>
+                        <a asp-controller="Course" asp-action="Details" asp-route-id="@course.CourseID" class="btn btn-primary">Xem chi tiết</a>
+                    </div>
                 </div>
             </div>
-        </div>
-    }
-</div>
+        }
+    </div>
+}

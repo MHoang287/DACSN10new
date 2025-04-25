@@ -1,0 +1,29 @@
+﻿@{
+    ViewData["Title"] = "Không tìm thấy đăng ký";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!-- Modal HTML -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-center">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="errorModalLabel"><i class="bi bi-exclamation-triangle-fill"></i> Lỗi!</h5>
+            </div>
+            <div class="modal-body">
+                <p class="lead">@ViewBag.ErrorMessage</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <a href="@Url.Action("Index", "Course")" class="btn btn-primary">Quay lại khóa học</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#errorModal').modal('show');
+        });
+    </script>
+}
