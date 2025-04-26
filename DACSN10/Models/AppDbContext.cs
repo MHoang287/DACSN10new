@@ -3,7 +3,6 @@ using System.Reflection.Emit;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-
 namespace DACSN10.Models
 {
     public class AppDbContext : IdentityDbContext<User>
@@ -25,6 +24,7 @@ namespace DACSN10.Models
         public DbSet<Quiz> Quizzes { get; set; }
         public DbSet<Question> Questions { get; set; }
         public DbSet<QuizResult> QuizResults { get; set; }
+        public DbSet<CourseFollow> CourseFollows { get; set; } // Thêm mới
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -34,19 +34,19 @@ namespace DACSN10.Models
                 .HasOne(c => c.User)
                 .WithMany(u => u.Courses)
                 .HasForeignKey(c => c.UserID)
-                .OnDelete(DeleteBehavior.Restrict); // 👈 Giữ User không bị xoá lan
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Lesson>()
                 .HasOne(l => l.Course)
                 .WithMany(c => c.Lessons)
                 .HasForeignKey(l => l.CourseID)
-                .OnDelete(DeleteBehavior.Cascade); // Hoặc .Restrict nếu cần
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Assignment>()
                 .HasOne(a => a.Course)
                 .WithMany(c => c.Assignments)
                 .HasForeignKey(a => a.CourseID)
-                .OnDelete(DeleteBehavior.Restrict); // 👈 Đổi từ Cascade sang Restrict
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Submission>()
                 .HasOne(s => s.Assignment)
@@ -70,7 +70,7 @@ namespace DACSN10.Models
                 .HasOne(p => p.Course)
                 .WithMany(c => c.Payments)
                 .HasForeignKey(p => p.CourseID)
-                .OnDelete(DeleteBehavior.Restrict); // 👈 Cần thiết
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Enrollment>()
                 .HasOne(e => e.User)
@@ -82,8 +82,8 @@ namespace DACSN10.Models
                 .HasOne(e => e.Course)
                 .WithMany(c => c.Enrollments)
                 .HasForeignKey(e => e.CourseID)
-                .OnDelete(DeleteBehavior.Restrict); // 👈 Dòng này gây lỗi trước đó
-            // Quan hệ nhiều-nhiều: Course <-> Category
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<CourseCategory>()
                 .HasKey(cc => new { cc.CourseID, cc.CategoryID });
 
@@ -99,7 +99,6 @@ namespace DACSN10.Models
                 .HasForeignKey(cc => cc.CategoryID)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // FavoriteCourse (many-to-many giữa User và Course)
             modelBuilder.Entity<FavoriteCourse>()
                 .HasKey(fc => new { fc.UserID, fc.CourseID });
 
@@ -115,7 +114,6 @@ namespace DACSN10.Models
                 .HasForeignKey(fc => fc.CourseID)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Follow (many-to-many giữa User với chính User - follow giáo viên)
             modelBuilder.Entity<Follow>()
                 .HasKey(f => new { f.FollowerID, f.FollowedTeacherID });
 
@@ -131,21 +129,18 @@ namespace DACSN10.Models
                 .HasForeignKey(f => f.FollowedTeacherID)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Quiz - Course
             modelBuilder.Entity<Quiz>()
                 .HasOne(q => q.Course)
                 .WithMany(c => c.Quizzes)
                 .HasForeignKey(q => q.CourseID)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Question - Quiz
             modelBuilder.Entity<Question>()
                 .HasOne(q => q.Quiz)
                 .WithMany(qz => qz.Questions)
                 .HasForeignKey(q => q.QuizID)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // QuizResult - User + Quiz
             modelBuilder.Entity<QuizResult>()
                 .HasOne(qr => qr.User)
                 .WithMany(u => u.QuizResults)
@@ -157,8 +152,22 @@ namespace DACSN10.Models
                 .WithMany(qz => qz.QuizResults)
                 .HasForeignKey(qr => qr.QuizID)
                 .OnDelete(DeleteBehavior.Cascade);
-        }
 
+            // Cấu hình cho CourseFollow
+            modelBuilder.Entity<CourseFollow>()
+                .HasKey(cf => new { cf.UserID, cf.CourseID });
+
+            modelBuilder.Entity<CourseFollow>()
+                .HasOne(cf => cf.User)
+                .WithMany()
+                .HasForeignKey(cf => cf.UserID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<CourseFollow>()
+                .HasOne(cf => cf.Course)
+                .WithMany()
+                .HasForeignKey(cf => cf.CourseID)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
     }
 }
-

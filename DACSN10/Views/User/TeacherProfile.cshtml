@@ -1,95 +1,340 @@
 ﻿@model DACSN10.Models.TeacherSearchViewModel
 @{
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Hồ sơ giảng viên - " + Model.Teacher.HoTen;
+
+    // Lấy trạng thái đang follow hay không
+    bool isFollowed = Model.IsFollowed;
 }
 
-<div class="container mt-5">
-    <h2 class="mb-4"><i class="fas fa-chalkboard-teacher"></i> Hồ sơ giảng viên: @Model.Teacher.HoTen</h2>
-    <div class="card shadow">
+<head>
+    <link rel="stylesheet" href="~/css/teacheravt.css" />
+</head>
+
+<div class="container teacher-profile-container">
+    <!-- Header Profile -->
+    <div class="card mb-4 teacher-profile-header">
         <div class="card-body">
-            <p><strong>Email:</strong> @Model.Teacher.Email</p>
-            <p><strong>Loại người dùng:</strong> @Model.Teacher.LoaiNguoiDung</p>
-            <form class="follow-form d-inline" data-teacher-id="@Model.Teacher.Id">
-                <input type="hidden" name="teacherId" value="@Model.Teacher.Id" />
-                <button type="submit" class="btn @(Model.IsFollowed ? "btn-success" : "btn-outline-primary") follow-btn">
-                    <i class="fas @(Model.IsFollowed ? "fa-check" : "fa-user-plus")"></i>
-                    @(Model.IsFollowed ? "Đang theo dõi" : "Follow")
-                </button>
-            </form>
-            <h5 class="mt-4">Khóa học của giảng viên</h5>
-            @if (Model.Courses.Any())
-            {
-                <ul class="list-group">
-                    @foreach (var course in Model.Courses)
+            <div class="row align-items-center">
+                <div class="col-md-2 text-center mb-3 mb-md-0">
+                    <div class="teacher-avatar">
+                        <img src="/api/placeholder/200/200" class="rounded-circle img-fluid" alt="@Model.Teacher.HoTen" />
+                    </div>
+                </div>
+                <div class="col-md-7">
+                    <h2 class="mb-1">@Model.Teacher.HoTen</h2>
+                    <p class="text-muted mb-2">
+                        <i class="fas fa-calendar-alt me-1"></i> Tham gia từ @Model.Teacher.NgayDangKy.ToString("dd/MM/yyyy")
+                    </p>
+                    <div class="teacher-stats d-flex flex-wrap">
+                        <div class="me-4 mb-2">
+                            <span class="badge bg-primary p-2">
+                                <i class="fas fa-book me-1"></i> @Model.Courses.Count khóa học
+                            </span>
+                        </div>
+                        <div class="me-4 mb-2">
+                            <span class="badge bg-info p-2">
+                                <i class="fas fa-users me-1"></i> @Model.Courses.Sum(c => c.Enrollments?.Count ?? 0) học viên
+                            </span>
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-success p-2">
+                                <i class="fas fa-star me-1"></i> @(Model.Teacher.Followers?.Count ?? 0) người theo dõi
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mt-3 mt-md-0 text-md-end">
+                    @if (User.Identity.IsAuthenticated)
                     {
-                        <li class="list-group-item">
-                            <a href="@Url.Action("Details", "Course", new { id = course.CourseID })">
-                                @course.TenKhoaHoc
-                            </a>
-                            <span class="badge bg-success float-end">@course.Gia.ToString("C")</span>
-                        </li>
+                        @if (isFollowed)
+                        {
+                            <button id="unfollowBtn"
+                                    class="btn btn-outline-danger"
+                                    data-teacher-id="@Model.Teacher.Id"
+                                    data-teacher-name="@Model.Teacher.HoTen">
+                                <i class="fas fa-user-times me-1"></i> Bỏ theo dõi
+                            </button>
+                        }
+                        else
+                        {
+                            <button id="followBtn"
+                                    class="btn btn-outline-success"
+                                    data-teacher-id="@Model.Teacher.Id"
+                                    data-teacher-name="@Model.Teacher.HoTen">
+                                <i class="fas fa-user-plus me-1"></i> Theo dõi
+                            </button>
+                        }
                     }
-                </ul>
-            }
-            else
-            {
-                <p class="text-muted">Chưa có khóa học nào.</p>
-            }
+                    else
+                    {
+                        <a href="@Url.Action("Login", "Account", new { Area = "Identity", ReturnUrl = Url.Action("TeacherProfile", "User", new { id = Model.Teacher.Id }) })" class="btn btn-outline-primary">
+                            <i class="fas fa-sign-in-alt me-1"></i> Đăng nhập để theo dõi
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Khóa học của giảng viên -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-graduation-cap me-2"></i>
+                        Khóa học của giảng viên
+                    </h4>
+                </div>
+                <div class="card-body">
+                    @if (!Model.Courses.Any())
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
+                            <h5>Hiện chưa có khóa học nào</h5>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="row">
+                            @foreach (var course in Model.Courses)
+                            {
+                                <div class="col-md-6 col-lg-4 mb-4">
+                                    <div class="card course-card h-100">
+                                        <img src="/api/placeholder/350/200" class="card-img-top" alt="@course.TenKhoaHoc">
+                                        <div class="card-body">
+                                            <h5 class="card-title">@course.TenKhoaHoc</h5>
+                                            <p class="card-text text-muted">
+                                                @(course.MoTa?.Length > 100 ? course.MoTa.Substring(0, 100) + "..." : course.MoTa)
+                                            </p>
+                                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                                <span class="text-primary fw-bold">
+                                                    @if (course.Gia > 0)
+                                                    {
+                                                        <span>@String.Format("{0:N0}", course.Gia) VNĐ</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-success">Miễn phí</span>
+                                                    }
+                                                </span>
+                                                <span class="badge bg-info">
+                                                    <i class="fas fa-users me-1"></i> @(course.Enrollments?.Count ?? 0) học viên
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer bg-white border-top-0">
+                                            <a href="@Url.Action("Details", "Course", new { id = course.CourseID })" class="btn btn-primary w-100">
+                                                <i class="fas fa-info-circle me-1"></i> Xem chi tiết
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        $(document).ready(function () {
-            $('.follow-form').on('submit', function (e) {
-                e.preventDefault();
-                var form = $(this);
-                var teacherId = form.data('teacher-id');
-                var isFollowed = form.find('.follow-btn').hasClass('btn-success');
-                var url = isFollowed ? '@Url.Action("UnfollowTeacher", "User")' : '@Url.Action("FollowTeacher", "User")';
+        $(document).ready(function() {
+            // Follow giảng viên
+            $('#followBtn').click(function() {
+                var teacherId = $(this).data('teacher-id');
+                var teacherName = $(this).data('teacher-name');
+                var button = $(this);
 
                 $.ajax({
-                    url: url,
+                    url: '@Url.Action("FollowTeacher", "User")',
                     type: 'POST',
-                    data: form.serialize(),
-                    success: function (response) {
+                    data: { teacherId: teacherId },
+                    success: function(response) {
                         if (response.success) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Thành công',
-                                text: response.message,
-                                confirmButtonText: 'OK'
+                            // Cập nhật nút
+                            button.replaceWith('<button id="unfollowBtn" class="btn btn-outline-danger" data-teacher-id="' +
+                                teacherId + '" data-teacher-name="' + teacherName +
+                                '"><i class="fas fa-user-times me-1"></i> Bỏ theo dõi</button>');
+
+                            // Gắn sự kiện cho nút mới
+                            $('#unfollowBtn').click(function() {
+                                unfollowTeacher(teacherId, teacherName);
                             });
 
-                            // Cập nhật giao diện nút
-                            var button = form.find('.follow-btn');
-                            if (isFollowed) {
-                                button.removeClass('btn-success').addClass('btn-outline-primary');
-                                button.html('<i class="fas fa-user-plus"></i> Follow');
-                            } else {
-                                button.removeClass('btn-outline-primary').addClass('btn-success');
-                                button.html('<i class="fas fa-check"></i> Đang theo dõi');
-                            }
+                            // Hiển thị thông báo
+                            Swal.fire({
+                                title: 'Theo dõi thành công!',
+                                text: 'Bạn đã theo dõi giảng viên ' + teacherName,
+                                icon: 'success',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
                         } else {
                             Swal.fire({
-                                icon: 'error',
-                                title: 'Lỗi',
+                                title: 'Có lỗi xảy ra!',
                                 text: response.message,
-                                confirmButtonText: 'OK'
+                                icon: 'error'
                             });
                         }
                     },
-                    error: function () {
+                    error: function() {
                         Swal.fire({
-                            icon: 'error',
-                            title: 'Lỗi',
-                            text: 'Có lỗi xảy ra. Vui lòng thử lại.',
-                            confirmButtonText: 'OK'
+                            title: 'Có lỗi xảy ra!',
+                            text: 'Không thể kết nối đến máy chủ',
+                            icon: 'error'
                         });
                     }
                 });
             });
+
+            // Bỏ theo dõi giảng viên
+            $('#unfollowBtn').click(function() {
+                var teacherId = $(this).data('teacher-id');
+                var teacherName = $(this).data('teacher-name');
+
+                unfollowTeacher(teacherId, teacherName);
+            });
+
+            function unfollowTeacher(teacherId, teacherName) {
+                Swal.fire({
+                    title: 'Bỏ theo dõi giảng viên?',
+                    text: 'Bạn có chắc chắn muốn bỏ theo dõi giảng viên ' + teacherName + '?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Bỏ theo dõi',
+                    cancelButtonText: 'Hủy',
+                    confirmButtonColor: '#dc3545'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '@Url.Action("UnfollowTeacher", "User")',
+                            type: 'POST',
+                            data: { teacherId: teacherId },
+                            success: function(response) {
+                                if (response.success) {
+                                    // Cập nhật nút
+                                    $('#unfollowBtn').replaceWith('<button id="followBtn" class="btn btn-outline-success" data-teacher-id="' +
+                                        teacherId + '" data-teacher-name="' + teacherName +
+                                        '"><i class="fas fa-user-plus me-1"></i> Theo dõi</button>');
+
+                                    // Gắn sự kiện cho nút mới
+                                    $('#followBtn').click(function() {
+                                        var teacherId = $(this).data('teacher-id');
+                                        var teacherName = $(this).data('teacher-name');
+
+                                        $.ajax({
+                                            url: '@Url.Action("FollowTeacher", "User")',
+                                            type: 'POST',
+                                            data: { teacherId: teacherId },
+                                            success: function(response) {
+                                                if (response.success) {
+                                                    // Cập nhật nút
+                                                    $('#followBtn').replaceWith('<button id="unfollowBtn" class="btn btn-outline-danger" data-teacher-id="' +
+                                                        teacherId + '" data-teacher-name="' + teacherName +
+                                                        '"><i class="fas fa-user-times me-1"></i> Bỏ theo dõi</button>');
+
+                                                    // Gắn sự kiện cho nút mới
+                                                    $('#unfollowBtn').click(function() {
+                                                        unfollowTeacher(teacherId, teacherName);
+                                                    });
+
+                                                    // Hiển thị thông báo
+                                                    Swal.fire({
+                                                        title: 'Theo dõi thành công!',
+                                                        text: 'Bạn đã theo dõi giảng viên ' + teacherName,
+                                                        icon: 'success',
+                                                        timer: 2000,
+                                                        showConfirmButton: false
+                                                    });
+                                                }
+                                            }
+                                        });
+                                    });
+
+                                    // Hiển thị thông báo
+                                    Swal.fire({
+                                        title: 'Bỏ theo dõi thành công!',
+                                        text: 'Bạn đã bỏ theo dõi giảng viên ' + teacherName,
+                                        icon: 'success',
+                                        timer: 2000,
+                                        showConfirmButton: false
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        title: 'Có lỗi xảy ra!',
+                                        text: response.message,
+                                        icon: 'error'
+                                    });
+                                }
+                            },
+                            error: function() {
+                                Swal.fire({
+                                    title: 'Có lỗi xảy ra!',
+                                    text: 'Không thể kết nối đến máy chủ',
+                                    icon: 'error'
+                                });
+                            }
+                        });
+                    }
+                });
+            }
         });
     </script>
+
+    <style>
+        .teacher-profile-container {
+            max-width: 1100px;
+        }
+
+        .teacher-profile-header {
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: none;
+        }
+
+        .teacher-avatar img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border: 4px solid #f8f9fa;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .course-card {
+            border-radius: 1rem;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+            .course-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            }
+
+            .course-card .card-img-top {
+                height: 180px;
+                object-fit: cover;
+            }
+
+            .course-card .card-title {
+                font-size: 1.1rem;
+                font-weight: 600;
+                line-height: 1.4;
+                height: 2.8rem;
+                overflow: hidden;
+            }
+
+        .card-text {
+            height: 4.8rem;
+            overflow: hidden;
+        }
+
+        
+
+        }
+    </style>
 }

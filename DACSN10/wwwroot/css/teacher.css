@@ -1,0 +1,21 @@
+﻿@media (max-width: 991px) {
+    .teacher-avatar img {
+        width: 70px;
+        height: 70px;
+    }
+}
+
+@media (max-width: 767px) {
+    .teacher-search-header {
+        padding: 1rem;
+    }
+
+    .teacher-avatar img {
+        width: 60px;
+        height: 60px;
+    }
+
+    .teacher-card .card-title {
+        font-size: 1.1rem;
+    }
+}

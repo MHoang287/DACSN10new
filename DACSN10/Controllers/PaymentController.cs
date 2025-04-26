@@ -3,6 +3,8 @@ using DACSN10.Models;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace DACSN10.Controllers
 {
@@ -15,11 +17,10 @@ namespace DACSN10.Controllers
             _context = context;
         }
 
-        // Hiển thị các tùy chọn thanh toán cho một khóa học
         [HttpGet]
         public IActionResult SelectPayment(int courseId)
         {
-            var course = _context.Courses.FirstOrDefault(c => c.CourseID == courseId);
+            var course = _context.Courses.FirstOrDefault(c => c.CourseID == courseId && c.TrangThai == "Active");
             if (course == null)
             {
                 return NotFound();
@@ -27,45 +28,43 @@ namespace DACSN10.Controllers
             return View(course);
         }
 
-        // Thanh toán bằng VNPAY
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> PayWithVNPAY(int courseId)
         {
             return await ProcessPayment(courseId, "VNPAY");
         }
 
-        // Thanh toán bằng MOMO
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> PayWithMomo(int courseId)
         {
             return await ProcessPayment(courseId, "MOMO");
         }
 
-        // Thanh toán bằng VISA
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> PayWithVisa(int courseId)
         {
             return await ProcessPayment(courseId, "VISA");
         }
 
-        // Logic xử lý thanh toán chung
         private async Task<IActionResult> ProcessPayment(int courseId, string paymentMethod)
         {
-            if (!User.Identity.IsAuthenticated)
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
             {
                 TempData["Error"] = "Vui lòng đăng nhập để tiếp tục thanh toán.";
                 return RedirectToAction("Login", "Account");
             }
 
-            var userId = User.Identity.Name;
-            var course = _context.Courses.FirstOrDefault(c => c.CourseID == courseId);
+            var course = _context.Courses.FirstOrDefault(c => c.CourseID == courseId && c.TrangThai == "Active");
             if (course == null)
             {
                 TempData["Error"] = "Không tìm thấy khóa học.";
                 return RedirectToAction("Index", "Course");
             }
 
-            // Kiểm tra xem người dùng đã đăng ký chưa
             var existingEnrollment = _context.Enrollments
                 .FirstOrDefault(e => e.CourseID == courseId && e.UserID == userId);
             if (existingEnrollment != null)
@@ -84,66 +83,80 @@ namespace DACSN10.Controllers
                 Status = PaymentStatus.Pending
             };
 
-            _context.Payments.Add(payment);
-            _context.SaveChanges();
-
-            // Giả lập gọi đến cổng thanh toán
-            bool paymentSuccess = await SimulatePaymentGateway(payment);
-
-            if (paymentSuccess)
+            if (payment.SoTien != course.Gia)
             {
-                payment.Status = PaymentStatus.Success;
+                TempData["Error"] = "Giá khóa học không hợp lệ.";
+                return RedirectToAction("SelectPayment", new { courseId });
+            }
 
-                // Tạo đăng ký khóa học
-                var enrollment = new Enrollment
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                _context.Payments.Add(payment);
+                await _context.SaveChangesAsync();
+
+                bool paymentSuccess = await SimulatePaymentGateway(payment);
+
+                if (paymentSuccess)
                 {
-                    CourseID = courseId,
-                    UserID = userId,
-                    EnrollDate = DateTime.Now,
-                    TrangThai = "Active",
-                    Progress = 0
-                };
-                _context.Enrollments.Add(enrollment);
-            }
-            else
-            {
-                payment.Status = PaymentStatus.Failed;
-            }
+                    payment.Status = PaymentStatus.Success;
 
-            _context.SaveChanges();
+                    var enrollment = new Enrollment
+                    {
+                        CourseID = courseId,
+                        UserID = userId,
+                        EnrollDate = DateTime.Now,
+                        TrangThai = "Active",
+                        Progress = 0
+                    };
+                    _context.Enrollments.Add(enrollment);
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                }
+                else
+                {
+                    payment.Status = PaymentStatus.Failed;
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                }
 
-            if (paymentSuccess)
-            {
-                TempData["Success"] = "Thanh toán thành công! Bạn đã được đăng ký vào khóa học.";
-                return RedirectToAction("MyCourses", "Course");
+                if (paymentSuccess)
+                {
+                    TempData["Success"] = "Thanh toán thành công! Bạn đã được đăng ký vào khóa học.";
+                    return RedirectToAction("MyCourses", "Course");
+                }
+                else
+                {
+                    TempData["Error"] = "Thanh toán thất bại. Vui lòng thử lại.";
+                    return RedirectToAction("SelectPayment", new { courseId });
+                }
             }
-            else
+            catch
             {
-                TempData["Error"] = "Thanh toán thất bại. Vui lòng thử lại.";
+                await transaction.RollbackAsync();
+                TempData["Error"] = "Lỗi trong quá trình thanh toán.";
                 return RedirectToAction("SelectPayment", new { courseId });
             }
         }
 
-        // Giả lập cổng thanh toán (sẽ được thay thế bằng tích hợp cổng thực tế)
         private async Task<bool> SimulatePaymentGateway(Payment payment)
         {
-            // Giả lập gọi bất đồng bộ đến cổng thanh toán
             await Task.Delay(1000);
-            // Ngẫu nhiên thành công hoặc thất bại để mô phỏng (sẽ được thay thế bằng phản hồi thực tế từ cổng thanh toán)
             return new Random().Next(0, 2) == 1;
         }
 
-        // Lịch sử thanh toán
         [HttpGet]
         public IActionResult History()
         {
-            if (!User.Identity.IsAuthenticated)
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
             {
                 return RedirectToAction("Login", "Account");
             }
 
-            var userId = User.Identity.Name;
             var history = _context.Payments
+                .AsNoTracking()
+                .Include(p => p.Course)
                 .Where(p => p.UserID == userId)
                 .OrderByDescending(p => p.NgayThanhToan)
                 .Select(p => new

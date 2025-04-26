@@ -9,7 +9,7 @@ using System;
 
 namespace DACSN10.Controllers
 {
-    [Authorize] // Require authentication for most actions
+    [Authorize]
     public class CourseController : Controller
     {
         private readonly AppDbContext _context;
@@ -19,83 +19,97 @@ namespace DACSN10.Controllers
             _context = context;
         }
 
-        // 1. View all courses (with pagination)
+        [AllowAnonymous]
         public async Task<IActionResult> Index(int page = 1, int pageSize = 12)
         {
             var courses = await _context.Courses
                 .AsNoTracking()
+                .Where(c => c.TrangThai == "Active")
+                .OrderBy(c => c.TenKhoaHoc)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
             ViewBag.Page = page;
             ViewBag.PageSize = pageSize;
-            ViewBag.TotalCourses = await _context.Courses.CountAsync();
+            ViewBag.TotalCourses = await _context.Courses.CountAsync(c => c.TrangThai == "Active");
             return View(courses);
         }
 
-        // 2. Popular courses
+        [AllowAnonymous]
         public async Task<IActionResult> PopularCourses()
         {
             var courses = await _context.Courses
                 .AsNoTracking()
                 .Include(c => c.Enrollments)
+                .Where(c => c.TrangThai == "Active")
                 .OrderByDescending(c => c.Enrollments.Count)
                 .Take(10)
                 .ToListAsync();
             return View(courses);
         }
 
-        // 3. New courses
+        [AllowAnonymous]
         public async Task<IActionResult> NewCourses()
         {
             var courses = await _context.Courses
                 .AsNoTracking()
+                .Where(c => c.TrangThai == "Active")
                 .OrderByDescending(c => c.NgayTao)
                 .Take(10)
                 .ToListAsync();
-            return View(courses); // <-- Tự động tìm View có tên NewCourses.cshtml
+            return View(courses);
         }
 
-        // 4. Search by name
+        [AllowAnonymous]
         public async Task<IActionResult> SearchByName(string keyword)
         {
-            if (string.IsNullOrWhiteSpace(keyword))
+            if (string.IsNullOrWhiteSpace(keyword) || keyword.Length > 100)
+            {
+                TempData["Error"] = "Từ khóa không hợp lệ.";
                 return View("SearchResult", new List<Course>());
+            }
             var result = await _context.Courses
                 .AsNoTracking()
-                .Where(c => c.TenKhoaHoc.ToLower().Contains(keyword.ToLower()))
+                .Where(c => c.TrangThai == "Active" && c.TenKhoaHoc.ToLower().Contains(keyword.ToLower()))
                 .ToListAsync();
             ViewBag.Keyword = keyword;
             return View("SearchResult", result);
         }
 
-        // 5. Search by topic (using MoTa as per model)
+        [AllowAnonymous]
         public async Task<IActionResult> SearchByTopic(string topic)
         {
-            if (string.IsNullOrWhiteSpace(topic))
+            if (string.IsNullOrWhiteSpace(topic) || topic.Length > 100)
+            {
+                TempData["Error"] = "Chủ đề không hợp lệ.";
                 return View("SearchResult", new List<Course>());
+            }
             var result = await _context.Courses
                 .AsNoTracking()
-                .Where(c => c.MoTa.ToLower().Contains(topic.ToLower()))
+                .Where(c => c.TrangThai == "Active" && c.MoTa.ToLower().Contains(topic.ToLower()))
                 .ToListAsync();
             ViewBag.Topic = topic;
             return View("SearchResult", result);
         }
 
-        // 6. Search by category
+        [AllowAnonymous]
         public async Task<IActionResult> SearchByCategory(int categoryId)
         {
             var result = await _context.CourseCategories
                 .AsNoTracking()
                 .Include(cc => cc.Course)
-                .Where(cc => cc.CategoryID == categoryId)
+                .Where(cc => cc.CategoryID == categoryId && cc.Course.TrangThai == "Active")
                 .Select(cc => cc.Course)
                 .ToListAsync();
+            if (!result.Any())
+            {
+                TempData["Error"] = "Không tìm thấy khóa học trong danh mục này.";
+            }
             ViewBag.CategoryId = categoryId;
             return View("SearchResult", result);
         }
 
-        // 7. Course details
+        [AllowAnonymous]
         public async Task<IActionResult> Details(int id)
         {
             var course = await _context.Courses
@@ -103,12 +117,16 @@ namespace DACSN10.Controllers
                 .Include(c => c.User)
                 .Include(c => c.Lessons)
                 .Include(c => c.CourseCategories).ThenInclude(cc => cc.Category)
-                .FirstOrDefaultAsync(c => c.CourseID == id);
-            if (course == null) return NotFound("Course not found.");
+                .FirstOrDefaultAsync(c => c.CourseID == id && c.TrangThai == "Active");
+            if (course == null)
+            {
+                TempData["Error"] = "Không tìm thấy khóa học.";
+                return NotFound();
+            }
             return View(course);
         }
 
-        // 8. Preview video (first lesson)
+        [AllowAnonymous]
         public async Task<IActionResult> PreviewVideo(int courseId)
         {
             var lesson = await _context.Lessons
@@ -116,122 +134,298 @@ namespace DACSN10.Controllers
                 .Where(l => l.CourseID == courseId)
                 .OrderBy(l => l.LessonID)
                 .FirstOrDefaultAsync();
-            if (lesson == null) return NotFound("No lessons found for this course.");
+            if (lesson == null)
+            {
+                TempData["Error"] = "Không có bài học nào để xem trước.";
+                return NotFound();
+            }
             return View(lesson);
         }
 
-        // 9. Enroll in a course
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "UserOnly")]
         public async Task<IActionResult> Enroll(int courseId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId)) return Unauthorized("User not authenticated.");
+            if (string.IsNullOrEmpty(userId))
+            {
+                TempData["Error"] = "Vui lòng đăng nhập để đăng ký khóa học.";
+                return Unauthorized();
+            }
 
-            if (!await _context.Courses.AnyAsync(c => c.CourseID == courseId))
-                return NotFound("Course not found.");
+            var course = await _context.Courses.FirstOrDefaultAsync(c => c.CourseID == courseId && c.TrangThai == "Active");
+            if (course == null)
+            {
+                TempData["Error"] = "Khóa học không tồn tại hoặc không hoạt động.";
+                return NotFound();
+            }
 
             var exists = await _context.Enrollments.AnyAsync(e => e.UserID == userId && e.CourseID == courseId);
-            if (!exists)
+            if (exists)
+            {
+                TempData["Error"] = "Bạn đã đăng ký khóa học này.";
+                return RedirectToAction("MyCourses");
+            }
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
                 _context.Enrollments.Add(new Enrollment
                 {
                     CourseID = courseId,
                     UserID = userId,
                     EnrollDate = DateTime.Now,
-                    TrangThai = "Đã đăng ký",
+                    TrangThai = "Active",
                     Progress = 0
                 });
                 await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
             }
-            return Json(new { success = true, message = "Enrolled successfully!" });
+            catch
+            {
+                await transaction.RollbackAsync();
+                TempData["Error"] = "Lỗi khi đăng ký khóa học.";
+                return RedirectToAction("Details", new { id = courseId });
+            }
+
+            TempData["Success"] = "Đăng ký khóa học thành công!";
+            return RedirectToAction("MyCourses");
         }
 
-        // 10. Follow teacher (assumed to be in UserController, not implemented here)
-
-        // 11. Add to favorites
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "UserOnly")]
+        public async Task<IActionResult> FollowCourse(int courseId)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                TempData["Error"] = "Vui lòng đăng nhập để theo dõi khóa học.";
+                return Unauthorized();
+            }
+
+            var course = await _context.Courses.FirstOrDefaultAsync(c => c.CourseID == courseId && c.TrangThai == "Active");
+            if (course == null)
+            {
+                TempData["Error"] = "Khóa học không tồn tại hoặc không hoạt động.";
+                return NotFound();
+            }
+
+            var exists = await _context.CourseFollows.AnyAsync(f => f.CourseID == courseId && f.UserID == userId);
+            if (exists)
+            {
+                TempData["Error"] = "Bạn đã theo dõi khóa học này.";
+                return RedirectToAction("MyFollowedCourses");
+            }
+
+            _context.CourseFollows.Add(new CourseFollow
+            {
+                CourseID = courseId,
+                UserID = userId,
+                FollowDate = DateTime.Now
+            });
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Đã theo dõi khóa học!";
+            return RedirectToAction("MyFollowedCourses");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Policy = "UserOnly")]
+        public async Task<IActionResult> UnfollowCourse(int courseId)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                TempData["Error"] = "Vui lòng đăng nhập để bỏ theo dõi khóa học.";
+                return Unauthorized();
+            }
+
+            var follow = await _context.CourseFollows
+                .FirstOrDefaultAsync(f => f.CourseID == courseId && f.UserID == userId);
+            if (follow == null)
+            {
+                TempData["Error"] = "Bạn chưa theo dõi khóa học này.";
+                return RedirectToAction("MyFollowedCourses");
+            }
+
+            _context.CourseFollows.Remove(follow);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Đã bỏ theo dõi khóa học!";
+            return RedirectToAction("MyFollowedCourses");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Policy = "UserOnly")]
         public async Task<IActionResult> AddToFavorite(int courseId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId)) return Unauthorized("User not authenticated.");
+            if (string.IsNullOrEmpty(userId))
+            {
+                TempData["Error"] = "Vui lòng đăng nhập để thêm vào yêu thích.";
+                return Unauthorized();
+            }
 
-            if (!await _context.Courses.AnyAsync(c => c.CourseID == courseId))
-                return NotFound("Course not found.");
+            var course = await _context.Courses.FirstOrDefaultAsync(c => c.CourseID == courseId && c.TrangThai == "Active");
+            if (course == null)
+            {
+                TempData["Error"] = "Khóa học không tồn tại hoặc không hoạt động.";
+                return NotFound();
+            }
 
             var exists = await _context.FavoriteCourses.AnyAsync(f => f.CourseID == courseId && f.UserID == userId);
-            if (!exists)
+            if (exists)
             {
-                _context.FavoriteCourses.Add(new FavoriteCourse
-                {
-                    CourseID = courseId,
-                    UserID = userId
-                });
-                await _context.SaveChangesAsync();
+                TempData["Error"] = "Khóa học đã có trong danh sách yêu thích.";
+                return RedirectToAction("FavoriteCourses");
             }
-            return Json(new { success = true, message = "Added to favorites!" });
+
+            _context.FavoriteCourses.Add(new FavoriteCourse
+            {
+                CourseID = courseId,
+                UserID = userId
+            });
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Đã thêm vào danh sách yêu thích!";
+            return RedirectToAction("FavoriteCourses");
         }
 
-        // 12. Remove from favorites
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "UserOnly")]
         public async Task<IActionResult> RemoveFromFavorite(int courseId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId)) return Unauthorized("User not authenticated.");
+            if (string.IsNullOrEmpty(userId))
+            {
+                TempData["Error"] = "Vui lòng đăng nhập để xóa khỏi yêu thích.";
+                return Unauthorized();
+            }
 
             var fav = await _context.FavoriteCourses
                 .FirstOrDefaultAsync(f => f.CourseID == courseId && f.UserID == userId);
-            if (fav != null)
+            if (fav == null)
             {
-                _context.FavoriteCourses.Remove(fav);
-                await _context.SaveChangesAsync();
+                TempData["Error"] = "Khóa học không có trong danh sách yêu thích.";
+                return RedirectToAction("FavoriteCourses");
             }
-            return Json(new { success = true, message = "Removed from favorites!" });
+
+            _context.FavoriteCourses.Remove(fav);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Đã xóa khỏi danh sách yêu thích!";
+            return RedirectToAction("FavoriteCourses");
         }
 
-        // 13. View enrolled courses
         public async Task<IActionResult> MyCourses()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var courses = await _context.Enrollments
                 .AsNoTracking()
                 .Include(e => e.Course)
-                .Where(e => e.UserID == userId)
+                .Where(e => e.UserID == userId && e.TrangThai == "Active")
                 .Select(e => e.Course)
                 .ToListAsync();
             return View(courses);
         }
 
-        // 14. View course progress
+        public async Task<IActionResult> MyFollowedCourses()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var courses = await _context.CourseFollows
+                .AsNoTracking()
+                .Include(f => f.Course)
+                .Where(f => f.UserID == userId && f.Course.TrangThai == "Active")
+                .Select(f => f.Course)
+                .ToListAsync();
+            return View(courses);
+        }
+
         public async Task<IActionResult> Progress(int courseId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var enrollment = await _context.Enrollments
                 .AsNoTracking()
+                .Include(e => e.Course)
                 .FirstOrDefaultAsync(e => e.UserID == userId && e.CourseID == courseId);
             if (enrollment == null)
             {
-                ViewBag.ErrorMessage = "Bạn chưa đăng ký khóa học nào";
+                TempData["Error"] = "Bạn chưa đăng ký khóa học này.";
                 return View("EnrollmentNotFound");
             }
             ViewBag.Progress = enrollment.Progress;
             ViewBag.CourseID = courseId;
+            ViewBag.CourseName = enrollment.Course.TenKhoaHoc;
             return View();
         }
 
-        // 15. View favorite courses
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Policy = "UserOnly")]
+        public async Task<IActionResult> UpdateProgress(int courseId, int lessonId)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                TempData["Error"] = "Vui lòng đăng nhập để cập nhật tiến độ.";
+                return Unauthorized();
+            }
+
+            var enrollment = await _context.Enrollments
+                .FirstOrDefaultAsync(e => e.UserID == userId && e.CourseID == courseId && e.TrangThai == "Active");
+            if (enrollment == null)
+            {
+                TempData["Error"] = "Bạn chưa đăng ký khóa học này.";
+                return RedirectToAction("MyCourses");
+            }
+
+            var totalLessons = await _context.Lessons
+                .CountAsync(l => l.CourseID == courseId);
+            if (totalLessons == 0)
+            {
+                TempData["Error"] = "Khóa học không có bài học.";
+                return RedirectToAction("Progress", new { courseId });
+            }
+
+            // Giả sử mỗi bài học hoàn thành tăng tiến độ đều
+            var progressPerLesson = 100f / totalLessons;
+            enrollment.Progress = Math.Min(100f, enrollment.Progress + progressPerLesson);
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Cập nhật tiến độ thành công!";
+            return RedirectToAction("Progress", new { courseId });
+        }
+
         public async Task<IActionResult> FavoriteCourses()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var favs = await _context.FavoriteCourses
                 .AsNoTracking()
                 .Include(f => f.Course)
-                .Where(f => f.UserID == userId)
+                .Where(f => f.UserID == userId && f.Course.TrangThai == "Active")
                 .Select(f => f.Course)
                 .ToListAsync();
             return View(favs);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAverageProgress()
+        {
+            if (!User.Identity.IsAuthenticated)
+                return Json(0);
+
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var averageProgress = await _context.Enrollments
+                .Where(e => e.UserID == userId && e.TrangThai == "Active")
+                .AverageAsync(e => (float?)e.Progress) ?? 0;
+
+            return Json(averageProgress);
         }
     }
 }
