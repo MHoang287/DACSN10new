@@ -1,17 +1,54 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
-<div class="container mt-5">
-    <h2>Chi tiết bài tập</h2>
-    <p>Đây là nội dung bài tập...</p>
-    <form method="post" action="/Practice/Submit">
-        <input type="hidden" name="assignmentId" value="1" />
-        <div class="mb-3">
-            <label for="answer" class="form-label">Nội dung nộp bài</label>
-            <textarea class="form-control" name="answer" rows="4"></textarea>
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết bài tập</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="text-center mb-4">Chi tiết bài tập: @Model.TenBaiTap</h2>
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">@Model.TenBaiTap</h5>
+                <p><strong>Mô tả:</strong> @Model.MoTa</p>
+                <p><strong>Hạn nộp:</strong> @Model.HanNop.ToString("dd/MM/yyyy HH:mm")</p>
+                <hr>
+                <h5>Nộp bài tập</h5>
+                <form asp-action="Submit" asp-controller="Practice" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="assignmentId" value="@Model.AssignmentID" />
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Chọn file bài tập (PDF, DOCX, ZIP):</label>
+                        <input type="file" class="form-control" id="file" name="file" accept=".pdf,.docx,.zip" required>
+                    </div>
+                    <button type="submit" class="btn btn-success">Nộp bài</button>
+                    <a asp-action="Index" asp-route-courseId="@Model.CourseID" class="btn btn-secondary">Quay lại</a>
+                </form>
+            </div>
         </div>
-        <button type="submit" class="btn btn-success">Nộp bài</button>
-    </form>
-</div>
+    </div>
+    @if (TempData["Success"] != null)
+    {
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Thành công',
+                text: '@TempData["Success"]',
+            });
+        </script>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <script>
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: '@TempData["Error"]',
+            });
+        </script>
+    }
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

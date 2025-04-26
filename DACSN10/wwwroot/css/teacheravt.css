@@ -1,0 +1,5 @@
+﻿@media (max-width: 767px) {
+    .teacher-avatar img {
+        width: 120px;
+        height: 120px;
+    }
