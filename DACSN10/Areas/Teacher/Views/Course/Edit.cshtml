@@ -1,0 +1,249 @@
+﻿@model DACSN10.Areas.Teacher.Models.CourseViewModel
+
+@{
+    ViewData["Title"] = "Edit Course";
+    Layout = "~/Areas/Teacher/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid px-4 animate__animated animate__fadeIn">
+    <h1 class="mt-4 mb-4">
+        <i class="fas fa-edit"></i> Edit Course
+    </h1>
+
+    <div class="row">
+        <div class="col-xl-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-book me-1"></i>
+                            Course Details
+                        </div>
+                        <div>
+                            <span class="badge bg-info">Created: @Model.NgayTao.ToString("dd/MM/yyyy")</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit" enctype="multipart/form-data" id="editCourseForm">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="CourseID" />
+                        <input type="hidden" asp-for="NgayTao" />
+
+                        <div class="mb-3">
+                            <label asp-for="TenKhoaHoc" class="form-label">Course Name</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-heading"></i></span>
+                                <input asp-for="TenKhoaHoc" class="form-control" required />
+                            </div>
+                            <span asp-validation-for="TenKhoaHoc" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="MoTa" class="form-label">Description</label>
+                            <textarea asp-for="MoTa" class="form-control" rows="4"></textarea>
+                            <span asp-validation-for="MoTa" class="text-danger"></span>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="Gia" class="form-label">Price (VND)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-money-bill"></i></span>
+                                    <input asp-for="Gia" class="form-control" type="number" min="0" />
+                                </div>
+                                <span asp-validation-for="Gia" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="TrangThai" class="form-label">Status</label>
+                                <select asp-for="TrangThai" class="form-select">
+                                    <option value="Draft">Draft</option>
+                                    <option value="Published">Published</option>
+                                </select>
+                                <span asp-validation-for="TrangThai" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Categories</label>
+                            <div class="card">
+                                <div class="card-body py-2 px-3">
+                                    @foreach (var category in Model.AvailableCategories)
+                                    {
+                                        <div class="form-check form-check-inline">
+                                            <input type="checkbox"
+                                                   name="SelectedCategories"
+                                                   value="@category.CategoryID"
+                                                   class="form-check-input"
+                                                   id="category-@category.CategoryID"
+                                            @(Model.SelectedCategories.Contains(category.CategoryID) ? "checked" : "") />
+                                            <label class="form-check-label" for="category-@category.CategoryID">@category.Name</label>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 text-end">
+                            <a asp-action="Index" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-arrow-left"></i> Back to List
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Update Course
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-cog me-1"></i>
+                    Course Management
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <a asp-action="Lessons" asp-route-id="@Model.CourseID" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-list-ul"></i> Manage Lessons
+                            </div>
+                            <span class="badge bg-primary rounded-pill">
+                                <i class="fas fa-chevron-right"></i>
+                            </span>
+                        </a>
+                        <a asp-action="Quizzes" asp-route-id="@Model.CourseID" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-question-circle"></i> Manage Quizzes
+                            </div>
+                            <span class="badge bg-primary rounded-pill">
+                                <i class="fas fa-chevron-right"></i>
+                            </span>
+                        </a>
+                        <a asp-action="Students" asp-route-id="@Model.CourseID" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-users"></i> View Students
+                            </div>
+                            <span class="badge bg-primary rounded-pill">
+                                <i class="fas fa-chevron-right"></i>
+                            </span>
+                        </a>
+                        <a asp-action="Followers" asp-route-id="@Model.CourseID" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-heart"></i> View Followers
+                            </div>
+                            <span class="badge bg-primary rounded-pill">
+                                <i class="fas fa-chevron-right"></i>
+                            </span>
+                        </a>
+                    </div>
+
+                    <hr />
+
+                    <div class="d-grid gap-2">
+                        <button id="deleteCourseBtn" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Delete Course
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function() {
+            // Rich text editor for description
+            $("#MoTa").kendoEditor({
+                tools: [
+                    "bold", "italic", "underline", "strikethrough",
+                    "justifyLeft", "justifyCenter", "justifyRight", "justifyFull",
+                    "insertUnorderedList", "insertOrderedList", "indent", "outdent",
+                    "createLink", "unlink", "insertImage", "subscript", "superscript",
+                    "tableWizard", "createTable", "addRowAbove", "addRowBelow", "addColumnLeft",
+                    "addColumnRight", "deleteRow", "deleteColumn", "viewHtml", "formatting",
+                    "cleanFormatting"
+                ],
+                resizable: {
+                    content: true,
+                    toolbar: true
+                }
+            });
+
+            // Form validation
+            $("#editCourseForm").validate({
+                rules: {
+                    TenKhoaHoc: {
+                        required: true,
+                        minlength: 5
+                    },
+                    Gia: {
+                        required: true,
+                        min: 0
+                    }
+                },
+                messages: {
+                    TenKhoaHoc: {
+                        required: "Please enter a course name",
+                        minlength: "Course name must be at least 5 characters long"
+                    },
+                    Gia: {
+                        required: "Please enter a price",
+                        min: "Price cannot be negative"
+                    }
+                },
+                errorElement: "div",
+                errorClass: "invalid-feedback",
+                highlight: function(element) {
+                    $(element).addClass("is-invalid").removeClass("is-valid");
+                },
+                unhighlight: function(element) {
+                    $(element).addClass("is-valid").removeClass("is-invalid");
+                },
+                errorPlacement: function(error, element) {
+                    error.insertAfter(element.closest(".input-group"));
+                }
+            });
+
+            // Submit form handling with SweetAlert
+            $("#editCourseForm").on("submit", function(e) {
+                if (!$(this).valid()) {
+                    toastr.error("Please fix the validation errors before submitting");
+                    return true; // Let the validation handle the errors
+                }
+
+                // Let form submit and show success message after redirect
+                localStorage.setItem('courseUpdated', 'true');
+            });
+
+            // Check for update notification
+            if (localStorage.getItem('courseUpdated') === 'true') {
+                toastr.success('Course has been updated successfully!');
+                localStorage.removeItem('courseUpdated');
+            }
+
+            // Delete course button
+            $("#deleteCourseBtn").on("click", function() {
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "You won't be able to revert this!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = `/Teacher/Course/Delete/${@Model.CourseID}`;
+                    }
+                });
+            });
+        });
+    </script>
+}

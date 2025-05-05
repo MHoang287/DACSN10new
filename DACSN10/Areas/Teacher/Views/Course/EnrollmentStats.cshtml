@@ -1,0 +1,511 @@
+﻿@model IEnumerable<dynamic>
+
+@{
+    ViewData["Title"] = "Enrollment Statistics";
+    Layout = "~/Areas/Teacher/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid px-4 animate__animated animate__fadeIn">
+    <h1 class="mt-4 mb-4">
+        <i class="fas fa-chart-line"></i> Enrollment Statistics
+    </h1>
+
+    <div class="row">
+        <div class="col-xl-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-bar me-1"></i>
+                    Course Enrollments Comparison
+                </div>
+                <div class="card-body">
+                    <canvas id="courseComparisonChart" height="100"></canvas>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <i class="fas fa-chart-line me-1"></i>
+                            Monthly Enrollment Trend
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <select id="courseSelector" class="form-select">
+                                    @foreach (var item in Model)
+                                    {
+                                        <option value="@item.Course.CourseID">@item.Course.TenKhoaHoc</option>
+                                    }
+                                </select>
+                            </div>
+                            <canvas id="monthlyTrendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <i class="fas fa-chart-pie me-1"></i>
+                            Revenue Distribution
+                        </div>
+                        <div class="card-body">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-table me-1"></i>
+                    Course Rankings
+                </div>
+                <div class="card-body">
+                    <table id="rankingsTable" class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Course</th>
+                                <th>Enrollments</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                var rank = 1;
+                                foreach (var item in Model.OrderByDescending(c => (int)c.EnrollmentCount))
+                                {
+                                    <tr class="@(rank <= 3 ? "table-" + (rank == 1 ? "success" : (rank == 2 ? "info" : "warning")) : "")">
+                                        <td>
+                                            @if (rank == 1)
+                                            {
+                                                <i class="fas fa-trophy text-warning"></i>
+                                            }
+                                            else
+                                            {
+                                                @rank
+                                            }
+                                        </td>
+                                        <td>@item.Course.TenKhoaHoc</td>
+                                        <td>@item.EnrollmentCount</td>
+                                        <td>
+                                            <a asp-action="Students" asp-route-id="@item.Course.CourseID" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    rank++;
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-bullseye me-1"></i>
+                    Key Performance Indicators
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-3 bg-primary text-white">
+                                <div class="card-body text-center py-3">
+                                    <h3 class="card-title mb-0">
+                                        @{
+                                            // Fix: Add explicit conversion to int
+                                            var totalEnrollments = Model.Sum(c => (int)c.EnrollmentCount);
+                                        }
+                                        @totalEnrollments
+                                    </h3>
+                                    <div class="text-white-50">Total Enrollments</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card mb-3 bg-success text-white">
+                                <div class="card-body text-center py-3">
+                                    <h3 class="card-title mb-0">
+                                        @{
+                                            // Fix: Use explicit conversion for calculations
+                                            decimal totalRevenue = Model.Sum(c => (decimal)c.Course.Gia * (int)c.EnrollmentCount);
+                                            var formattedRevenue = totalRevenue.ToString("N0");
+                                        }
+                                        @formattedRevenue
+                                    </h3>
+                                    <div class="text-white-50">Total Revenue (VND)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Conversion Rate</h6>
+                            @{
+                                // Simulate a conversion rate between 5-15%
+                                var conversionRate = new Random().Next(5, 16);
+                                var conversionClass = conversionRate > 10 ? "success" : (conversionRate > 7 ? "info" : "warning");
+                            }
+                            <div class="progress mb-2" style="height: 20px;">
+                                <div class="progress-bar bg-@conversionClass" role="progressbar" style="width: @conversionRate%;"
+                                     aria-valuenow="@conversionRate" aria-valuemin="0" aria-valuemax="100">
+                                    @conversionRate%
+                                </div>
+                            </div>
+                            <div class="text-muted small">Visitors to enrolled students</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Average Rating</h6>
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="display-4 me-2">4.7</div>
+                                <div>
+                                    <div class="mb-1">
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star-half-alt text-warning"></i>
+                                    </div>
+                                    <div class="text-muted small">Based on 28 reviews</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-calendar-alt me-1"></i>
+                            Enrollment Calendar
+                        </div>
+                        <div>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-secondary active" data-period="week">Week</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-period="month">Month</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-period="year">Year</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="enrollmentCalendar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            });
+
+            // Course comparison chart
+            const courseComparisonCtx = document.getElementById('courseComparisonChart').getContext('2d');
+
+            const courseLabels = [@Html.Raw(string.Join(",", Model.Select(c => $"'{c.Course.TenKhoaHoc}'")))];
+            // Fix: Ensure explicit conversion to int in the JavaScript
+            const enrollmentData = [@Html.Raw(string.Join(",", Model.Select(c => $"{(int)c.EnrollmentCount}")))];
+            const chartColors = [
+                'rgba(75, 192, 192, 0.6)',
+                'rgba(54, 162, 235, 0.6)',
+                'rgba(255, 206, 86, 0.6)',
+                'rgba(255, 99, 132, 0.6)',
+                'rgba(153, 102, 255, 0.6)',
+                'rgba(255, 159, 64, 0.6)',
+                'rgba(199, 199, 199, 0.6)'
+            ];
+
+            new Chart(courseComparisonCtx, {
+                type: 'bar',
+                data: {
+                    labels: courseLabels,
+                    datasets: [{
+                        label: 'Number of Enrollments',
+                        data: enrollmentData,
+                        backgroundColor: chartColors.slice(0, courseLabels.length),
+                        borderColor: chartColors.slice(0, courseLabels.length).map(color => color.replace('0.6', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+
+            // Monthly trend chart (mock data)
+            const monthlyTrendCtx = document.getElementById('monthlyTrendChart').getContext('2d');
+
+            // Generate mock data for the last 6 months
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+
+            // Create random enrollment data for each course
+            const courseEnrollmentData = {};
+
+        @foreach (var item in Model)
+        {
+            @:courseEnrollmentData[@item.Course.CourseID] = Array.from({length: 6}, () => Math.floor(Math.random() * 20) + 1);
+        }
+
+            // Initial course selection
+            let selectedCourseId = $('#courseSelector').val();
+
+            const monthlyTrendChart = new Chart(monthlyTrendCtx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Monthly Enrollments',
+                        data: courseEnrollmentData[selectedCourseId],
+                        fill: false,
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Update chart when course selection changes
+            $('#courseSelector').on('change', function() {
+                selectedCourseId = $(this).val();
+
+                // Update chart with new data
+                monthlyTrendChart.data.datasets[0].data = courseEnrollmentData[selectedCourseId];
+                monthlyTrendChart.update();
+
+                // Update the chart title with the selected course name
+                const courseName = $(this).find('option:selected').text();
+                monthlyTrendChart.options.plugins.title = {
+                    display: true,
+                    text: `Monthly Enrollments: ${courseName}`
+                };
+                monthlyTrendChart.update();
+            });
+
+            // Revenue chart
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+
+            const courseNames = [@Html.Raw(string.Join(",", Model.Select(c => $"'{c.Course.TenKhoaHoc}'")))];
+            // Fix: Add explicit decimal calculations for revenue
+            const revenueData = [
+        @Html.Raw(string.Join(",", Model.Select(c => $"{(decimal)c.Course.Gia * (int)c.EnrollmentCount}")))
+            ];
+
+            new Chart(revenueCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: courseNames,
+                    datasets: [{
+                        data: revenueData,
+                        backgroundColor: chartColors.slice(0, courseNames.length),
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 10
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Initialize calendar with FullCalendar (mock data)
+            const calendarEl = document.getElementById('enrollmentCalendar');
+
+            // Generate mock enrollment events
+            const events = [];
+
+            // Create random enrollment events for the current month
+            const currentDate = new Date('2025-05-05 07:18:02'); // Updated to current time
+            const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+            const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+
+            // Generate course colors for events
+            const courseColors = {};
+            let colorIndex = 0;
+        @foreach (var item in Model)
+        {
+            @:courseColors[@item.Course.CourseID] = chartColors[colorIndex % chartColors.length].replace('0.6', '1');
+            @:colorIndex++;
+        }
+
+            // Generate between 1-3 enrollments per day for a random course
+            for (let day = 1; day <= endDate.getDate(); day++) {
+                const eventDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+
+                // Skip future dates
+                if (eventDate > currentDate) continue;
+
+                // Skip weekends for more realistic data
+                if (eventDate.getDay() === 0 || eventDate.getDay() === 6) continue;
+
+                const enrollmentsCount = Math.floor(Math.random() * 3) + 1;
+
+                // For each enrollment on this day
+                for (let i = 0; i < enrollmentsCount; i++) {
+                    // Pick a random course
+                    // Fix: Ensure explicit conversion to int
+                    const courseIds = [@Html.Raw(string.Join(",", Model.Select(c => (int)c.Course.CourseID)))];
+                    const randomCourseId = courseIds[Math.floor(Math.random() * courseIds.length)];
+                    // Store courseIds in a variable to avoid reference error
+                    const courseIdList = courseIds;
+                    const courseIndex = courseIdList.indexOf(randomCourseId);
+                    const courseName = courseNames[courseIndex >= 0 ? courseIndex : 0];
+
+                    // Random time during business hours (9 AM - 6 PM)
+                    const hour = Math.floor(Math.random() * 9) + 9;
+                    const minute = Math.floor(Math.random() * 60);
+
+                    events.push({
+                        title: `New enrollment: ${courseName}`,
+                        start: new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate(), hour, minute),
+                        backgroundColor: courseColors[randomCourseId],
+                        borderColor: courseColors[randomCourseId],
+                        extendedProps: {
+                            courseId: randomCourseId
+                        }
+                    });
+                }
+            }
+
+            // Initialize the calendar
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'timeGridWeek',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'timeGridDay,timeGridWeek,dayGridMonth'
+                },
+                events: events,
+                nowIndicator: true,
+                now: '2025-05-05T07:18:02', // Updated current time
+                eventClick: function(info) {
+                    // Show event details
+                    const courseId = info.event.extendedProps.courseId;
+                    // Fix: Store courseIds in a variable to avoid reference error
+                    const courseIdList = [@Html.Raw(string.Join(",", Model.Select(c => (int)c.Course.CourseID)))];
+                    const courseIndex = courseIdList.indexOf(courseId);
+                    const courseName = courseNames[courseIndex >= 0 ? courseIndex : 0];
+
+                    Swal.fire({
+                        title: 'Enrollment Details',
+                        html: `
+                            <div class="text-start">
+                                <p><strong>Course:</strong> ${courseName}</p>
+                                <p><strong>Date:</strong> ${info.event.start.toLocaleString()}</p>
+                                <p><strong>Status:</strong> <span class="badge bg-success">Completed</span></p>
+                            </div>
+                        `,
+                        icon: 'info'
+                    });
+                }
+            });
+
+            calendar.render();
+
+            // Handle period buttons
+            $('.btn-group button').on('click', function() {
+                $('.btn-group button').removeClass('active');
+                $(this).addClass('active');
+
+                const period = $(this).data('period');
+
+                switch (period) {
+                    case 'week':
+                        calendar.changeView('timeGridWeek');
+                        break;
+                    case 'month':
+                        calendar.changeView('dayGridMonth');
+                        break;
+                    case 'year':
+                        calendar.changeView('dayGridYear');
+                        break;
+                }
+            });
+
+            // Initialize DataTable for rankings
+            $('#rankingsTable').DataTable({
+                paging: false,
+                searching: false,
+                info: false,
+                order: [[2, 'desc']]
+            });
+
+            // Initialize introJs
+            const startTour = () => {
+                introJs().setOptions({
+                    steps: [
+                        {
+                            element: document.querySelector('h1'),
+                            intro: "Welcome to your enrollment statistics dashboard!"
+                        },
+                        {
+                            element: document.querySelector('#courseComparisonChart').parentNode,
+                            intro: "This chart shows enrollment numbers across all your courses"
+                        },
+                        {
+                            element: document.querySelector('#rankingsTable').parentNode,
+                            intro: "See which courses are performing the best"
+                        },
+                        {
+                            element: document.querySelector('#enrollmentCalendar'),
+                            intro: "View enrollment activities on a calendar"
+                        }
+                    ]
+                }).start();
+            };
+
+            // Add a tour button
+            $('<button class="btn btn-sm btn-info position-fixed" style="bottom: 20px; right: 20px;"><i class="fas fa-question-circle"></i> Help</button>')
+                .appendTo('body')
+                .on('click', startTour);
+        });
+    </script>
+}
