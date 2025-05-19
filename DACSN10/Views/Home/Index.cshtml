@@ -1,8 +1,143 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model List<DACSN10.Models.Course>
+@{
+    ViewData["Title"] = "Tất cả khóa học";
 }
 
-<div class="container mt-5">
-    <h1>Chào mừng bạn đến với hệ thống học trực tuyến</h1>
-    <p>Khám phá hàng trăm khóa học hấp dẫn ngay hôm nay!</p>
+<div class="container mt-5 animate__animated animate__fadeIn">
+    <h1 class="mb-3 text-primary"><i class="fas fa-book-open me-2"></i> Danh sách khóa học</h1>
+    <p class="mb-4 text-muted">Khám phá các khóa học chất lượng, cập nhật liên tục từ các giảng viên hàng đầu.</p>
+
+    <div class="mb-3">
+        <input id="searchCourse" type="text" class="form-control" placeholder="Tìm kiếm khóa học..." />
+    </div>
+
+    <table id="coursesTable" class="table table-hover table-bordered align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Tên khóa học</th>
+                <th>Mô tả</th>
+                <th>Giá</th>
+                <th>Trạng thái</th>
+                <th>Ngày tạo</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var course in Model)
+            {
+                <tr>
+                    <td>
+                        <span class="fw-bold">@course.TenKhoaHoc</span>
+                    </td>
+                    <td>
+                        <span class="text-truncate d-inline-block" style="max-width: 250px;" title="@course.MoTa">
+                            @course.MoTa
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-success">@course.Gia.ToString("N0") VNĐ</span>
+                    </td>
+                    <td>
+                        @if (course.TrangThai == "Published")
+                        {
+                            <span class="badge bg-primary"><i class="fas fa-check-circle"></i> Đang mở</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary"><i class="fas fa-lock"></i> Đã đóng</span>
+                        }
+                    </td>
+                    <td>
+                        <span class="text-muted">@course.NgayTao.ToString("dd/MM/yyyy")</span>
+                    </td>
+                    <td>
+                        <a href="@Url.Action("Details", "Course", new { id = course.CourseID })" class="btn btn-outline-info btn-sm me-1 animate__animated animate__pulse">
+                            <i class="fas fa-eye"></i> Xem
+                        </a>
+                        <button class="btn btn-outline-success btn-sm animate__animated animate__pulse" onclick="showEnrollSuccess('@course.TenKhoaHoc')">
+                            <i class="fas fa-user-plus"></i> Đăng ký
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="mt-5">
+        <canvas id="courseChart" height="100"></canvas>
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            // DataTables
+            var table = $('#coursesTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/vi.json'
+                }
+            });
+
+            // Tìm kiếm
+            $('#searchCourse').on('keyup', function () {
+                table.search(this.value).draw();
+            });
+
+            // Animate row on hover
+            $('#coursesTable tbody').on('mouseenter', 'tr', function () {
+                $(this).addClass('animate__pulse');
+            }).on('mouseleave', 'tr', function () {
+                $(this).removeClass('animate__pulse');
+            });
+
+            // Chart.js - Thống kê số lượng khóa học theo trạng thái
+            var ctx = document.getElementById('courseChart').getContext('2d');
+            var activeCount = @Model.Count(c => c.TrangThai == "Active");
+            var closedCount = @Model.Count(c => c.TrangThai != "Active");
+            var courseChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Đang mở', 'Đã đóng'],
+                    datasets: [{
+                        data: [activeCount, closedCount],
+                        backgroundColor: ['#0d6efd', '#adb5bd'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: { display: true, position: 'bottom' }
+                    }
+                }
+            });
+
+            // Intro.js hướng dẫn
+            setTimeout(function () {
+                introJs().setOptions({
+                    nextLabel: 'Tiếp',
+                    prevLabel: 'Trước',
+                    doneLabel: 'Hoàn thành',
+                    steps: [
+                        { intro: "Đây là danh sách các khóa học trực tuyến. Bạn có thể tìm kiếm, xem chi tiết hoặc đăng ký học." },
+                        { element: '#searchCourse', intro: "Tìm kiếm nhanh khóa học theo tên hoặc mô tả." },
+                        { element: '#coursesTable', intro: "Bảng hiển thị thông tin chi tiết từng khóa học." },
+                        { element: '#courseChart', intro: "Biểu đồ thống kê số lượng khóa học đang mở và đã đóng." }
+                    ]
+                }).start();
+            }, 1000);
+        });
+
+        // Toastr + SweetAlert2 khi đăng ký
+        function showEnrollSuccess(courseName) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Đăng ký thành công!',
+                text: 'Bạn đã đăng ký khóa học: ' + courseName,
+                showConfirmButton: false,
+                timer: 2000
+            });
+            toastr.success('Đăng ký thành công khóa học: ' + courseName);
+        }
+    </script>
+    <!-- DataTables, Chart.js, Toastr, SweetAlert2, Intro.js, Animate.css, FontAwesome, jQuery UI, MDB, Syncfusion đã được load ở _Layout.cshtml -->
+}
