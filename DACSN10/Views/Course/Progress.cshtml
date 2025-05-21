@@ -1,10 +1,589 @@
 ﻿@{
-    ViewData["Title"] = "Tiến độ khóa học";
-    var progress = ViewBag.Progress;
-    var courseId = ViewBag.CourseID;
+    ViewData["Title"] = "Tiến độ học tập";
 }
-<h2>Tiến độ khóa học</h2>
-<div class="progress">
-    <div class="progress-bar" role="progressbar" style="width: @progress%" aria-valuenow="@progress" aria-valuemin="0" aria-valuemax="100">@progress%</div>
+
+<div class="container animate__animated animate__fadeIn">
+    <h1 class="mb-4 text-center fw-bold">
+        <i class="fas fa-chart-line text-primary me-2"></i> Tiến độ học tập
+    </h1>
+
+    @if (!User.Identity.IsAuthenticated)
+    {
+        <div class="alert alert-warning text-center">
+            <i class="fas fa-exclamation-triangle me-2"></i> Vui lòng <a href="/Identity/Account/Login">đăng nhập</a> để xem tiến độ học tập.
+        </div>
+    }
+    else
+    {
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-graduation-cap me-2"></i> @ViewBag.CourseName
+                        </h5>
+                        <div class="progress mt-3" style="height: 25px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                                 style="width: @ViewBag.Progress%;"
+                                 aria-valuenow="@ViewBag.Progress" aria-valuemin="0" aria-valuemax="100">
+                                @ViewBag.Progress%
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-2">
+                            <small>Bắt đầu</small>
+                            <small>Hoàn thành</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Nội dung khóa học -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" id="lessons-tab" data-bs-toggle="tab" href="#lessons" role="tab">
+                                    <i class="fas fa-list me-1"></i> Bài học
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="materials-tab" data-bs-toggle="tab" href="#materials" role="tab">
+                                    <i class="fas fa-file-alt me-1"></i> Tài liệu
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="quiz-tab" data-bs-toggle="tab" href="#quiz" role="tab">
+                                    <i class="fas fa-question-circle me-1"></i> Bài kiểm tra
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <div class="tab-content">
+                            <!-- Tab bài học -->
+                            <div class="tab-pane fade show active" id="lessons" role="tabpanel">
+                                <div id="lessonsAccordion">
+                                    <!-- Dữ liệu sẽ được tải bằng AJAX -->
+                                    <div class="placeholder-glow">
+                                        <span class="placeholder col-12 mb-2" style="height: 50px;"></span>
+                                        <span class="placeholder col-12 mb-2" style="height: 50px;"></span>
+                                        <span class="placeholder col-12 mb-2" style="height: 50px;"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tab tài liệu -->
+                            <div class="tab-pane fade" id="materials" role="tabpanel">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i> Tài liệu của khóa học sẽ xuất hiện ở đây.
+                                </div>
+                            </div>
+
+                            <!-- Tab bài kiểm tra -->
+                            <div class="tab-pane fade" id="quiz" role="tabpanel">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i> Bài kiểm tra của khóa học sẽ xuất hiện ở đây.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Video player -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">
+                            <i class="fas fa-play-circle me-2"></i> <span id="currentLessonTitle">Chưa chọn bài học</span>
+                        </h5>
+                        <div class="ratio ratio-16x9 mb-3">
+                            <iframe id="videoPlayer" src="about:blank" allowfullscreen></iframe>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <button id="prevLesson" class="btn btn-outline-primary" disabled>
+                                <i class="fas fa-step-backward me-1"></i> Bài trước
+                            </button>
+                            <button id="markComplete" class="btn btn-success" disabled>
+                                <i class="fas fa-check-circle me-1"></i> Đánh dấu hoàn thành
+                            </button>
+                            <button id="nextLesson" class="btn btn-outline-primary" disabled>
+                                Bài tiếp theo <i class="fas fa-step-forward ms-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ghi chú -->
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-sticky-note me-2"></i> Ghi chú của bạn
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <textarea id="noteContent" class="form-control" rows="5" placeholder="Nhập ghi chú của bạn về bài học này..."></textarea>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button id="saveNote" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Lưu ghi chú
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <!-- Thông tin tiến độ -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i> Thống kê học tập
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="progressChart" height="200"></canvas>
+
+                        <hr>
+
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>Tổng thời gian học:</div>
+                            <div class="fw-bold" id="totalLearningTime">0 phút</div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>Số bài đã hoàn thành:</div>
+                            <div class="fw-bold" id="completedLessons">0/0</div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>Điểm kiểm tra:</div>
+                            <div class="fw-bold" id="quizScore">Chưa có</div>
+                        </div>
+
+                        <hr>
+
+                        <div class="d-grid">
+                            <button id="downloadCertificate" class="btn btn-outline-success mb-2" disabled>
+                                <i class="fas fa-certificate me-1"></i> Tải chứng chỉ
+                            </button>
+                            <a href="@Url.Action("MyCourses", "Course")" class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-left me-1"></i> Quay lại khóa học của tôi
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thảo luận -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="fas fa-comments me-2"></i> Thảo luận
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="discussionContainer" style="max-height: 300px; overflow-y: auto;">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i> Không có thảo luận nào cho bài học này.
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <div class="mb-3">
+                            <textarea id="commentContent" class="form-control" rows="3" placeholder="Viết câu hỏi hoặc bình luận của bạn..."></textarea>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button id="postComment" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-1"></i> Gửi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 </div>
-<a href="@Url.Action("Details", new { id = courseId })" class="btn btn-primary mt-3">Quay lại</a>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            var currentLessonId = null;
+            var courseId = @ViewBag.CourseID;
+            var totalLessons = 0;
+            var completedLessonsCount = 0;
+
+            // Lấy danh sách bài học
+            function loadLessons() {
+                $.ajax({
+                    url: '/api/lessons/' + courseId, // Đây là API giả định
+                    type: 'GET',
+                    success: function(lessons) {
+                        // Trong thực tế, bạn sẽ nhận được dữ liệu từ API
+                        // Ở đây chúng ta sẽ giả lập dữ liệu
+                        var lessonsData = [
+                            {
+                                id: 1,
+                                title: 'Giới thiệu khóa học',
+                                duration: 10,
+                                videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+                                completed: true
+                            },
+                            {
+                                id: 2,
+                                title: 'Bài 1: Cơ bản',
+                                duration: 15,
+                                videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+                                completed: true
+                            },
+                            {
+                                id: 3,
+                                title: 'Bài 2: Nâng cao',
+                                duration: 20,
+                                videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+                                completed: false
+                            },
+                            {
+                                id: 4,
+                                title: 'Bài 3: Thực hành',
+                                duration: 25,
+                                videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+                                completed: false
+                            },
+                            {
+                                id: 5,
+                                title: 'Tổng kết khóa học',
+                                duration: 15,
+                                videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+                                completed: false
+                            }
+                        ];
+
+                        totalLessons = lessonsData.length;
+                        completedLessonsCount = lessonsData.filter(l => l.completed).length;
+
+                        // Hiển thị danh sách bài học
+                        var lessonsHtml = '';
+
+                        lessonsData.forEach(function(lesson, index) {
+                            lessonsHtml += `
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="heading${lesson.id}">
+                                        <button class="accordion-button ${index === 0 ? '' : 'collapsed'}" type="button"
+                                                data-bs-toggle="collapse" data-bs-target="#collapse${lesson.id}"
+                                                aria-expanded="${index === 0 ? 'true' : 'false'}" aria-controls="collapse${lesson.id}">
+                                            <div class="d-flex justify-content-between align-items-center w-100">
+                                                <div>
+                                                    <i class="fas ${lesson.completed ? 'fa-check-circle text-success' : 'fa-circle'}"></i>
+                                                    <span class="ms-2">${lesson.title}</span>
+                                                </div>
+                                                <span class="badge bg-light text-dark rounded-pill">${lesson.duration} phút</span>
+                                            </div>
+                                        </button>
+                                    </h2>
+                                    <div id="collapse${lesson.id}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}"
+                                         aria-labelledby="heading${lesson.id}" data-bs-parent="#lessonsAccordion">
+                                        <div class="accordion-body">
+                                            <p>Thời lượng: ${lesson.duration} phút</p>
+                                            <p>Trạng thái: ${lesson.completed ? '<span class="text-success">Đã hoàn thành</span>' : '<span class="text-warning">Chưa hoàn thành</span>'}</p>
+                                            <button class="btn btn-primary btn-sm watch-lesson" data-id="${lesson.id}"
+                                                    data-title="${lesson.title}" data-url="${lesson.videoUrl}">
+                                                <i class="fas fa-play-circle me-1"></i> Xem bài học
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+
+                        $('#lessonsAccordion').html(lessonsHtml);
+
+                        // Cập nhật thống kê
+                        $('#completedLessons').text(completedLessonsCount + '/' + totalLessons);
+                        $('#totalLearningTime').text(lessonsData.reduce((total, lesson) => total + lesson.duration, 0) + ' phút');
+
+                        // Vẽ biểu đồ tiến độ
+                        var ctx = document.getElementById('progressChart').getContext('2d');
+                        var progressChart = new Chart(ctx, {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['Hoàn thành', 'Chưa hoàn thành'],
+                                datasets: [{
+                                    data: [completedLessonsCount, totalLessons - completedLessonsCount],
+                                    backgroundColor: ['rgba(40, 167, 69, 0.7)', 'rgba(108, 117, 125, 0.3)'],
+                                    borderColor: ['rgba(40, 167, 69, 1)', 'rgba(108, 117, 125, 0.5)'],
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                plugins: {
+                                    legend: {
+                                        position: 'bottom'
+                                    },
+                                    title: {
+                                        display: true,
+                                        text: 'Tiến độ bài học'
+                                    }
+                                },
+                                animation: {
+                                    animateScale: true,
+                                    animateRotate: true
+                                }
+                            }
+                        });
+
+                        // Xử lý sự kiện khi click vào nút xem bài học
+                        $('.watch-lesson').on('click', function() {
+                            var lessonId = $(this).data('id');
+                            var lessonTitle = $(this).data('title');
+                            var videoUrl = $(this).data('url');
+
+                            currentLessonId = lessonId;
+                            $('#currentLessonTitle').text(lessonTitle);
+                            $('#videoPlayer').attr('src', videoUrl);
+
+                            // Enable/disable nút điều hướng
+                            $('#prevLesson').prop('disabled', lessonId === 1);
+                            $('#nextLesson').prop('disabled', lessonId === totalLessons);
+                            $('#markComplete').prop('disabled', false);
+
+                            // Cuộn đến khu vực video
+                            $('html, body').animate({
+                                scrollTop: $('#videoPlayer').offset().top - 100
+                            }, 500);
+
+                            loadNotes(lessonId);
+                            loadDiscussions(lessonId);
+                        });
+
+                        // Nếu chưa hoàn thành hết khóa học thì không cho tải chứng chỉ
+                        $('#downloadCertificate').prop('disabled', completedLessonsCount < totalLessons);
+                    },
+                    error: function() {
+                        $('#lessonsAccordion').html('<div class="alert alert-danger">Không thể tải danh sách bài học.</div>');
+                    }
+                });
+            }
+
+            // Khởi tạo trang
+            loadLessons();
+
+            // Xử lý nút đánh dấu hoàn thành
+            $('#markComplete').on('click', function() {
+                if (!currentLessonId) return;
+
+                Swal.fire({
+                    title: 'Xác nhận hoàn thành',
+                    text: 'Bạn có chắc đã hoàn thành bài học này?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Hoàn thành',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '@Url.Action("UpdateProgress", "Course")',
+                            type: 'POST',
+                            data: {
+                                courseId: courseId,
+                                lessonId: currentLessonId,
+                                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                            },
+                            success: function() {
+                                toastr.success('Đã đánh dấu bài học hoàn thành!');
+
+                                // Cập nhật giao diện
+                                completedLessonsCount++;
+                                $('#completedLessons').text(completedLessonsCount + '/' + totalLessons);
+
+                                // Cập nhật biểu đồ (đơn giản là reload trang)
+                                setTimeout(function() {
+                                    location.reload();
+                                }, 1500);
+                            },
+                            error: function() {
+                                toastr.error('Có lỗi xảy ra khi cập nhật tiến độ.');
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Xử lý nút bài trước, bài tiếp theo
+            $('#prevLesson, #nextLesson').on('click', function() {
+                if (!currentLessonId) return;
+
+                var direction = $(this).attr('id') === 'prevLesson' ? -1 : 1;
+                var newLessonId = currentLessonId + direction;
+
+                // Giả lập việc chuyển bài học
+                $('.watch-lesson[data-id="' + newLessonId + '"]').click();
+            });
+
+            // Xử lý lưu ghi chú
+            $('#saveNote').on('click', function() {
+                var noteContent = $('#noteContent').val();
+
+                if (!currentLessonId || !noteContent.trim()) {
+                    toastr.warning('Vui lòng chọn bài học và nhập nội dung ghi chú!');
+                    return;
+                }
+
+                // Trong thực tế, bạn sẽ gửi AJAX request để lưu ghi chú
+                // Ở đây chúng ta sẽ giả lập
+                toastr.success('Đã lưu ghi chú thành công!');
+
+                // Lưu vào localStorage để demo
+                localStorage.setItem('note_' + currentLessonId, noteContent);
+            });
+
+            // Xử lý gửi bình luận
+            $('#postComment').on('click', function() {
+                var commentContent = $('#commentContent').val();
+
+                if (!currentLessonId || !commentContent.trim()) {
+                    toastr.warning('Vui lòng chọn bài học và nhập nội dung bình luận!');
+                    return;
+                }
+
+                // Thêm bình luận vào giao diện
+                var newComment = `
+                    <div class="mb-3 animate__animated animate__fadeIn">
+                        <div class="d-flex">
+                            <img src="/images/default-avatar.jpg" class="rounded-circle me-2" width="40" height="40" alt="Avatar">
+                            <div class="flex-grow-1">
+                                <div class="bg-light p-2 rounded">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <div class="fw-bold">@User.Identity.Name</div>
+                                        <small class="text-muted">Vừa xong</small>
+                                    </div>
+                                    <div>${commentContent}</div>
+                                </div>
+                                <div class="mt-1">
+                                    <a href="#" class="text-decoration-none me-2"><i class="far fa-thumbs-up me-1"></i>Thích</a>
+                                    <a href="#" class="text-decoration-none"><i class="far fa-comment me-1"></i>Trả lời</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Nếu chưa có bình luận nào
+                if ($('#discussionContainer .alert').length) {
+                    $('#discussionContainer').html('');
+                }
+
+                $('#discussionContainer').append(newComment);
+                $('#commentContent').val('');
+
+                toastr.success('Đã gửi bình luận thành công!');
+            });
+
+            // Hàm tải ghi chú
+            function loadNotes(lessonId) {
+                // Trong thực tế, bạn sẽ gửi AJAX request để lấy ghi chú
+                // Ở đây chúng ta sẽ lấy từ localStorage để demo
+                var noteContent = localStorage.getItem('note_' + lessonId) || '';
+                $('#noteContent').val(noteContent);
+            }
+
+            // Hàm tải thảo luận
+            function loadDiscussions(lessonId) {
+                // Trong thực tế, bạn sẽ gửi AJAX request để lấy thảo luận
+                // Ở đây chúng ta sẽ giả lập dữ liệu
+
+                // Nếu là bài đầu tiên, hiển thị một số bình luận mẫu
+                if (lessonId === 1) {
+                    var discussionsHtml = `
+                        <div class="mb-3 animate__animated animate__fadeIn">
+                            <div class="d-flex">
+                                <img src="/images/default-avatar.jpg" class="rounded-circle me-2" width="40" height="40" alt="Avatar">
+                                <div class="flex-grow-1">
+                                    <div class="bg-light p-2 rounded">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <div class="fw-bold">Nguyễn Văn A</div>
+                                            <small class="text-muted">2 ngày trước</small>
+                                        </div>
+                                        <div>Bài học rất hay và dễ hiểu, cảm ơn thầy!</div>
+                                    </div>
+                                    <div class="mt-1">
+                                        <a href="#" class="text-decoration-none me-2"><i class="far fa-thumbs-up me-1"></i>Thích (5)</a>
+                                        <a href="#" class="text-decoration-none"><i class="far fa-comment me-1"></i>Trả lời</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3 animate__animated animate__fadeIn">
+                            <div class="d-flex">
+                                <img src="/images/default-avatar.jpg" class="rounded-circle me-2" width="40" height="40" alt="Avatar">
+                                <div class="flex-grow-1">
+                                    <div class="bg-light p-2 rounded">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <div class="fw-bold">Lê Thị B</div>
+                                            <small class="text-muted">1 ngày trước</small>
+                                        </div>
+                                        <div>Tôi có một câu hỏi: Làm thế nào để áp dụng kiến thức này vào thực tế?</div>
+                                    </div>
+                                    <div class="mt-1">
+                                        <a href="#" class="text-decoration-none me-2"><i class="far fa-thumbs-up me-1"></i>Thích (2)</a>
+                                        <a href="#" class="text-decoration-none"><i class="far fa-comment me-1"></i>Trả lời</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ps-5 mb-3 animate__animated animate__fadeIn">
+                            <div class="d-flex">
+                                <img src="/images/teacher-avatar.jpg" class="rounded-circle me-2" width="40" height="40" alt="Avatar">
+                                <div class="flex-grow-1">
+                                    <div class="bg-light p-2 rounded">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <div class="fw-bold">Giảng viên</div>
+                                            <small class="text-muted">8 giờ trước</small>
+                                        </div>
+                                        <div>Bạn có thể tham khảo thêm các tài liệu được chia sẻ trong tab "Tài liệu" nhé!</div>
+                                    </div>
+                                    <div class="mt-1">
+                                        <a href="#" class="text-decoration-none me-2"><i class="far fa-thumbs-up me-1"></i>Thích (3)</a>
+                                        <a href="#" class="text-decoration-none"><i class="far fa-comment me-1"></i>Trả lời</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    $('#discussionContainer').html(discussionsHtml);
+                } else {
+                    $('#discussionContainer').html('<div class="alert alert-info"><i class="fas fa-info-circle me-2"></i> Không có thảo luận nào cho bài học này.</div>');
+                }
+            }
+
+            // Xử lý nút tải chứng chỉ
+            $('#downloadCertificate').on('click', function() {
+                if (completedLessonsCount < totalLessons) {
+                    Swal.fire({
+                        title: 'Chưa thể tải chứng chỉ',
+                        text: 'Bạn cần hoàn thành tất cả bài học để nhận chứng chỉ.',
+                        icon: 'warning',
+                        confirmButtonText: 'Đã hiểu'
+                    });
+                    return;
+                }
+
+                Swal.fire({
+                    title: 'Chúc mừng!',
+                    text: 'Bạn đã hoàn thành khóa học! Chứng chỉ của bạn đang được chuẩn bị.',
+                    icon: 'success',
+                    confirmButtonText: 'Tải chứng chỉ'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        toastr.info('Đang tải chứng chỉ...');
+                        setTimeout(function() {
+                            toastr.success('Chứng chỉ đã được tải xuống!');
+                        }, 2000);
+                    }
+                });
+            });
+        });
+    </script>
+}

@@ -1,57 +1,268 @@
 ﻿@model List<DACSN10.Models.Course>
 @{
-    ViewData["Title"] = "Khóa học yêu thích";
+    ViewData["Title"] = "Danh sách khóa học";
 }
-<h2>Khóa học yêu thích</h2>
-@if (!Model.Any())
-{
-    <p>Bạn chưa thêm khóa học yêu thích</p>
-}
-else
-{
-    <div class="row">
-        @foreach (var course in Model)
-        {
-            <div class="col-md-4 mb-4">
-                <div class="card course-card">
-                    <div class="card-body">
-                        <h5 class="card-title">@course.TenKhoaHoc</h5>
-                        <p class="card-text">@course.MoTa</p>
-                        <a href="@Url.Action("Details", new { id = course.CourseID })" class="btn btn-primary">Xem chi tiết</a>
-                        <button class="btn btn-danger remove-favorite-btn" data-course-id="@course.CourseID">Xóa</button>
+
+<div class="container animate__animated animate__fadeIn">
+    <h1 class="mb-4 text-center fw-bold">Khám phá các khóa học</h1>
+
+    <!-- Bộ lọc -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
+                        <input type="text" id="quickSearch" class="form-control" placeholder="Tìm kiếm nhanh trong trang này...">
                     </div>
+                </div>
+                <div class="col-md-4">
+                    <select id="sortCourses" class="form-select">
+                        <option value="name">Sắp xếp theo tên</option>
+                        <option value="date">Sắp xếp theo ngày tạo</option>
+                        <option value="popularity">Sắp xếp theo phổ biến</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hiển thị khóa học -->
+    <div class="row" id="courseContainer">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var course in Model)
+            {
+                <div class="col-md-4 mb-4 course-item">
+                    <div class="card h-100 shadow-sm course-card">
+                        <div class="position-relative">
+                            <div class="position-absolute top-0 end-0 m-2">
+                                <span class="badge bg-primary rounded-pill">
+                                    <i class="fas fa-users me-1"></i> @(course.Enrollments?.Count ?? 0)
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title text-truncate">@course.TenKhoaHoc</h5>
+                            <p class="card-text text-muted small">
+                                <i class="fas fa-calendar-alt me-1"></i> Ngày tạo: @course.NgayTao.ToString("dd/MM/yyyy")
+                            </p>
+                            <p class="card-text mb-4" style="height: 50px; overflow: hidden;">@(course.MoTa?.Length > 100 ? course.MoTa.Substring(0, 100) + "..." : course.MoTa)</p>
+                            <div class="mt-auto d-flex justify-content-between align-items-center">
+                                <a href="@Url.Action("Details", new { id = course.CourseID })" class="btn btn-primary">
+                                    <i class="fas fa-info-circle me-1"></i> Chi tiết
+                                </a>
+                                <div>
+                                    <a href="javascript:void(0);" class="btn btn-outline-primary btn-sm btn-follow" data-id="@course.CourseID" title="Theo dõi">
+                                        <i class="far fa-bell"></i>
+                                    </a>
+                                    <a href="javascript:void(0);" class="btn btn-outline-danger btn-sm btn-favorite" data-id="@course.CourseID" title="Yêu thích">
+                                        <i class="far fa-heart"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    <i class="fas fa-info-circle me-2"></i> Không có khóa học nào. Hãy quay lại sau!
                 </div>
             </div>
         }
     </div>
-}
+
+    <!-- Phân trang -->
+    @{
+        int totalPages = (int)Math.Ceiling((double)ViewBag.TotalCourses / ViewBag.PageSize);
+    }
+    @if (totalPages > 1)
+    {
+        <nav aria-label="Điều hướng trang" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(ViewBag.Page == 1 ? "Draft" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = ViewBag.Page - 1, pageSize = ViewBag.PageSize })" tabindex="-1">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    <li class="page-item @(ViewBag.Page == i ? "Published" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { page = i, pageSize = ViewBag.PageSize })">@i</a>
+                    </li>
+                }
+                <li class="page-item @(ViewBag.Page == totalPages ? "Draft" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = ViewBag.Page + 1, pageSize = ViewBag.PageSize })">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>
+
 @section Scripts {
     <script>
-        $(document).ready(function () {
-            $(".remove-favorite-btn").click(function () {
-                var courseId = $(this).data("course-id");
-                Swal.fire({
-                    title: "Remove from Favorites",
-                    text: "Do you want to remove this course from your favorites?",
-                    icon: "warning",
-                    showCancelButton: true,
-                    confirmButtonText: "Remove"
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            url: "@Url.Action("RemoveFromFavorite")",
-                            type: "POST",
-                            data: { courseId: courseId },
-                            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
-                            success: function (response) {
-                                Swal.fire("Success!", response.message, "success").then(() => {
-                                    location.reload();
-                                });
-                            },
-                            error: function () {
-                                Swal.fire("Error", "Failed to remove from favorites.", "error");
-                            }
-                        });
+        $(document).ready(function() {
+            // Tìm kiếm nhanh
+            $("#quickSearch").on("keyup", function() {
+                var value = $(this).val().toLowerCase();
+                $(".course-item").filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+            });
+
+            // Sắp xếp khóa học
+            $("#sortCourses").on("change", function() {
+                var sortBy = $(this).val();
+                var courses = $(".course-item").get();
+
+                courses.sort(function(a, b) {
+                    if (sortBy === "name") {
+                        var textA = $(a).find(".card-title").text().toLowerCase();
+                        var textB = $(b).find(".card-title").text().toLowerCase();
+                        return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+                    } else if (sortBy === "date") {
+                        var dateA = new Date($(a).find(".text-muted").text().replace("Ngày tạo: ", "").split("/").reverse().join("-"));
+                        var dateB = new Date($(b).find(".text-muted").text().replace("Ngày tạo: ", "").split("/").reverse().join("-"));
+                        return dateB - dateA;
+                    } else if (sortBy === "popularity") {
+                        var countA = parseInt($(a).find(".badge").text().trim());
+                        var countB = parseInt($(b).find(".badge").text().trim());
+                        return countB - countA;
+                    }
+                });
+
+                var courseContainer = $("#courseContainer");
+                $.each(courses, function(index, item) {
+                    courseContainer.append(item);
+                });
+            });
+
+            // Xử lý nút theo dõi
+            $(".btn-follow").on("click", function() {
+                var courseId = $(this).data("id");
+                var btn = $(this);
+
+        @if (User.Identity.IsAuthenticated)
+        {
+            <text>
+                            $.ajax({
+                                url: '@Url.Action("FollowCourse")',
+                                type: 'POST',
+                                data: { courseId: courseId, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
+                                success: function(result) {
+                                    btn.find('i').removeClass('far').addClass('fas');
+                                    toastr.success('Đã theo dõi khóa học thành công!');
+                                },
+                                error: function(xhr) {
+                                    if (xhr.status === 401) {
+                                        Swal.fire({
+                                            title: 'Cần đăng nhập',
+                                            text: 'Bạn cần đăng nhập để theo dõi khóa học.',
+                                            icon: 'info',
+                                            showCancelButton: true,
+                                            confirmButtonText: 'Đăng nhập',
+                                            cancelButtonText: 'Hủy'
+                                        }).then((result) => {
+                                            if (result.isConfirmed) {
+                                                window.location.href = '/Identity/Account/Login';
+                                            }
+                                        });
+                                    } else {
+                                        toastr.error(xhr.responseJSON?.error || 'Đã xảy ra lỗi!');
+                                    }
+                                }
+                            });
+            </text>
+        }
+        else
+        {
+            <text>
+                            Swal.fire({
+                                title: 'Cần đăng nhập',
+                                text: 'Bạn cần đăng nhập để theo dõi khóa học.',
+                                icon: 'info',
+                                showCancelButton: true,
+                                confirmButtonText: 'Đăng nhập',
+                                cancelButtonText: 'Hủy'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = '/Identity/Account/Login';
+                                }
+                            });
+            </text>
+        }
+            });
+
+            // Xử lý nút yêu thích
+            $(".btn-favorite").on("click", function() {
+                var courseId = $(this).data("id");
+                var btn = $(this);
+
+        @if (User.Identity.IsAuthenticated)
+        {
+            <text>
+                            $.ajax({
+                                url: '@Url.Action("AddToFavorite")',
+                                type: 'POST',
+                                data: { courseId: courseId, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
+                                success: function(result) {
+                                    btn.find('i').removeClass('far').addClass('fas');
+                                    toastr.success('Đã thêm vào danh sách yêu thích!');
+                                },
+                                error: function(xhr) {
+                                    if (xhr.status === 401) {
+                                        Swal.fire({
+                                            title: 'Cần đăng nhập',
+                                            text: 'Bạn cần đăng nhập để thêm khóa học vào yêu thích.',
+                                            icon: 'info',
+                                            showCancelButton: true,
+                                            confirmButtonText: 'Đăng nhập',
+                                            cancelButtonText: 'Hủy'
+                                        }).then((result) => {
+                                            if (result.isConfirmed) {
+                                                window.location.href = '/Identity/Account/Login';
+                                            }
+                                        });
+                                    } else {
+                                        toastr.error(xhr.responseJSON?.error || 'Đã xảy ra lỗi!');
+                                    }
+                                }
+                            });
+            </text>
+        }
+        else
+        {
+            <text>
+                            Swal.fire({
+                                title: 'Cần đăng nhập',
+                                text: 'Bạn cần đăng nhập để thêm khóa học vào yêu thích.',
+                                icon: 'info',
+                                showCancelButton: true,
+                                confirmButtonText: 'Đăng nhập',
+                                cancelButtonText: 'Hủy'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = '/Identity/Account/Login';
+                                }
+                            });
+            </text>
+        }
+            });
+
+            // Animation khi cuộn trang
+            $(window).scroll(function() {
+                $(".course-card").each(function() {
+                    var position = $(this).offset().top;
+                    var scrollPosition = $(window).scrollTop() + $(window).height();
+
+                    if (scrollPosition > position) {
+                        $(this).addClass("animate__animated animate__fadeInUp");
                     }
                 });
             });

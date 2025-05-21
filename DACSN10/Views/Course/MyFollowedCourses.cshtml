@@ -1,0 +1,239 @@
+﻿@model List<DACSN10.Models.Course>
+@{
+    ViewData["Title"] = "Khóa học đã theo dõi";
+}
+
+<div class="container animate__animated animate__fadeIn">
+    <h1 class="mb-4 text-center fw-bold">
+        <i class="fas fa-bell text-primary me-2"></i> Khóa học đã theo dõi
+    </h1>
+
+    @if (!User.Identity.IsAuthenticated)
+    {
+        <div class="alert alert-warning text-center">
+            <i class="fas fa-exclamation-triangle me-2"></i> Vui lòng <a href="/Identity/Account/Login">đăng nhập</a> để xem danh sách khóa học đã theo dõi.
+        </div>
+    }
+    else if (Model == null || !Model.Any())
+    {
+        <div class="text-center py-5">
+            <img src="/images/empty-followed.svg" alt="Không có khóa học" style="max-width: 200px;" class="mb-4">
+            <h3>Bạn chưa theo dõi khóa học nào</h3>
+            <p class="text-muted">Theo dõi khóa học để nhận thông báo khi có cập nhật mới</p>
+            <a href="@Url.Action("Index", "Course")" class="btn btn-primary mt-3">
+                <i class="fas fa-search me-1"></i> Tìm khóa học
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
+                            <input type="text" id="searchFollowed" class="form-control" placeholder="Tìm kiếm trong danh sách theo dõi...">
+                            <select id="sortFollowed" class="form-select" style="max-width: 200px;">
+                                <option value="">Sắp xếp theo</option>
+                                <option value="name">Tên khóa học</option>
+                                <option value="date">Ngày theo dõi</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" id="followedCoursesContainer">
+            @foreach (var course in Model)
+            {
+                <div class="col-md-4 mb-4 course-item">
+                    <div class="card h-100 shadow-sm course-card">
+                        <div class="position-relative">
+                            <div class="position-absolute top-0 end-0 m-2">
+                                <form asp-action="UnfollowCourse" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="courseId" value="@course.CourseID" />
+                                    <button type="submit" class="btn btn-danger btn-sm rounded-circle" title="Bỏ theo dõi">
+                                        <i class="fas fa-bell-slash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">@course.TenKhoaHoc</h5>
+                            <p class="card-text text-muted small">
+                                <i class="fas fa-user me-1"></i> @(course.User?.HoTen ?? "Không có thông tin")
+                            </p>
+
+                            <!-- Hiển thị thông báo mới (nếu có) -->
+                            <div class="alert alert-info small p-2 d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-info-circle me-1"></i> Có cập nhật mới
+                                </div>
+                                <span class="badge bg-danger">Mới</span>
+                            </div>
+
+                            <p class="card-text" style="height: 50px; overflow: hidden;">
+                                @(course.MoTa?.Length > 100 ? course.MoTa.Substring(0, 100) + "..." : course.MoTa)
+                            </p>
+                            <div class="mt-auto d-flex justify-content-between">
+                                <a href="@Url.Action("Details", new { id = course.CourseID })" class="btn btn-primary">
+                                    <i class="fas fa-info-circle me-1"></i> Chi tiết
+                                </a>
+                                <form asp-action="Enroll" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="courseId" value="@course.CourseID" />
+                                    <button type="submit" class="btn btn-outline-primary">
+                                        <i class="fas fa-graduation-cap me-1"></i> Đăng ký
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Thiết lập theo dõi -->
+        <div class="card shadow-sm mt-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-cog me-2"></i> Cài đặt thông báo</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="notifyLessons" checked>
+                            <label class="form-check-label" for="notifyLessons">Thông báo khi có bài học mới</label>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="notifyUpdates" checked>
+                            <label class="form-check-label" for="notifyUpdates">Thông báo khi cập nhật nội dung</label>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="notifyComments">
+                            <label class="form-check-label" for="notifyComments">Thông báo khi có bình luận mới</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="notifyEmail" checked>
+                            <label class="form-check-label" for="notifyEmail">Gửi thông báo qua email</label>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="notifyBrowser">
+                            <label class="form-check-label" for="notifyBrowser">Cho phép thông báo trên trình duyệt</label>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="notifyWeekly">
+                            <label class="form-check-label" for="notifyWeekly">Nhận bản tin tổng hợp hàng tuần</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end mt-3">
+                    <button id="saveNotifySettings" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i> Lưu cài đặt
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+        @if (User.Identity.IsAuthenticated && Model != null && Model.Any())
+        {
+            <text>
+                        // Tìm kiếm trong danh sách theo dõi
+                        $("#searchFollowed").on("keyup", function() {
+                            var value = $(this).val().toLowerCase();
+                            $(".course-item").filter(function() {
+                                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+                            });
+                        });
+
+                        // Sắp xếp danh sách
+                        $("#sortFollowed").on("change", function() {
+                            var sortBy = $(this).val();
+                            var items = $('#followedCoursesContainer .course-item').get();
+
+                            if (!sortBy) return;
+
+                            items.sort(function(a, b) {
+                                if (sortBy === "name") {
+                                    var textA = $(a).find(".card-title").text().toLowerCase();
+                                    var textB = $(b).find(".card-title").text().toLowerCase();
+                                    return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+                                } else if (sortBy === "date") {
+                                    // Giả lập sắp xếp theo ngày theo dõi (trong thực tế sẽ lấy từ dữ liệu)
+                                    return Math.random() - 0.5;
+                                }
+                            });
+
+                            $.each(items, function(i, item) {
+                                $('#followedCoursesContainer').append(item);
+                            });
+
+                            toastr.success('Đã sắp xếp danh sách theo dõi!');
+                        });
+
+                        // Xử lý lưu cài đặt thông báo
+                        $("#saveNotifySettings").on("click", function() {
+                            // Trong thực tế, bạn sẽ gửi AJAX request để lưu cài đặt
+                            // Ở đây chúng ta sẽ giả lập
+                            Swal.fire({
+                                title: 'Thành công!',
+                                text: 'Đã lưu cài đặt thông báo của bạn.',
+                                icon: 'success',
+                                confirmButtonText: 'OK'
+                            });
+                        });
+
+                        // Xử lý thông báo trình duyệt
+                        $("#notifyBrowser").on("change", function() {
+                            if ($(this).is(":checked")) {
+                                // Yêu cầu quyền thông báo
+                                if ('Notification' in window) {
+                                    Notification.requestPermission().then(function(permission) {
+                                        if (permission !== 'granted') {
+                                            toastr.warning('Bạn cần cho phép thông báo từ trình duyệt để nhận được thông báo.');
+                                            $("#notifyBrowser").prop('checked', false);
+                                        }
+                                    });
+                                } else {
+                                    toastr.error('Trình duyệt của bạn không hỗ trợ chức năng thông báo.');
+                                    $(this).prop('checked', false);
+                                }
+                            }
+                        });
+            </text>
+        }
+
+            // Animation cho các thẻ
+            $('.course-card').hover(
+                function() {
+                    $(this).addClass('animate__animated animate__pulse');
+                },
+                function() {
+                    $(this).removeClass('animate__animated animate__pulse');
+                }
+            );
+
+            // Hiệu ứng cuộn trang
+            $(window).scroll(function() {
+                $(".course-card").each(function() {
+                    var position = $(this).offset().top;
+                    var scrollPosition = $(window).scrollTop() + $(window).height();
+
+                    if (scrollPosition > position) {
+                        $(this).addClass("animate__animated animate__fadeInUp");
+                    }
+                });
+            });
+        });
+    </script>
+}

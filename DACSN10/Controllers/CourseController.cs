@@ -24,14 +24,14 @@ namespace DACSN10.Controllers
         {
             var courses = await _context.Courses
                 .AsNoTracking()
-                .Where(c => c.TrangThai == "Active")
+                .Where(c => c.TrangThai == "Published")
                 .OrderBy(c => c.TenKhoaHoc)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
             ViewBag.Page = page;
             ViewBag.PageSize = pageSize;
-            ViewBag.TotalCourses = await _context.Courses.CountAsync(c => c.TrangThai == "Active");
+            ViewBag.TotalCourses = await _context.Courses.CountAsync(c => c.TrangThai == "Published");
             return View(courses);
         }
 
@@ -41,7 +41,7 @@ namespace DACSN10.Controllers
             var courses = await _context.Courses
                 .AsNoTracking()
                 .Include(c => c.Enrollments)
-                .Where(c => c.TrangThai == "Active")
+                .Where(c => c.TrangThai == "Published")
                 .OrderByDescending(c => c.Enrollments.Count)
                 .Take(10)
                 .ToListAsync();
@@ -53,7 +53,7 @@ namespace DACSN10.Controllers
         {
             var courses = await _context.Courses
                 .AsNoTracking()
-                .Where(c => c.TrangThai == "Active")
+                .Where(c => c.TrangThai == "Published")
                 .OrderByDescending(c => c.NgayTao)
                 .Take(10)
                 .ToListAsync();
@@ -70,7 +70,7 @@ namespace DACSN10.Controllers
             }
             var result = await _context.Courses
                 .AsNoTracking()
-                .Where(c => c.TrangThai == "Active" && c.TenKhoaHoc.ToLower().Contains(keyword.ToLower()))
+                .Where(c => c.TrangThai == "Published" && c.TenKhoaHoc.ToLower().Contains(keyword.ToLower()))
                 .ToListAsync();
             ViewBag.Keyword = keyword;
             return View("SearchResult", result);
@@ -86,7 +86,7 @@ namespace DACSN10.Controllers
             }
             var result = await _context.Courses
                 .AsNoTracking()
-                .Where(c => c.TrangThai == "Active" && c.MoTa.ToLower().Contains(topic.ToLower()))
+                .Where(c => c.TrangThai == "Published" && c.MoTa.ToLower().Contains(topic.ToLower()))
                 .ToListAsync();
             ViewBag.Topic = topic;
             return View("SearchResult", result);
@@ -98,7 +98,7 @@ namespace DACSN10.Controllers
             var result = await _context.CourseCategories
                 .AsNoTracking()
                 .Include(cc => cc.Course)
-                .Where(cc => cc.CategoryID == categoryId && cc.Course.TrangThai == "Active")
+                .Where(cc => cc.CategoryID == categoryId && cc.Course.TrangThai == "Published")
                 .Select(cc => cc.Course)
                 .ToListAsync();
             if (!result.Any())
@@ -117,7 +117,7 @@ namespace DACSN10.Controllers
                 .Include(c => c.User)
                 .Include(c => c.Lessons)
                 .Include(c => c.CourseCategories).ThenInclude(cc => cc.Category)
-                .FirstOrDefaultAsync(c => c.CourseID == id && c.TrangThai == "Active");
+                .FirstOrDefaultAsync(c => c.CourseID == id && c.TrangThai == "Published");
             if (course == null)
             {
                 TempData["Error"] = "Không tìm thấy khóa học.";
@@ -144,7 +144,7 @@ namespace DACSN10.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Policy = "UserOnly")]
+        [Authorize(Roles = "User")]
         public async Task<IActionResult> Enroll(int courseId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -154,7 +154,7 @@ namespace DACSN10.Controllers
                 return Unauthorized();
             }
 
-            var course = await _context.Courses.FirstOrDefaultAsync(c => c.CourseID == courseId && c.TrangThai == "Active");
+            var course = await _context.Courses.FirstOrDefaultAsync(c => c.CourseID == courseId && c.TrangThai == "Published");
             if (course == null)
             {
                 TempData["Error"] = "Khóa học không tồn tại hoặc không hoạt động.";
@@ -176,7 +176,7 @@ namespace DACSN10.Controllers
                     CourseID = courseId,
                     UserID = userId,
                     EnrollDate = DateTime.Now,
-                    TrangThai = "Active",
+                    TrangThai = "Published",
                     Progress = 0
                 });
                 await _context.SaveChangesAsync();
@@ -195,7 +195,7 @@ namespace DACSN10.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Policy = "UserOnly")]
+        [Authorize(Roles = "User")]
         public async Task<IActionResult> FollowCourse(int courseId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -205,7 +205,7 @@ namespace DACSN10.Controllers
                 return Unauthorized();
             }
 
-            var course = await _context.Courses.FirstOrDefaultAsync(c => c.CourseID == courseId && c.TrangThai == "Active");
+            var course = await _context.Courses.FirstOrDefaultAsync(c => c.CourseID == courseId && c.TrangThai == "Published");
             if (course == null)
             {
                 TempData["Error"] = "Khóa học không tồn tại hoặc không hoạt động.";
@@ -233,7 +233,7 @@ namespace DACSN10.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Policy = "UserOnly")]
+        [Authorize(Roles = "User")]
         public async Task<IActionResult> UnfollowCourse(int courseId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -260,7 +260,7 @@ namespace DACSN10.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Policy = "UserOnly")]
+        [Authorize(Roles = "User")]
         public async Task<IActionResult> AddToFavorite(int courseId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -270,7 +270,7 @@ namespace DACSN10.Controllers
                 return Unauthorized();
             }
 
-            var course = await _context.Courses.FirstOrDefaultAsync(c => c.CourseID == courseId && c.TrangThai == "Active");
+            var course = await _context.Courses.FirstOrDefaultAsync(c => c.CourseID == courseId && c.TrangThai == "Published");
             if (course == null)
             {
                 TempData["Error"] = "Khóa học không tồn tại hoặc không hoạt động.";
@@ -297,7 +297,7 @@ namespace DACSN10.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Policy = "UserOnly")]
+        [Authorize(Roles = "User")]
         public async Task<IActionResult> RemoveFromFavorite(int courseId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -328,7 +328,7 @@ namespace DACSN10.Controllers
             var courses = await _context.Enrollments
                 .AsNoTracking()
                 .Include(e => e.Course)
-                .Where(e => e.UserID == userId && e.TrangThai == "Active")
+                .Where(e => e.UserID == userId && e.TrangThai == "Published")
                 .Select(e => e.Course)
                 .ToListAsync();
             return View(courses);
@@ -340,7 +340,7 @@ namespace DACSN10.Controllers
             var courses = await _context.CourseFollows
                 .AsNoTracking()
                 .Include(f => f.Course)
-                .Where(f => f.UserID == userId && f.Course.TrangThai == "Active")
+                .Where(f => f.UserID == userId && f.Course.TrangThai == "Published")
                 .Select(f => f.Course)
                 .ToListAsync();
             return View(courses);
@@ -366,7 +366,7 @@ namespace DACSN10.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Policy = "UserOnly")]
+        [Authorize(Roles = "User")]
         public async Task<IActionResult> UpdateProgress(int courseId, int lessonId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -377,7 +377,7 @@ namespace DACSN10.Controllers
             }
 
             var enrollment = await _context.Enrollments
-                .FirstOrDefaultAsync(e => e.UserID == userId && e.CourseID == courseId && e.TrangThai == "Active");
+                .FirstOrDefaultAsync(e => e.UserID == userId && e.CourseID == courseId && e.TrangThai == "Published");
             if (enrollment == null)
             {
                 TempData["Error"] = "Bạn chưa đăng ký khóa học này.";
@@ -408,7 +408,7 @@ namespace DACSN10.Controllers
             var favs = await _context.FavoriteCourses
                 .AsNoTracking()
                 .Include(f => f.Course)
-                .Where(f => f.UserID == userId && f.Course.TrangThai == "Active")
+                .Where(f => f.UserID == userId && f.Course.TrangThai == "Published")
                 .Select(f => f.Course)
                 .ToListAsync();
             return View(favs);
@@ -422,7 +422,7 @@ namespace DACSN10.Controllers
 
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var averageProgress = await _context.Enrollments
-                .Where(e => e.UserID == userId && e.TrangThai == "Active")
+                .Where(e => e.UserID == userId && e.TrangThai == "Published")
                 .AverageAsync(e => (float?)e.Progress) ?? 0;
 
             return Json(averageProgress);

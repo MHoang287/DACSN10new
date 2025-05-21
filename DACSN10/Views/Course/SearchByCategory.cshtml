@@ -1,0 +1,305 @@
+﻿@model List<DACSN10.Models.Course>
+@{
+    ViewData["Title"] = "Tìm kiếm theo danh mục";
+    var categoryId = ViewBag.CategoryId;
+}
+
+<div class="container animate__animated animate__fadeIn">
+    <h1 class="mb-2 text-center fw-bold" id="categoryTitle">
+        <i class="fas fa-folder me-2 text-primary"></i> Danh mục khóa học
+    </h1>
+
+    <p class="text-center text-muted mb-4" id="categoryDescription">
+        Đang tải thông tin danh mục...
+    </p>
+
+    <div class="row mb-4">
+        <div class="col-md-9">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
+                        <input type="text" id="searchInCategory" class="form-control" placeholder="Tìm kiếm trong danh mục...">
+                        <div class="input-group-append">
+                            <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-filter me-1"></i> Lọc
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item sort-option" href="#" data-sort="name-asc"><i class="fas fa-sort-alpha-down me-2"></i> Tên (A-Z)</a></li>
+                                <li><a class="dropdown-item sort-option" href="#" data-sort="name-desc"><i class="fas fa-sort-alpha-up me-2"></i> Tên (Z-A)</a></li>
+                                <li><a class="dropdown-item sort-option" href="#" data-sort="date-desc"><i class="fas fa-calendar-alt me-2"></i> Mới nhất</a></li>
+                                <li><a class="dropdown-item sort-option" href="#" data-sort="date-asc"><i class="fas fa-calendar-alt me-2"></i> Cũ nhất</a></li>
+                                <li><a class="dropdown-item sort-option" href="#" data-sort="popularity"><i class="fas fa-fire me-2"></i> Phổ biến nhất</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="d-flex justify-content-between align-items-center bg-light rounded p-3 h-100">
+                <div>Tìm thấy:</div>
+                <span class="badge bg-primary rounded-pill fs-6" id="resultCount">@Model.Count</span>
+            </div>
+        </div>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="row">
+            <div class="col-md-9">
+                <div class="row row-cols-1 row-cols-md-3 g-4" id="categoryResults">
+                    @foreach (var course in Model)
+                    {
+                        <div class="col course-item"
+                             data-name="@course.TenKhoaHoc.ToLower()"
+                             data-date="@course.NgayTao.ToString("yyyyMMdd")"
+                             data-popularity="@(course.Enrollments?.Count ?? 0)">
+                            <div class="card h-100 shadow-sm course-card">
+                                <div class="position-relative">
+                                    <div class="position-absolute top-0 end-0 m-2">
+                                        <span class="badge bg-primary rounded-pill">
+                                            <i class="fas fa-users me-1"></i> @(course.Enrollments?.Count ?? 0)
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title">@course.TenKhoaHoc</h5>
+                                    <p class="card-text text-muted small">
+                                        <i class="fas fa-user me-1"></i> @(course.User?.HoTen ?? "Không có thông tin")
+                                    </p>
+                                    <p class="card-text text-muted small">
+                                        <i class="fas fa-calendar-alt me-1"></i> @course.NgayTao.ToString("dd/MM/yyyy")
+                                    </p>
+                                    <p class="card-text" style="height: 50px; overflow: hidden;">
+                                        @(course.MoTa?.Length > 100 ? course.MoTa.Substring(0, 100) + "..." : course.MoTa)
+                                    </p>
+                                    <div class="mt-auto d-flex justify-content-between">
+                                        <a href="@Url.Action("Details", new { id = course.CourseID })" class="btn btn-primary">
+                                            <i class="fas fa-info-circle me-1"></i> Chi tiết
+                                        </a>
+                                        @if (User.Identity.IsAuthenticated)
+                                        {
+                                            <form asp-action="Enroll" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="courseId" value="@course.CourseID" />
+                                                <button type="submit" class="btn btn-outline-primary">
+                                                    <i class="fas fa-graduation-cap me-1"></i> Đăng ký
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <a href="/Identity/Account/Login" class="btn btn-outline-primary">
+                                                <i class="fas fa-sign-in-alt me-1"></i> Đăng nhập
+                                            </a>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <!-- Danh mục bên phải -->
+                <div class="card shadow-sm mb-4 sticky-top" style="top: 20px; z-index: 999;">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-list-alt me-2"></i> Các danh mục</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <ul class="list-group list-group-flush" id="categoriesList">
+                            <li class="list-group-item placeholder-glow">
+                                <span class="placeholder col-8"></span>
+                            </li>
+                            <li class="list-group-item placeholder-glow">
+                                <span class="placeholder col-6"></span>
+                            </li>
+                            <li class="list-group-item placeholder-glow">
+                                <span class="placeholder col-7"></span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Giảng viên nổi bật -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-chalkboard-teacher me-2"></i> Giảng viên nổi bật</h5>
+                    </div>
+                    <div class="card-body" id="featuredInstructors">
+                        <div class="placeholder-glow">
+                            <span class="placeholder col-12 mb-2" style="height: 60px;"></span>
+                            <span class="placeholder col-12 mb-2" style="height: 60px;"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <img src="/images/no-results.svg" alt="Không có kết quả" style="max-width: 200px;" class="mb-4">
+            <h3>Không tìm thấy khóa học trong danh mục này</h3>
+            <p class="text-muted">Vui lòng thử danh mục khác hoặc quay lại trang khóa học</p>
+            <div class="mt-4">
+                <a href="@Url.Action("Index", "Course")" class="btn btn-primary me-2">
+                    <i class="fas fa-th-list me-1"></i> Tất cả khóa học
+                </a>
+                <a href="@Url.Action("PopularCourses", "Course")" class="btn btn-outline-primary">
+                    <i class="fas fa-fire me-1"></i> Khóa học phổ biến
+                </a>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Lấy thông tin danh mục
+            $.ajax({
+                url: '/api/categories/@categoryId', // Đây là API giả định
+                type: 'GET',
+                success: function(data) {
+                    // Trong thực tế, bạn sẽ nhận được dữ liệu từ API
+                    // Ở đây chúng ta sẽ giả lập dữ liệu
+                    var categoryData = {
+                        id: @categoryId,
+                        name: 'Danh mục @categoryId',
+                        description: 'Mô tả chi tiết về danh mục khóa học số @categoryId trên hệ thống học trực tuyến.'
+                    };
+
+                    $('#categoryTitle').text(categoryData.name);
+                    $('#categoryDescription').text(categoryData.description);
+                },
+                error: function() {
+                    $('#categoryTitle').text('Danh mục khóa học');
+                    $('#categoryDescription').text('Không thể tải thông tin danh mục.');
+                }
+            });
+
+            // Lấy danh sách các danh mục
+            $.ajax({
+                url: '/api/categories', // Đây là API giả định
+                type: 'GET',
+                success: function(data) {
+                    // Trong thực tế, bạn sẽ nhận được dữ liệu từ API
+                    // Ở đây chúng ta sẽ giả lập dữ liệu
+                    var categories = [
+                        { id: 1, name: 'Lập trình' },
+                        { id: 2, name: 'Thiết kế đồ họa' },
+                        { id: 3, name: 'Marketing' },
+                        { id: 4, name: 'Ngoại ngữ' },
+                        { id: 5, name: 'Kinh doanh' },
+                        { id: 6, name: 'Phát triển cá nhân' },
+                        { id: 7, name: 'Thiết kế Web' }
+                    ];
+
+                    var categoriesHtml = '';
+                    categories.forEach(function(category) {
+                        var activeClass = category.id == @categoryId ? 'active bg-light' : '';
+                        categoriesHtml += `
+                            <li class="list-group-item d-flex justify-content-between align-items-center ${activeClass}">
+                                <a href="@Url.Action("SearchByCategory")?categoryId=${category.id}" class="text-decoration-none text-dark">
+                                    ${category.name}
+                                </a>
+                                <span class="badge bg-primary rounded-pill">8</span>
+                            </li>
+                        `;
+                    });
+
+                    $('#categoriesList').html(categoriesHtml);
+                },
+                error: function() {
+                    $('#categoriesList').html('<li class="list-group-item">Không thể tải danh sách danh mục.</li>');
+                }
+            });
+
+            // Lấy danh sách giảng viên nổi bật
+            $.ajax({
+                url: '/api/instructors/featured', // Đây là API giả định
+                type: 'GET',
+                success: function(data) {
+                    // Trong thực tế, bạn sẽ nhận được dữ liệu từ API
+                    // Ở đây chúng ta sẽ giả lập dữ liệu
+                    var instructors = [
+                        { id: 1, name: 'Nguyễn Văn A', avatar: '/images/default-avatar.jpg', title: 'Chuyên gia Lập trình' },
+                        { id: 2, name: 'Trần Thị B', avatar: '/images/default-avatar.jpg', title: 'Giảng viên Marketing' }
+                    ];
+
+                    var instructorsHtml = '';
+                    instructors.forEach(function(instructor) {
+                        instructorsHtml += `
+                            <div class="d-flex align-items-center mb-3">
+                                <img src="${instructor.avatar}" class="rounded-circle me-2" width="50" height="50" alt="${instructor.name}">
+                                <div>
+                                    <div class="fw-bold">${instructor.name}</div>
+                                    <div class="text-muted small">${instructor.title}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    $('#featuredInstructors').html(instructorsHtml);
+                },
+                error: function() {
+                    $('#featuredInstructors').html('<div class="alert alert-warning">Không thể tải danh sách giảng viên.</div>');
+                }
+            });
+
+            // Tìm kiếm trong danh mục
+            $("#searchInCategory").on("keyup", function() {
+                var value = $(this).val().toLowerCase();
+                $(".course-item").filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+                });
+
+                // Cập nhật số lượng kết quả hiển thị
+                $('#resultCount').text($('.course-item:visible').length);
+            });
+
+            // Sắp xếp kết quả
+            $(".sort-option").on("click", function(e) {
+                e.preventDefault();
+                var sortBy = $(this).data('sort');
+                var items = $('#categoryResults .course-item').get();
+
+                items.sort(function(a, b) {
+                    switch(sortBy) {
+                        case 'name-asc':
+                            return $(a).data('name').localeCompare($(b).data('name'));
+                        case 'name-desc':
+                            return $(b).data('name').localeCompare($(a).data('name'));
+                        case 'date-desc':
+                            return $(b).data('date') - $(a).data('date');
+                        case 'date-asc':
+                            return $(a).data('date') - $(b).data('date');
+                        case 'popularity':
+                            return $(b).data('popularity') - $(a).data('popularity');
+                        default:
+                            return 0;
+                    }
+                });
+
+                $.each(items, function(i, item) {
+                    $('#categoryResults').append(item);
+                });
+
+                toastr.success('Đã sắp xếp kết quả!');
+            });
+
+            // Animation cho các thẻ
+            $('.course-card').hover(
+                function() {
+                    $(this).addClass('animate__animated animate__pulse');
+                },
+                function() {
+                    $(this).removeClass('animate__animated animate__pulse');
+                }
+            );
+        });
+    </script>
+}

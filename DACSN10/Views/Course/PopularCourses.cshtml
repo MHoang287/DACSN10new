@@ -2,19 +2,335 @@
 @{
     ViewData["Title"] = "Khóa học phổ biến";
 }
-<h2>Khóa học phổ biến</h2>
-<div class="row">
-    @foreach (var course in Model)
-    {
-        <div class="col-md-4 mb-4">
-            <div class="card course-card">
+
+<div class="container animate__animated animate__fadeIn">
+    <h1 class="mb-4 text-center fw-bold">
+        <i class="fas fa-fire text-danger me-2"></i> Khóa học phổ biến
+    </h1>
+    <p class="text-center text-muted mb-5">
+        Những khóa học được nhiều học viên đăng ký nhất
+    </p>
+
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-filter me-2"></i> Bộ lọc</h5>
+                </div>
                 <div class="card-body">
-                    <h5 class="card-title">@course.TenKhoaHoc</h5>
-                    <p class="card-text">@course.MoTa</p>
-                    <p class="card-text"><strong>Price:</strong> @course.Gia.ToString("C")</p>
-                    <a href="@Url.Action("Details", new { id = course.CourseID })" class="btn btn-primary">Xem chi tiết</a>
+                    <div class="mb-3">
+                        <label for="categoryFilter" class="form-label">Danh mục</label>
+                        <select id="categoryFilter" class="form-select">
+                            <option value="">Tất cả danh mục</option>
+                            <!-- Danh mục sẽ được thêm bằng JavaScript -->
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="levelFilter" class="form-label">Cấp độ</label>
+                        <select id="levelFilter" class="form-select">
+                            <option value="">Tất cả cấp độ</option>
+                            <option value="Cơ bản">Cơ bản</option>
+                            <option value="Trung bình">Trung bình</option>
+                            <option value="Nâng cao">Nâng cao</option>
+                        </select>
+                    </div>
+
+                    <hr>
+
+                    <button id="applyFilters" class="btn btn-primary w-100">
+                        <i class="fas fa-check me-1"></i> Áp dụng
+                    </button>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Thông tin</h5>
+                </div>
+                <div class="card-body">
+                    <p>
+                        <i class="fas fa-chart-line me-2"></i>
+                        <span class="fw-bold course-count">@Model.Count</span> khóa học phổ biến
+                    </p>
+                    <p>
+                        <i class="fas fa-users me-2"></i>
+                        <span class="fw-bold student-count">0</span> học viên đã đăng ký
+                    </p>
+                    <div class="text-center mt-4">
+                        <a href="@Url.Action("Index", "Course")" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left me-1"></i> Tất cả khóa học
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
-    }
+
+        <div class="col-md-9">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
+                        <input type="text" id="searchPopular" class="form-control" placeholder="Tìm kiếm trong danh sách khóa học phổ biến...">
+                    </div>
+                </div>
+            </div>
+
+            <div id="popularCoursesContainer">
+                @if (Model != null && Model.Any())
+                {
+                    <div class="row row-cols-1 row-cols-md-2 g-4">
+                        @foreach (var course in Model)
+                        {
+                            <div class="col course-item">
+                                <div class="card h-100 shadow-sm course-card">
+                                    <div class="position-relative">
+                                        <div class="position-absolute top-0 start-0 m-2">
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-award me-1"></i> Hot
+                                            </span>
+                                        </div>
+                                        <div class="position-absolute top-0 end-0 m-2">
+                                            <span class="badge bg-primary rounded-pill">
+                                                <i class="fas fa-users me-1"></i> @(course.Enrollments?.Count ?? 0)
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="card-body d-flex flex-column">
+                                        <h5 class="card-title">@course.TenKhoaHoc</h5>
+                                        <p class="card-text text-muted mb-1 small">
+                                            <i class="fas fa-user me-1"></i> @(course.User?.HoTen ?? "Không có thông tin")
+                                        </p>
+                                        <div class="progress mb-3" style="height: 5px;">
+                                            <div class="progress-bar" role="progressbar"
+                                                 style="width: @(Math.Min(100, (course.Enrollments?.Count ?? 0) * 100 / Math.Max(1, Model.Max(c => c.Enrollments?.Count ?? 0))))%;"
+                                                 aria-valuenow="@(course.Enrollments?.Count ?? 0)" aria-valuemin="0"
+                                                 aria-valuemax="@(Model.Max(c => c.Enrollments?.Count ?? 0))"></div>
+                                        </div>
+                                        <p class="card-text" style="height: 50px; overflow: hidden;">
+                                            @(course.MoTa?.Length > 100 ? course.MoTa.Substring(0, 100) + "..." : course.MoTa)
+                                        </p>
+                                        <div class="mt-auto d-flex justify-content-between">
+                                            <a href="@Url.Action("Details", new { id = course.CourseID })" class="btn btn-primary">
+                                                <i class="fas fa-info-circle me-1"></i> Chi tiết
+                                            </a>
+                                            <a href="javascript:void(0);" class="btn btn-outline-primary enroll-btn" data-id="@course.CourseID">
+                                                <i class="fas fa-graduation-cap me-1"></i> Đăng ký
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <a href="@Url.Action("NewCourses", "Course")" class="btn btn-outline-success">
+                            <i class="fas fa-star me-1"></i> Xem khóa học mới nhất
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> Chưa có khóa học phổ biến. Hãy quay lại sau!
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Tính tổng số học viên
+            var totalStudents = 0;
+        @if (Model != null && Model.Any())
+        {
+            <text>
+                        totalStudents = @(Model.Sum(c => c.Enrollments?.Count ?? 0));
+            </text>
+        }
+            $(".student-count").text(totalStudents);
+
+            // Lấy danh mục cho bộ lọc
+            var categories = [];
+        @if (Model != null && Model.Any())
+        {
+            <text>
+                @foreach (var course in Model)
+                {
+                    if (course.CourseCategories != null && course.CourseCategories.Any())
+                    {
+                        foreach (var cc in course.CourseCategories)
+                        {
+                            <text>
+                                                            if (cc.Category && categories.indexOf(cc.Category.TenDanhMuc) === -1) {
+                                                                categories.push(cc.Category.TenDanhMuc);
+                                                            }
+                            </text>
+                        }
+                    }
+                }
+            </text>
+        }
+
+            categories.forEach(function(category) {
+                $("#categoryFilter").append(`<option value="${category}">${category}</option>`);
+            });
+
+            // Tìm kiếm nhanh
+            $("#searchPopular").on("keyup", function() {
+                var value = $(this).val().toLowerCase();
+                $(".course-item").filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+                });
+            });
+
+            // Áp dụng bộ lọc
+            $("#applyFilters").click(function() {
+                var categoryValue = $("#categoryFilter").val().toLowerCase();
+                var levelValue = $("#levelFilter").val().toLowerCase();
+
+                $(".course-item").each(function() {
+                    var courseText = $(this).text().toLowerCase();
+                    var categoryMatch = categoryValue === "" || courseText.indexOf(categoryValue) > -1;
+                    var levelMatch = levelValue === "" || courseText.indexOf(levelValue) > -1;
+
+                    $(this).toggle(categoryMatch && levelMatch);
+                });
+
+                // Cập nhật số lượng hiển thị
+                var visibleCourses = $(".course-item:visible").length;
+                $(".course-count").text(visibleCourses);
+
+                toastr.success('Đã áp dụng bộ lọc!');
+            });
+
+            // Xử lý nút đăng ký
+            $(".enroll-btn").click(function() {
+                var courseId = $(this).data("id");
+
+        @if (User.Identity.IsAuthenticated)
+        {
+            <text>
+                            Swal.fire({
+                                title: 'Xác nhận đăng ký',
+                                text: 'Bạn có muốn đăng ký khóa học này không?',
+                                icon: 'question',
+                                showCancelButton: true,
+                                confirmButtonText: 'Đăng ký',
+                                cancelButtonText: 'Hủy'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    $.ajax({
+                                        url: '@Url.Action("Enroll", "Course")',
+                                        type: 'POST',
+                                        data: {
+                                            courseId: courseId,
+                                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                                        },
+                                        success: function() {
+                                            Swal.fire(
+                                                'Đã đăng ký!',
+                                                'Bạn đã đăng ký khóa học thành công.',
+                                                'success'
+                                            ).then(() => {
+                                                window.location.href = '@Url.Action("MyCourses", "Course")';
+                                            });
+                                        },
+                                        error: function(xhr) {
+                                            Swal.fire(
+                                                'Lỗi!',
+                                                xhr.responseJSON?.error || 'Đã xảy ra lỗi khi đăng ký khóa học.',
+                                                'error'
+                                            );
+                                        }
+                                    });
+                                }
+                            });
+            </text>
+        }
+        else
+        {
+            <text>
+                            Swal.fire({
+                                title: 'Cần đăng nhập',
+                                text: 'Bạn cần đăng nhập để đăng ký khóa học.',
+                                icon: 'info',
+                                showCancelButton: true,
+                                confirmButtonText: 'Đăng nhập',
+                                cancelButtonText: 'Hủy'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = '/Identity/Account/Login';
+                                }
+                            });
+            </text>
+        }
+            });
+
+            // Animation hiệu ứng
+            $('.card').hover(
+                function() {
+                    $(this).addClass('animate__animated animate__pulse');
+                },
+                function() {
+                    $(this).removeClass('animate__animated animate__pulse');
+                }
+            );
+
+            // Biểu đồ thống kê
+            var ctx = document.createElement('canvas');
+            ctx.id = 'popularChart';
+            $('.card-body:first').after($('<div class="card-body border-top"></div>').append(ctx));
+
+        @if (Model != null && Model.Any())
+        {
+            <text>
+                        var labels = [];
+                        var data = [];
+                        var colors = [];
+
+                @for (int i = 0; i < Math.Min(Model.Count, 5); i++)
+                {
+                    <text>
+                                    labels.push('@Model[i].TenKhoaHoc');
+                                    data.push(@(Model[i].Enrollments?.Count ?? 0));
+                                    colors.push('rgba(' + Math.floor(Math.random() * 200) + ',' + Math.floor(Math.random() * 200) + ',' + Math.floor(Math.random() * 200) + ',0.7)');
+                    </text>
+                }
+
+                        new Chart(document.getElementById('popularChart'), {
+                            type: 'bar',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    label: 'Số lượng học viên',
+                                    data: data,
+                                    backgroundColor: colors,
+                                    borderColor: colors.map(c => c.replace('0.7', '1')),
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                scales: {
+                                    y: {
+                                        beginAtZero: true
+                                    }
+                                },
+                                plugins: {
+                                    title: {
+                                        display: true,
+                                        text: 'Top 5 khóa học phổ biến nhất'
+                                    }
+                                }
+                            }
+                        });
+            </text>
+        }
+        });
+    </script>
+}

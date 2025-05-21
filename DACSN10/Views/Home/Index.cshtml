@@ -92,8 +92,8 @@
 
             // Chart.js - Thống kê số lượng khóa học theo trạng thái
             var ctx = document.getElementById('courseChart').getContext('2d');
-            var activeCount = @Model.Count(c => c.TrangThai == "Active");
-            var closedCount = @Model.Count(c => c.TrangThai != "Active");
+            var activeCount = @Model.Count(c => c.TrangThai == "Published");
+            var closedCount = @Model.Count(c => c.TrangThai != "Published");
             var courseChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
