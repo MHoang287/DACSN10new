@@ -1,0 +1,113 @@
+﻿@model DACSN10.Areas.Admin.Models.CategoryAdminViewModel
+@{
+    ViewData["Title"] = "Xóa danh mục";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid px-4 animate__animated animate__fadeIn">
+    <h1 class="mt-4">Xóa danh mục</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="/Admin">Trang chủ</a></li>
+        <li class="breadcrumb-item"><a asp-action="Index">Danh mục</a></li>
+        <li class="breadcrumb-item active">Xóa</li>
+    </ol>
+
+    <div class="card mb-4 border-danger">
+        <div class="card-header bg-danger text-white">
+            <i class="fas fa-exclamation-triangle me-1"></i>
+            Xác nhận xóa danh mục
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <strong>Cảnh báo:</strong> Bạn có chắc chắn muốn xóa danh mục này? Hành động này không thể hoàn tác.
+                @if (Model.CourseCount > 0)
+                {
+                    <div class="mt-2">
+                        <strong>Lưu ý:</strong> Danh mục này hiện có @Model.CourseCount khóa học. Không thể xóa danh mục đang được sử dụng.
+                    </div>
+                }
+            </div>
+
+            <dl class="row">
+                <dt class="col-sm-3">ID danh mục</dt>
+                <dd class="col-sm-9">@Model.CategoryID</dd>
+
+                <dt class="col-sm-3">Tên danh mục</dt>
+                <dd class="col-sm-9">@Model.Name</dd>
+
+                <dt class="col-sm-3">Mô tả</dt>
+                <dd class="col-sm-9">@(string.IsNullOrEmpty(Model.Description) ? "Không có mô tả" : Model.Description)</dd>
+
+                <dt class="col-sm-3">Số lượng khóa học</dt>
+                <dd class="col-sm-9">
+                    @if (Model.CourseCount > 0)
+                    {
+                        <span class="badge bg-danger">@Model.CourseCount khóa học</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success">0 khóa học</span>
+                    }
+                </dd>
+            </dl>
+
+            <form asp-action="Delete" method="post" id="deleteForm">
+                <input type="hidden" asp-for="CategoryID" />
+                <div class="mt-3">
+                    @if (Model.CourseCount == 0)
+                    {
+                        <button type="submit" class="btn btn-danger" id="deleteButton">
+                            <i class="fas fa-trash-alt me-1"></i> Xác nhận xóa
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-danger disabled" disabled title="Không thể xóa danh mục đang được sử dụng">
+                            <i class="fas fa-trash-alt me-1"></i> Xác nhận xóa
+                        </button>
+                        <small class="form-text text-danger">Không thể xóa danh mục đang được sử dụng bởi khóa học.</small>
+                    }
+                    <a asp-action="Index" class="btn btn-secondary ms-2">
+                        <i class="fas fa-arrow-left me-1"></i> Trở về danh sách
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Xác nhận xóa với SweetAlert2
+            $('#deleteButton').click(function (e) {
+                e.preventDefault();
+
+                Swal.fire({
+                    title: 'Xác nhận xóa',
+                    text: 'Bạn có chắc chắn muốn xóa danh mục "@Model.Name"? Hành động này không thể hoàn tác.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Xóa',
+                    cancelButtonText: 'Hủy bỏ'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $('#deleteForm').submit();
+                    }
+                });
+            });
+
+            // Hiệu ứng Animate.css khi trang tải
+            $(".card").addClass("animate__animated animate__fadeIn");
+
+            // Tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+}

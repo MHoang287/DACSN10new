@@ -55,12 +55,38 @@ namespace DACSN10.Areas.Admin.Models
 
     public class UserSearchViewModel
     {
+        [Display(Name = "Từ khóa")]
         public string Keyword { get; set; }
+
+        [Display(Name = "Loại người dùng")]
         public string UserType { get; set; } // "All", "User", "Teacher", "Admin"
+
+        [Display(Name = "Trạng thái")]
         public string Status { get; set; } // "All", "Active", "Locked", "Inactive"
 
+        [Display(Name = "Từ ngày")]
+        [DataType(DataType.Date)]
+        public DateTime? DateFrom { get; set; }
+
+        [Display(Name = "Đến ngày")]
+        [DataType(DataType.Date)]
+        public DateTime? DateTo { get; set; }
+
+        [Display(Name = "Số khóa học tối thiểu")]
+        [Range(0, int.MaxValue, ErrorMessage = "Số khóa học không được âm")]
+        public int? EnrollmentMin { get; set; }
+
+        [Display(Name = "Số khóa học tối đa")]
+        [Range(0, int.MaxValue, ErrorMessage = "Số khóa học không được âm")]
+        public int? EnrollmentMax { get; set; }
+
+        [Display(Name = "Kết quả tìm kiếm")]
         public List<UserAdminViewModel> SearchResults { get; set; } = new List<UserAdminViewModel>();
+
+        [Display(Name = "Loại người dùng")]
         public List<SelectListItem> UserTypes { get; set; } = new List<SelectListItem>();
+
+        [Display(Name = "Trạng thái")]
         public List<SelectListItem> StatusTypes { get; set; } = new List<SelectListItem>();
     }
 }

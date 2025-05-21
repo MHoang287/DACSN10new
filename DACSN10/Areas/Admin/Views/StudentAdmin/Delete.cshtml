@@ -1,0 +1,169 @@
+﻿@model DACSN10.Areas.Admin.Models.UserAdminViewModel
+@{
+    ViewData["Title"] = "Xóa học viên";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid px-4 animate__animated animate__fadeIn">
+    <h1 class="mt-4">Xóa học viên</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="/Admin">Trang chủ</a></li>
+        <li class="breadcrumb-item"><a asp-action="Index">Học viên</a></li>
+        <li class="breadcrumb-item active">Xóa</li>
+    </ol>
+
+    <div class="card mb-4 border-danger">
+        <div class="card-header bg-danger text-white">
+            <i class="fas fa-exclamation-triangle me-1"></i>
+            Xác nhận xóa học viên
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <strong>Cảnh báo:</strong> Bạn có chắc chắn muốn xóa học viên này? Hành động này không thể hoàn tác.
+                @if (Model.EnrollmentCount > 0)
+                {
+                    <div class="mt-2">
+                        <strong>Lưu ý:</strong> Học viên này đã đăng ký @Model.EnrollmentCount khóa học.
+                        Không thể xóa học viên đang có dữ liệu liên quan.
+                    </div>
+                }
+            </div>
+
+            <div class="mb-4">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <i class="fas fa-id-card me-1"></i> Thông tin cơ bản
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3 row">
+                                    <label class="col-sm-4 col-form-label fw-bold">ID</label>
+                                    <div class="col-sm-8">
+                                        <p class="form-control-plaintext">@Model.Id</p>
+                                    </div>
+                                </div>
+                                <div class="mb-3 row">
+                                    <label class="col-sm-4 col-form-label fw-bold">Họ tên</label>
+                                    <div class="col-sm-8">
+                                        <p class="form-control-plaintext">@Model.HoTen</p>
+                                    </div>
+                                </div>
+                                <div class="mb-3 row">
+                                    <label class="col-sm-4 col-form-label fw-bold">Email</label>
+                                    <div class="col-sm-8">
+                                        <p class="form-control-plaintext">@Model.Email</p>
+                                    </div>
+                                </div>
+                                <div class="mb-3 row">
+                                    <label class="col-sm-4 col-form-label fw-bold">Số điện thoại</label>
+                                    <div class="col-sm-8">
+                                        <p class="form-control-plaintext">@(string.IsNullOrEmpty(Model.PhoneNumber) ? "Chưa cập nhật" : Model.PhoneNumber)</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <i class="fas fa-info-circle me-1"></i> Thông tin bổ sung
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3 row">
+                                    <label class="col-sm-4 col-form-label fw-bold">Ngày đăng ký</label>
+                                    <div class="col-sm-8">
+                                        <p class="form-control-plaintext">@Model.NgayDangKy.ToString("dd/MM/yyyy HH:mm")</p>
+                                    </div>
+                                </div>
+                                <div class="mb-3 row">
+                                    <label class="col-sm-4 col-form-label fw-bold">Khóa học đã đăng ký</label>
+                                    <div class="col-sm-8">
+                                        <p class="form-control-plaintext">@Model.EnrollmentCount</p>
+                                    </div>
+                                </div>
+                                <div class="mb-3 row">
+                                    <label class="col-sm-4 col-form-label fw-bold">Trạng thái</label>
+                                    <div class="col-sm-8">
+                                        <p class="form-control-plaintext">
+                                            @if (Model.TrangThai == "Active")
+                                            {
+                                                <span class="badge bg-success">Hoạt động</span>
+                                            }
+                                            else if (Model.TrangThai == "Locked")
+                                            {
+                                                <span class="badge bg-danger">Đã khóa</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">Không hoạt động</span>
+                                            }
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form asp-action="Delete" method="post" id="deleteForm">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <div class="d-flex justify-content-between mt-4">
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Trở về danh sách
+                    </a>
+
+                    @if (Model.EnrollmentCount > 0)
+                    {
+                        <button type="button" class="btn btn-danger disabled" disabled title="Không thể xóa học viên đang có dữ liệu liên quan">
+                            <i class="fas fa-trash-alt me-1"></i> Xác nhận xóa
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="button" id="deleteButton" class="btn btn-danger">
+                            <i class="fas fa-trash-alt me-1"></i> Xác nhận xóa
+                        </button>
+                    }
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Animate.css
+            $('.card').addClass('animate__animated animate__fadeIn');
+            $('.alert').addClass('animate__animated animate__headShake');
+
+            // SweetAlert2 cho nút xóa
+            $('#deleteButton').click(function () {
+                Swal.fire({
+                    title: 'Xóa tài khoản học viên',
+                    text: `Bạn có chắc chắn muốn xóa học viên ${@Html.Raw(Json.Serialize(Model.HoTen))}? Hành động này không thể hoàn tác!`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Xác nhận xóa',
+                    cancelButtonText: 'Hủy bỏ'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Hiệu ứng khi xóa
+                        $('.card').removeClass('animate__fadeIn').addClass('animate__fadeOut');
+
+                        // Đặt timeout để form submit sau khi hiệu ứng kết thúc
+                        setTimeout(() => {
+                            document.getElementById('deleteForm').submit();
+                        }, 500);
+                    }
+                });
+            });
+        });
+    </script>
+}

@@ -1,0 +1,283 @@
+﻿@model List<DACSN10.Areas.Admin.Models.CategoryAdminViewModel>
+@{
+    ViewData["Title"] = "Quản lý danh mục";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid px-4 animate__animated animate__fadeIn">
+    <h1 class="mt-4">Quản lý danh mục</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="/Admin">Trang chủ</a></li>
+        <li class="breadcrumb-item active">Danh mục</li>
+    </ol>
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+                <i class="fas fa-table me-1"></i>
+                Danh sách danh mục
+            </div>
+            <div>
+                <a asp-action="Create" class="btn btn-success" data-intro="Nhấp vào đây để thêm danh mục mới">
+                    <i class="fas fa-plus-circle"></i> Thêm mới
+                </a>
+                <a asp-action="Search" class="btn btn-info text-white">
+                    <i class="fas fa-search"></i> Tìm kiếm
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <table id="datatablesCategories" class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tên danh mục</th>
+                        <th>Mô tả</th>
+                        <th>Số khóa học</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.CategoryID</td>
+                            <td>@item.Name</td>
+                            <td>@(string.IsNullOrEmpty(item.Description) ? "Không có mô tả" : item.Description)</td>
+                            <td>@item.CourseCount</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a asp-action="Edit" asp-route-id="@item.CategoryID" class="btn btn-primary btn-sm" data-bs-toggle="tooltip" title="Chỉnh sửa">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a asp-action="Details" asp-route-id="@item.CategoryID" class="btn btn-info btn-sm text-white" data-bs-toggle="tooltip" title="Chi tiết">
+                                        <i class="fas fa-info-circle"></i>
+                                    </a>
+                                    <a asp-action="Delete" asp-route-id="@item.CategoryID" class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Xóa">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Biểu đồ thống kê -->
+    <div class="row">
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-pie me-1"></i>
+                    Số lượng khóa học theo danh mục
+                </div>
+                <div class="card-body">
+                    <canvas id="categoryPieChart" width="100%" height="40"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-bar me-1"></i>
+                    Top 10 danh mục có nhiều khóa học nhất
+                </div>
+                <div class="card-body">
+                    <canvas id="categoryBarChart" width="100%" height="40"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Hiển thị thông báo thành công/lỗi với Toastr
+        $(document).ready(function () {
+            // DataTables
+            $('#datatablesCategories').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Vietnamese.json'
+                },
+                responsive: true
+            });
+
+            // Tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Hiển thị thông báo thành công nếu có
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <text>
+                    toastr.success('@TempData["SuccessMessage"]', 'Thành công');
+            </text>
+        }
+
+            // Hiển thị thông báo lỗi nếu có
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <text>
+                    toastr.error('@TempData["ErrorMessage"]', 'Lỗi');
+            </text>
+        }
+
+            // Dữ liệu cho biểu đồ
+            const categories = @Html.Raw(Json.Serialize(Model.Select(c => c.Name).ToList()));
+            const courseCounts = @Html.Raw(Json.Serialize(Model.Select(c => c.CourseCount).ToList()));
+
+            // Biểu đồ tròn (Pie Chart)
+            var ctxPie = document.getElementById("categoryPieChart");
+            var categoryPieChart = new Chart(ctxPie, {
+                type: 'pie',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        data: courseCounts,
+                        backgroundColor: [
+                            '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+                            '#5a5c69', '#858796', '#6f42c1', '#fd7e14', '#20c9a6',
+                            '#2c9faf', '#f8f9fc', '#5a5c69', '#3a3b45', '#224abe'
+                        ],
+                        hoverBackgroundColor: [
+                            '#2e59d9', '#17a673', '#2c9faf', '#f4b619', '#e02d1b',
+                            '#474653', '#717384', '#5c35a4', '#ee730a', '#16a085',
+                            '#258391', '#e5e9f2', '#474653', '#2a2b33', '#1a3898'
+                        ],
+                        hoverBorderColor: "rgba(234, 236, 244, 1)",
+                    }],
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    tooltips: {
+                        backgroundColor: "rgb(255,255,255)",
+                        bodyFontColor: "#858796",
+                        borderColor: '#dddfeb',
+                        borderWidth: 1,
+                        xPadding: 15,
+                        yPadding: 15,
+                        displayColors: false,
+                        caretPadding: 10,
+                    },
+                    legend: {
+                        display: true,
+                        position: 'bottom'
+                    },
+                    plugins: {
+                        datalabels: {
+                            formatter: (value, ctx) => {
+                                let sum = 0;
+                                let dataArr = ctx.chart.data.datasets[0].data;
+                                dataArr.map(data => {
+                                    sum += data;
+                                });
+                                let percentage = (value * 100 / sum).toFixed(1) + "%";
+                                return percentage;
+                            },
+                            color: '#fff',
+                        }
+                    }
+                },
+            });
+
+            // Biểu đồ cột (Bar Chart)
+            var ctxBar = document.getElementById("categoryBarChart");
+            var categoryBarChart = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        label: "Số khóa học",
+                        backgroundColor: "rgba(78, 115, 223, 0.8)",
+                        borderColor: "#4e73df",
+                        data: courseCounts,
+                    }],
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            left: 10,
+                            right: 25,
+                            top: 25,
+                            bottom: 0
+                        }
+                    },
+                    scales: {
+                        xAxes: [{
+                            gridLines: {
+                                display: false,
+                                drawBorder: false
+                            },
+                            ticks: {
+                                maxTicksLimit: 10
+                            }
+                        }],
+                        yAxes: [{
+                            ticks: {
+                                min: 0,
+                                maxTicksLimit: 5,
+                                padding: 10,
+                            },
+                            gridLines: {
+                                color: "rgb(234, 236, 244)",
+                                zeroLineColor: "rgb(234, 236, 244)",
+                                drawBorder: false,
+                                borderDash: [2],
+                                zeroLineBorderDash: [2]
+                            }
+                        }],
+                    },
+                    legend: {
+                        display: false
+                    },
+                    tooltips: {
+                        titleMarginBottom: 10,
+                        titleFontColor: '#6e707e',
+                        titleFontSize: 14,
+                        backgroundColor: "rgb(255,255,255)",
+                        bodyFontColor: "#858796",
+                        borderColor: '#dddfeb',
+                        borderWidth: 1,
+                        xPadding: 15,
+                        yPadding: 15,
+                        displayColors: false,
+                        caretPadding: 10,
+                    },
+                }
+            });
+        });
+
+        // Hướng dẫn sử dụng với Intro.js
+        function startTutorial() {
+            introJs().setOptions({
+                steps: [
+                    {
+                        element: document.querySelector('.card-header'),
+                        intro: 'Đây là phần quản lý danh mục khóa học.'
+                    },
+                    {
+                        element: document.querySelector('a[asp-action="Create"]'),
+                        intro: 'Nhấn vào đây để thêm danh mục mới.'
+                    },
+                    {
+                        element: document.querySelector('#datatablesCategories'),
+                        intro: 'Bảng này hiển thị tất cả các danh mục hiện có.'
+                    },
+                    {
+                        element: document.querySelector('.card-body canvas'),
+                        intro: 'Biểu đồ trực quan hóa số lượng khóa học trong từng danh mục.'
+                    }
+                ],
+                prevLabel: 'Trước',
+                nextLabel: 'Tiếp',
+                skipLabel: 'Bỏ qua',
+                doneLabel: 'Xong'
+            }).start();
+        }
+    </script>
+}

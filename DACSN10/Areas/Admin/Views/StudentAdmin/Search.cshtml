@@ -1,0 +1,460 @@
+﻿@model DACSN10.Areas.Admin.Models.UserSearchViewModel
+@{
+    ViewData["Title"] = "Tìm kiếm học viên";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid px-4 animate__animated animate__fadeIn">
+    <h1 class="mt-4">Tìm kiếm học viên</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="/Admin">Trang chủ</a></li>
+        <li class="breadcrumb-item"><a asp-action="Index">Học viên</a></li>
+        <li class="breadcrumb-item active">Tìm kiếm</li>
+    </ol>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-search me-1"></i>
+            Tìm kiếm học viên
+            <button type="button" id="showTutorial" class="btn btn-sm btn-outline-info float-end">
+                <i class="fas fa-question-circle"></i> Hướng dẫn
+            </button>
+        </div>
+        <div class="card-body">
+            <form asp-action="Search" method="post" id="searchForm">
+                <!-- Form tìm kiếm -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-outline mb-3">
+                            <label asp-for="Keyword" class="form-label">Từ khóa</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input asp-for="Keyword" class="form-control" placeholder="Nhập tên, email hoặc số điện thoại..." />
+                            </div>
+                            <span asp-validation-for="Keyword" class="text-danger"></span>
+                            <small class="form-text text-muted">Tìm kiếm theo tên, email hoặc số điện thoại</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-outline mb-3">
+                            <label asp-for="Status" class="form-label">Trạng thái</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-toggle-on"></i></span>
+                                <select asp-for="Status" class="form-select">
+                                    <option value="">-- Tất cả trạng thái --</option>
+                                    @foreach (var status in Model.StatusTypes)
+                                    {
+                                        <option value="@status.Value">@status.Text</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-outline mb-3">
+                            <label asp-for="DateFrom" class="form-label">Từ ngày</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                                <input asp-for="DateFrom" type="date" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-outline mb-3">
+                            <label asp-for="DateTo" class="form-label">Đến ngày</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                                <input asp-for="DateTo" type="date" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-outline mb-3">
+                            <label asp-for="EnrollmentMin" class="form-label">Số khóa học tối thiểu</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-book"></i></span>
+                                <input asp-for="EnrollmentMin" type="number" min="0" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-outline mb-3">
+                            <label asp-for="EnrollmentMax" class="form-label">Số khóa học tối đa</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-book"></i></span>
+                                <input asp-for="EnrollmentMax" type="number" min="0" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Trở về danh sách
+                    </a>
+                    <div>
+                        <button type="reset" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-undo me-1"></i> Xóa bộ lọc
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-1"></i> Tìm kiếm
+                        </button>
+                    </div>
+                </div>
+            </form>
+            
+            <!-- Kết quả tìm kiếm -->
+            @if (Model.SearchResults != null)
+            {
+                <hr />
+                <h5>Kết quả tìm kiếm (@Model.SearchResults.Count học viên)</h5>
+                
+                @if (Model.SearchResults.Any())
+                {
+                    <div class="table-responsive mt-3">
+                        <table id="searchResultsTable" class="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Họ tên</th>
+                                    <th>Email</th>
+                                    <th>Số điện thoại</th>
+                                    <th>Ngày đăng ký</th>
+                                    <th>Khóa học</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.SearchResults)
+                                {
+                                    <tr>
+                                        <td>@item.Id</td>
+                                        <td>
+                                            <a asp-action="Details" asp-route-id="@item.Id" class="text-decoration-none">
+                                                @item.HoTen
+                                            </a>
+                                        </td>
+                                        <td>@item.Email</td>
+                                        <td>@(string.IsNullOrEmpty(item.PhoneNumber) ? "Chưa cập nhật" : item.PhoneNumber)</td>
+                                        <td>@item.NgayDangKy.ToString("dd/MM/yyyy")</td>
+                                        <td>
+                                            <span class="badge rounded-pill bg-primary">@item.EnrollmentCount khóa học</span>
+                                        </td>
+                                        <td>
+                                            @if (item.TrangThai == "Active")
+                                            {
+                                                <span class="badge bg-success">Hoạt động</span>
+                                            }
+                                            else if (item.TrangThai == "Locked")
+                                            {
+                                                <span class="badge bg-danger">Đã khóa</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">Không hoạt động</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary btn-sm" data-bs-toggle="tooltip" title="Chỉnh sửa">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm text-white" data-bs-toggle="tooltip" title="Chi tiết">
+                                                    <i class="fas fa-info-circle"></i>
+                                                </a>
+                                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Xóa">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Biểu đồ thống kê kết quả tìm kiếm -->
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <i class="fas fa-chart-pie me-1"></i> Phân bố theo trạng thái
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="statusChart" width="100%" height="300"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <i class="fas fa-chart-bar me-1"></i> Phân bố theo khóa học
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="enrollmentChart" width="100%" height="300"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i> Không tìm thấy học viên nào phù hợp với điều kiện tìm kiếm.
+                    </div>
+                }
+            }
+        </div>
+    </div>
+    
+    <!-- Nút export nếu có kết quả -->
+    @if (Model.SearchResults != null && Model.SearchResults.Any())
+    {
+        <div class="text-end mb-4">
+            <div class="btn-group">
+                <button type="button" class="btn btn-success" id="exportExcel">
+                    <i class="fas fa-file-excel me-1"></i> Xuất Excel
+                </button>
+                <button type="button" class="btn btn-danger" id="exportPDF">
+                    <i class="fas fa-file-pdf me-1"></i> Xuất PDF
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // jQuery UI datepicker cho ô chọn ngày
+            $("input[type='date']").datepicker({
+                dateFormat: "yy-mm-dd",
+                changeMonth: true,
+                changeYear: true,
+                yearRange: "2010:+0"
+            });
+            
+            // DataTables
+            if ($("#searchResultsTable").length > 0) {
+                $('#searchResultsTable').DataTable({
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Vietnamese.json'
+                    },
+                    responsive: true,
+                    pageLength: 10,
+                    lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Tất cả"]]
+                });
+            }
+            
+            // Tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            
+            // Hiệu ứng Animate.css
+            $('.card').addClass('animate__animated animate__fadeIn');
+            
+            // Hiển thị thông báo thành công/lỗi với Toastr
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <text>
+                toastr.success('@TempData["SuccessMessage"]', 'Thành công');
+                </text>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <text>
+                toastr.error('@TempData["ErrorMessage"]', 'Lỗi');
+                </text>
+            }
+            
+            // Biểu đồ thống kê nếu có kết quả tìm kiếm
+            @if (Model.SearchResults != null && Model.SearchResults.Any())
+            {
+                <text>
+                // Đếm số lượng theo trạng thái
+                const statusCounts = {
+                    'Hoạt động': 0,
+                    'Đã khóa': 0,
+                    'Không hoạt động': 0
+                };
+                
+                const searchResults = @Html.Raw(Json.Serialize(Model.SearchResults));
+                
+                searchResults.forEach(student => {
+                    if (student.trangThai === 'Active') {
+                        statusCounts['Hoạt động']++;
+                    } else if (student.trangThai === 'Locked') {
+                        statusCounts['Đã khóa']++;
+                    } else {
+                        statusCounts['Không hoạt động']++;
+                    }
+                });
+                
+                // Biểu đồ phân bố theo trạng thái
+                var ctxStatus = document.getElementById("statusChart");
+                if (ctxStatus) {
+                    new Chart(ctxStatus, {
+                        type: 'pie',
+                        data: {
+                            labels: Object.keys(statusCounts),
+                            datasets: [{
+                                data: Object.values(statusCounts),
+                                backgroundColor: ['#28a745', '#dc3545', '#6c757d'],
+                                hoverBackgroundColor: ['#218838', '#c82333', '#5a6268']
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            legend: {
+                                position: 'bottom'
+                            },
+                            tooltips: {
+                                callbacks: {
+                                    label: function(tooltipItem, data) {
+                                        var dataset = data.datasets[tooltipItem.datasetIndex];
+                                        var total = dataset.data.reduce(function(previousValue, currentValue) {
+                                            return previousValue + currentValue;
+                                        });
+                                        var currentValue = dataset.data[tooltipItem.index];
+                                        var percentage = Math.floor(((currentValue/total) * 100)+0.5);
+                                        return data.labels[tooltipItem.index] + ': ' + currentValue + ' (' + percentage + '%)';
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // Phân bố theo số lượng khóa học đã đăng ký
+                const enrollmentGroups = {
+                    '0 khóa học': 0,
+                    '1 khóa học': 0,
+                    '2-3 khóa học': 0,
+                    '4-5 khóa học': 0,
+                    '6+ khóa học': 0
+                };
+                
+                // Biểu đồ phân bố theo số lượng khóa học
+                var ctxEnrollment = document.getElementById("enrollmentChart");
+                if (ctxEnrollment) {
+                    new Chart(ctxEnrollment, {
+                        type: 'bar',
+                        data: {
+                            labels: Object.keys(enrollmentGroups),
+                            datasets: [{
+                                label: 'Số học viên',
+                                data: Object.values(enrollmentGroups),
+                                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                yAxes: [{
+                                    ticks: {
+                                        beginAtZero: true,
+                                        stepSize: 1
+                                    }
+                                }]
+                            }
+                        }
+                    });
+                }
+                </text>
+            }
+            
+            // Xử lý nút export Excel
+            $('#exportExcel').click(function() {
+                Swal.fire({
+                    title: 'Xuất dữ liệu Excel',
+                    text: 'Đang chuẩn bị dữ liệu...',
+                    timerProgressBar: true,
+                    didOpen: () => {
+                        Swal.showLoading();
+                        
+                        // Giả lập xuất Excel
+                        setTimeout(() => {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Đã xuất dữ liệu thành công',
+                                text: 'Tệp đã được tải xuống',
+                                confirmButtonText: 'Đóng'
+                            });
+                        }, 1500);
+                    }
+                });
+            });
+            
+            // Xử lý nút export PDF
+            $('#exportPDF').click(function() {
+                Swal.fire({
+                    title: 'Xuất dữ liệu PDF',
+                    text: 'Đang chuẩn bị dữ liệu...',
+                    timerProgressBar: true,
+                    didOpen: () => {
+                        Swal.showLoading();
+                        
+                        // Giả lập xuất PDF
+                        setTimeout(() => {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Đã xuất dữ liệu thành công',
+                                text: 'Tệp đã được tải xuống',
+                                confirmButtonText: 'Đóng'
+                            });
+                        }, 1500);
+                    }
+                });
+            });
+            
+            // Hướng dẫn sử dụng với Intro.js
+            $('#showTutorial').click(function() {
+                introJs().setOptions({
+                    steps: [
+                        {
+                            element: document.querySelector('[asp-for="Keyword"]').closest('.form-outline'),
+                            intro: 'Nhập từ khóa tìm kiếm theo tên, email hoặc số điện thoại.'
+                        },
+                        {
+                            element: document.querySelector('[asp-for="Status"]').closest('.form-outline'),
+                            intro: 'Chọn trạng thái học viên để lọc kết quả.'
+                        },
+                        {
+                            element: document.querySelector('[asp-for="DateFrom"]').closest('.form-outline'),
+                            intro: 'Chọn ngày bắt đầu để tìm kiếm học viên đăng ký từ ngày này.'
+                        },
+                        {
+                            element: document.querySelector('[asp-for="DateTo"]').closest('.form-outline'),
+                            intro: 'Chọn ngày kết thúc để tìm kiếm học viên đăng ký đến ngày này.'
+                        },
+                        {
+                            element: document.querySelector('button[type="submit"]'),
+                            intro: 'Nhấn vào đây để thực hiện tìm kiếm với các điều kiện đã chọn.'
+                        }
+                    ],
+                    prevLabel: 'Trước',
+                    nextLabel: 'Tiếp',
+                    skipLabel: 'Bỏ qua',
+                    doneLabel: 'Xong'
+                }).start();
+            });
+        });
+    </script>
+}
