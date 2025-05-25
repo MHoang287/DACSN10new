@@ -23,84 +23,8 @@
         }
     }
 }
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="OnlineLearning - Nền tảng học trực tuyến hàng đầu Việt Nam" />
-    <title>Trang chủ - OnlineLearning</title>
-
-    <!-- CSS Dependencies -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">   
-</head>
-<body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg fixed-top">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="/">
-                <i class="fas fa-graduation-cap me-2"></i>
-                <span>OnlineLearning</span>
-            </a>
-
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/"><i class="fas fa-home me-1"></i> Trang chủ</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/Course"><i class="fas fa-book-open me-1"></i> Khóa học</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/About"><i class="fas fa-info-circle me-1"></i> Giới thiệu</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/Contact"><i class="fas fa-envelope me-1"></i> Liên hệ</a>
-                    </li>
-                </ul>
-
-                <div class="d-flex">
-                    <a href="/Identity/Account/Login" class="btn btn-outline-primary me-2">
-                        <i class="fas fa-sign-in-alt me-1"></i> Đăng nhập
-                    </a>
-                    <a href="/Identity/Account/Register" class="btn btn-primary">
-                        <i class="fas fa-user-plus me-1"></i> Đăng ký
-                    </a>
-                </div>
-            </div>
-            <hr class="my-4 bg-light opacity-25" />
-            <div class="row">
-                <div class="col-md-6 text-center text-md-start">
-                    <p class="mb-0">&copy; 2024 OnlineLearning. All rights reserved.</p>
-                </div>
-                <div class="col-md-6 text-center text-md-end">
-                    <a href="#" class="text-light text-decoration-none me-3">Chính sách bảo mật</a>
-                    <a href="#" class="text-light text-decoration-none">Điều khoản sử dụng</a>
-                </div>
-            </div>
-        </div>
-        </footer>
-
-        <!-- JavaScript Dependencies -->
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        </div>
-    </nav>
-</body>
-</html>
 <!-- Hero Section -->
-<section class="hero-section">
+<section class="hero-section home-section">
     <div class="floating-elements">
         <i class="fas fa-graduation-cap floating-element" style="font-size: 3rem;"></i>
         <i class="fas fa-book floating-element" style="font-size: 2.5rem;"></i>
@@ -108,7 +32,7 @@
         <i class="fas fa-rocket floating-element" style="font-size: 2.5rem;"></i>
     </div>
 
-    <div class="container">
+    <div class="container-fluid px-4 px-md-5">
         <div class="row align-items-center">
             <div class="col-lg-6">
                 <div class="hero-content animate__animated animate__fadeInLeft">
@@ -157,8 +81,8 @@
 </section>
 
 <!-- Search Section -->
-<section class="search-section" id="courses">
-    <div class="container">
+<section class="search-section home-section" id="courses">
+    <div class="container-fluid px-4 px-md-5">
         <div class="search-box">
             <div class="input-group">
                 <input type="text" class="form-control search-input" placeholder="Tìm kiếm khóa học..." id="searchCourse">
@@ -171,8 +95,8 @@
 </section>
 
 <!-- Courses Section -->
-<section class="courses-section">
-    <div class="container">
+<section class="courses-section home-section">
+    <div class="container-fluid px-4 px-md-5">
         <h2 class="section-title animate__animated animate__fadeInUp">
             <i class="fas fa-book-open me-3"></i>Danh sách khóa học
         </h2>
@@ -185,7 +109,7 @@
             {
                 foreach (var course in Model)
                 {
-                    <div class="col-lg-4 col-md-6 course-item"
+                    <div class="col-lg-4 col-md-6 course-item mb-4"
                          data-name="@course.TenKhoaHoc.ToLower()"
                          data-description="@(course.MoTa?.ToLower() ?? "")">
                         <div class="course-card animate__animated animate__fadeInUp">
@@ -292,9 +216,10 @@
         </div>
     </div>
 </section>
+
 <!-- Chart Section -->
-<section class="chart-section">
-    <div class="container">
+<section class="chart-section home-section">
+    <div class="container-fluid px-4 px-md-5">
         <h3 class="text-center mb-4">Thống kê khóa học</h3>
         <div class="chart-container">
             <canvas id="courseChart"></canvas>
@@ -302,10 +227,9 @@
     </div>
 </section>
 
-
 <!-- Footer -->
 <footer class="bg-dark text-light py-5">
-    <div class="container">
+    <div class="container-fluid px-4 px-md-5">
         <div class="row">
             <div class="col-lg-4 mb-4">
                 <h5 class="mb-4">
@@ -346,7 +270,15 @@
                 </div>
             </div>
         </div>
+        <hr class="my-4 bg-light opacity-25" />
+        <div class="row">
+            <div class="col-md-6 text-center text-md-start">
+                <p class="mb-0">&copy; 2024 OnlineLearning. All rights reserved.</p>
+            </div>
+            <div class="col-md-6 text-center text-md-end">
+                <a href="#" class="text-light text-decoration-none me-3">Chính sách bảo mật</a>
+                <a href="#" class="text-light text-decoration-none">Điều khoản sử dụng</a>
+            </div>
+        </div>
+    </div>
 </footer>
-    
-    <!-- Add CSRF token for AJAX requests -->
-    @Html.AntiForgeryToken()

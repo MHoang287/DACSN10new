@@ -8,101 +8,99 @@
 
     <!-- CSS Dependencies -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.19.1/css/mdb.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
-    <link href="https://cdn.syncfusion.com/ej2/23.1.36/material.css" rel="stylesheet" />
 
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="~/css/site.css" />
 
     <!-- Render any additional styles from the view -->
+    <!-- Render any additional styles from the view -->
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
     <header>
-        <!-- Main Navigation -->
-        <nav class="navbar navbar-expand-lg navbar-dark bg-gradient-primary sticky-top shadow-sm">
-            <div class="container">
-                <!-- Brand Logo -->
-                <a class="navbar-brand d-flex align-items-center" href="/">
-                    <i class="fas fa-graduation-cap me-2"></i>
-                    <span class="fw-bold">OnlineLearning</span>
+        <!-- Modern Glassmorphism Navigation -->
+        <nav class="navbar navbar-expand-lg sticky-top">
+            <div class="container-fluid px-4">
+                <!-- Compact Brand Logo -->
+                <a class="navbar-brand d-flex align-items-center text-decoration-none" href="/">
+                    <div class="brand-icon-wrapper">
+                        <i class="fas fa-graduation-cap brand-icon"></i>
+                        <div class="brand-icon-glow"></div>
+                    </div>
+                    <div class="brand-text-wrapper">
+                        <span class="brand-main">Online</span><span class="brand-accent">Learning</span>
+                    </div>
                 </a>
 
                 <!-- Mobile Toggle Button -->
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                         aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
                 <!-- Navbar Items -->
                 <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 align-items-center flex-nowrap">
                         <li class="nav-item">
-                            <a class="nav-link" href="/"><i class="fas fa-home me-1"></i> Trang chủ</a>
+                            <a class="nav-link" href="/"><i class="fas fa-home"></i>Trang&nbsp;chủ</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="@Url.Action("Index", "Course")"><i class="fas fa-book-open me-1"></i> Tất cả khóa học</a>
+                            <a class="nav-link" href="@Url.Action("Index", "Course")"><i class="fas fa-book-open"></i>Tất&nbsp;cả&nbsp;khóa&nbsp;học</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="@Url.Action("PopularCourses", "Course")"><i class="fas fa-fire me-1"></i> Phổ biến</a>
+                            <a class="nav-link" href="@Url.Action("PopularCourses", "Course")"><i class="fas fa-fire"></i>Phổ&nbsp;biến</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="@Url.Action("NewCourses", "Course")"><i class="fas fa-star me-1"></i> Mới nhất</a>
+                            <a class="nav-link" href="@Url.Action("NewCourses", "Course")"><i class="fas fa-star"></i>Mới&nbsp;nhất</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="@Url.Action("MyCourses", "Course")"><i class="fas fa-book me-1"></i> Khóa học của tôi</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="@Url.Action("FavoriteCourses", "Course")"><i class="fas fa-heart me-1"></i> Yêu thích</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/User/SearchTeacher"><i class="fas fa-chalkboard-teacher me-1"></i> Tìm giảng viên</a>
+                            <a class="nav-link" href="/User/SearchTeacher"><i class="fas fa-chalkboard-teacher"></i>Tìm&nbsp;giảng&nbsp;viên</a>
                         </li>
                         @if (User.IsInRole("Teacher"))
                         {
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="teacherDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-chalkboard-teacher me-1"></i> Giảng viên
+                                    <i class="fas fa-chalkboard-teacher"></i>Giảng&nbsp;viên
                                 </a>
-                                <ul class="dropdown-menu shadow-sm" aria-labelledby="teacherDropdown">
+                                <ul class="dropdown-menu" aria-labelledby="teacherDropdown">
                                     <li>
                                         <a class="dropdown-item" asp-area="Teacher" asp-controller="Course" asp-action="Index">
-                                            <i class="fas fa-th-list me-2"></i> Quản lý khóa học
+                                            <i class="fas fa-th-list me-2"></i> Quản&nbsp;lý&nbsp;khóa&nbsp;học
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" asp-area="Teacher" asp-controller="Course" asp-action="Create">
-                                            <i class="fas fa-plus-circle me-2"></i> Tạo khóa học mới
+                                            <i class="fas fa-plus-circle me-2"></i> Tạo&nbsp;khóa&nbsp;học&nbsp;mới
                                         </a>
                                     </li>
-                                    <li><hr class="dropdown-divider"></li>
+                                    <li><hr class="dropdown-divider" /></li>
                                     <li>
                                         <a class="dropdown-item" asp-area="Teacher" asp-controller="Course" asp-action="Students">
-                                            <i class="fas fa-users me-2"></i> Học viên đăng ký
+                                            <i class="fas fa-users me-2"></i> Học&nbsp;viên&nbsp;đăng&nbsp;ký
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" asp-area="Teacher" asp-controller="Course" asp-action="Followers">
-                                            <i class="fas fa-user-friends me-2"></i> Người theo dõi
+                                            <i class="fas fa-user-friends me-2"></i> Người&nbsp;theo&nbsp;dõi
                                         </a>
                                     </li>
-                                    <li><hr class="dropdown-divider"></li>
+                                    <li><hr class="dropdown-divider" /></li>
                                     <li>
                                         <a class="dropdown-item" asp-area="Teacher" asp-controller="Course" asp-action="CreateQuiz">
-                                            <i class="fas fa-question-circle me-2"></i> Tạo bài kiểm tra
+                                            <i class="fas fa-question-circle me-2"></i> Tạo&nbsp;bài&nbsp;kiểm&nbsp;tra
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" asp-area="Teacher" asp-controller="Course" asp-action="EnrollmentStats">
-                                            <i class="fas fa-chart-bar me-2"></i> Thống kê khóa học
+                                            <i class="fas fa-chart-bar me-2"></i> Thống&nbsp;kê&nbsp;khóa&nbsp;học
                                         </a>
                                     </li>
                                 </ul>
@@ -112,18 +110,18 @@
                         {
                             <li class="nav-item">
                                 <a class="nav-link" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
-                                    <i class="fas fa-users-cog me-1"></i> Quản trị
+                                    <i class="fas fa-users-cog"></i>Quản&nbsp;trị
                                 </a>
                             </li>
                         }
                     </ul>
 
-                    <!-- Search Form -->
+                    <!-- Modern Search Form -->
                     <form class="d-flex me-3 search-form" method="get" action="@Url.Action("SearchByName", "Course")">
                         <div class="input-group">
-                            <input class="form-control rounded-start" type="search" name="keyword"
+                            <input class="form-control" type="search" name="keyword"
                                    placeholder="Tìm kiếm khóa học..." aria-label="Search" />
-                            <button class="btn btn-light rounded-end" type="submit">
+                            <button class="btn" type="submit">
                                 <i class="fas fa-search"></i>
                             </button>
                         </div>
@@ -133,23 +131,20 @@
                     <ul class="navbar-nav">
                         @if (User.Identity.IsAuthenticated)
                         {
-                            <!-- Notifications dropdown -->
-                            <li class="nav-item dropdown me-2">
-                                <a class="nav-link dropdown-toggle position-relative" href="#" id="notificationsDropdown"
+                            <!-- Modern Notifications dropdown -->
+                            <li class="nav-item dropdown me-3">
+                                <a class="nav-link position-relative" href="#" id="notificationsDropdown"
                                    role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-bell"></i>
+                                    <i class="fas fa-bell fa-lg"></i>
                                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                                         3
                                         <span class="visually-hidden">Thông báo chưa đọc</span>
                                     </span>
                                 </a>
-                                <div class="dropdown-menu dropdown-menu-end shadow-sm p-0 notification-dropdown"
+                                <div class="dropdown-menu dropdown-menu-end notification-dropdown"
                                      aria-labelledby="notificationsDropdown">
-                                    <div class="dropdown-header bg-primary text-white">
-                                        <div class="d-flex align-items-center">
-                                            <i class="fas fa-bell me-2"></i>
-                                            <span>Thông báo</span>
-                                        </div>
+                                    <div class="dropdown-header text-center py-3">
+                                        <h6 class="mb-0"><i class="fas fa-bell me-2"></i>Thông báo</h6>
                                     </div>
                                     <div class="notification-list">
                                         <a href="#" class="dropdown-item notification-item unread">
@@ -158,7 +153,7 @@
                                             </div>
                                             <div class="notification-content">
                                                 <div class="notification-text">Khóa học mới đã được thêm vào danh mục của bạn</div>
-                                                <div class="notification-time text-muted">5 phút trước</div>
+                                                <div class="notification-time">5 phút trước</div>
                                             </div>
                                         </a>
                                         <a href="#" class="dropdown-item notification-item unread">
@@ -167,7 +162,7 @@
                                             </div>
                                             <div class="notification-content">
                                                 <div class="notification-text">Bạn đã hoàn thành khóa học Python cơ bản</div>
-                                                <div class="notification-time text-muted">30 phút trước</div>
+                                                <div class="notification-time">30 phút trước</div>
                                             </div>
                                         </a>
                                         <a href="#" class="dropdown-item notification-item">
@@ -176,45 +171,59 @@
                                             </div>
                                             <div class="notification-content">
                                                 <div class="notification-text">Giảng viên đã phản hồi bình luận của bạn</div>
-                                                <div class="notification-time text-muted">2 giờ trước</div>
+                                                <div class="notification-time">2 giờ trước</div>
                                             </div>
                                         </a>
                                     </div>
-                                    <div class="dropdown-footer text-center">
-                                        <a href="#" class="text-decoration-none">Xem tất cả</a>
+                                    <div class="dropdown-footer text-center py-3">
+                                        <a href="#" class="text-decoration-none fw-medium">Xem tất cả thông báo</a>
                                     </div>
                                 </div>
                             </li>
 
-                            <!-- User dropdown -->
+                            <!-- Modern User dropdown -->
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown"
+                                <a class="nav-link d-flex align-items-center" href="#" id="userDropdown"
                                    role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <img src="https://ui-avatars.com/api/?name=@User.Identity.Name&background=random"
-                                         class="rounded-circle me-1" width="28" height="28" alt="@User.Identity.Name" />
-                                    <span class="d-none d-lg-inline">@User.Identity.Name</span>
+                                    <div class="user-avatar me-2">
+                                        <img src="https://ui-avatars.com/api/?name=@User.Identity.Name&background=667eea&color=fff&bold=true"
+                                             alt="@User.Identity.Name" />
+                                    </div>
+                                    <span class="d-none d-lg-inline fw-medium">@User.Identity.Name</span>
+                                    <i class="fas fa-chevron-down ms-2 small"></i>
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userDropdown">
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("MyCourses", "Course")">
+                                            <i class="fas fa-book me-2"></i> Khóa&nbsp;học&nbsp;của&nbsp;tôi
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("FavoriteCourses", "Course")">
+                                            <i class="fas fa-heart me-2"></i> Khóa&nbsp;học&nbsp;yêu&nbsp;thích
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider" /></li>
                                     <li>
                                         <a class="dropdown-item" href="/User/EditProfile">
-                                            <i class="fas fa-user-edit me-2"></i> Hồ sơ
+                                            <i class="fas fa-user-edit me-2"></i> Hồ&nbsp;sơ&nbsp;cá&nbsp;nhân
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="@Url.Action("Progress", "Course")">
-                                            <i class="fas fa-chart-line me-2"></i> Tiến độ học
+                                            <i class="fas fa-chart-line me-2"></i> Tiến&nbsp;độ&nbsp;học&nbsp;tập
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="@Url.Action("History", "Payment")">
-                                            <i class="fas fa-history me-2"></i> Lịch sử thanh toán
+                                            <i class="fas fa-history me-2"></i> Lịch&nbsp;sử&nbsp;thanh&nbsp;toán
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider" /></li>
                                     <li>
                                         <form asp-area="Identity" asp-page="/Account/Logout" method="post">
                                             <button type="submit" class="dropdown-item">
-                                                <i class="fas fa-sign-out-alt me-2"></i> Đăng xuất
+                                                <i class="fas fa-sign-out-alt me-2"></i> Đăng&nbsp;xuất
                                             </button>
                                         </form>
                                     </li>
@@ -223,15 +232,14 @@
                         }
                         else
                         {
-                            <li class="nav-item">
-                                <a class="nav-link" href="/Identity/Account/Login">
-                                    <i class="fas fa-sign-in-alt me-1"></i> Đăng nhập
+                            <li class="nav-item me-2">
+                                <a class="btn btn-outline-modern" href="/Identity/Account/Login">
+                                    <i class="fas fa-sign-in-alt me-2"></i> Đăng nhập
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link btn btn-light text-primary rounded-pill ms-2 px-3"
-                                   href="/Identity/Account/Register">
-                                    <i class="fas fa-user-plus me-1"></i> Đăng ký
+                                <a class="btn btn-modern" href="/Identity/Account/Register">
+                                    <i class="fas fa-user-plus me-2"></i> Đăng ký
                                 </a>
                             </li>
                         }
@@ -243,8 +251,8 @@
         @if (User.Identity.IsAuthenticated)
         {
             <div class="progress-container">
-                <div class="progress" style="height: 3px;">
-                    <div class="progress-bar bg-success" role="progressbar" style="width: 0%;"
+                <div class="progress" style="height: 4px;">
+                    <div class="progress-bar" role="progressbar" style="width: 0%;"
                          aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
             </div>
@@ -252,51 +260,73 @@
     </header>
 
     <!-- Main Content -->
-    <main class="animate__animated animate__fadeIn animate__faster">
-        <div class="container py-4">
-            @if (TempData["SuccessMessage"] != null)
-            {
-                <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
-                    <i class="fas fa-check-circle me-2"></i> @TempData["SuccessMessage"]
+    <main class="animate-fade-in">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="container py-2">
+                <div class="alert alert-success alert-dismissible fade show animate-slide-up" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Thành công!</strong> @TempData["SuccessMessage"]
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
-            }
+            </div>
+        }
 
-            @if (TempData["ErrorMessage"] != null)
-            {
-                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
-                    <i class="fas fa-exclamation-circle me-2"></i> @TempData["ErrorMessage"]
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="container py-2">
+                <div class="alert alert-danger alert-dismissible fade show animate-slide-up" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <strong>Lỗi!</strong> @TempData["ErrorMessage"]
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
-            }
+            </div>
+        }
 
+        <!-- Check if this is the Home page -->
+        @if (ViewContext.RouteData.Values["controller"]?.ToString() == "Home" &&
+        ViewContext.RouteData.Values["action"]?.ToString() == "Index")
+        {
+            <!-- Home page content - full width -->
             @RenderBody()
-        </div>
+        }
+        else
+        {
+            <!-- Other pages - with container -->
+            <div class="container py-4">
+                @RenderBody()
+            </div>
+        }
     </main>
 
-    <!-- Back to top button -->
+    <!-- Modern Back to Top Button -->
     <a href="#" class="back-to-top" id="scrollToTop">
         <i class="fas fa-arrow-up"></i>
     </a>
 
-    <!-- Loading Spinner -->
+    <!-- Modern Loading Spinner -->
     <div id="loading-spinner" style="display: none;">
-        <div class="spinner-overlay"></div>
         <div class="spinner-content">
-            <div class="spinner-border text-primary" role="status"></div>
-            <p class="mt-2">Đang tải...</p>
+            <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <h5 class="fw-medium">Đang tải...</h5>
+            <p class="text-muted mb-0">Vui lòng chờ trong giây lát</p>
         </div>
     </div>
 
-    <!-- Toast container for notifications -->
+    <!-- Modern Toast Container -->
     <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
         <div id="liveToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="toast-header">
-                <strong class="me-auto" id="toastTitle">Thông báo</strong>
+                <div class="rounded me-2" style="width: 20px; height: 20px; background: var(--primary-gradient);"></div>
+                <strong class="me-auto" id="toastTitle">OnlineLearning</strong>
                 <small id="toastTime">Bây giờ</small>
                 <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
-            <div class="toast-body" id="toastMessage"></div>
+            <div class="toast-body" id="toastMessage">
+                Thông báo sẽ hiển thị tại đây
+            </div>
         </div>
     </div>
 
@@ -308,198 +338,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.19.1/js/mdb.min.js"></script>
-    <script src="https://cdn.syncfusion.com/ej2/23.1.36/dist/ej2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/6.0.0/bootbox.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.0.0/intro.min.js"></script>
 
-    <!-- Core Functions -->
-    <script>
-        $(document).ready(function () {
-            // Loading Spinner
-            window.addEventListener('beforeunload', function () {
-                $('#loading-spinner').show();
-            });
-
-            // Scroll to Top Button
-            const scrollToTopBtn = $('#scrollToTop');
-            $(window).on('scroll', function () {
-                if (window.scrollY > 300) {
-                    scrollToTopBtn.addClass('show');
-                } else {
-                    scrollToTopBtn.removeClass('show');
-                }
-            });
-
-            scrollToTopBtn.on('click', function (e) {
-                e.preventDefault();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-
-            // Progress Bar
-        @if (User.Identity.IsAuthenticated)
-        {
-            <text>
-                    $.ajax({
-                        url: '/Course/GetAverageProgress',
-                        method: 'GET',
-                        success: function (data) {
-                            $('.progress-bar').css('width', data + '%').attr('aria-valuenow', data);
-                        },
-                        error: function () {
-                            console.error('Failed to fetch progress data');
-                        }
-                    });
-            </text>
-        }
-
-            // Toastr Configuration
-            toastr.options = {
-                closeButton: true,
-                progressBar: true,
-                positionClass: 'toast-bottom-right',
-                timeOut: 3000,
-                extendedTimeOut: 1500,
-                showEasing: "swing",
-                hideEasing: "linear",
-                showMethod: "fadeIn",
-                hideMethod: "fadeOut"
-            };
-
-            // Toast Notification Function
-            window.showToast = function (title, message, type = 'info') {
-                switch (type) {
-                    case 'success':
-                        toastr.success(message, title);
-                        break;
-                    case 'error':
-                    case 'danger':
-                        toastr.error(message, title);
-                        break;
-                    case 'warning':
-                        toastr.warning(message, title);
-                        break;
-                    default:
-                        toastr.info(message, title);
-                }
-            };
-
-            // Initialize tooltips
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
-
-            // Initialize popovers
-            var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
-            popoverTriggerList.map(function (popoverTriggerEl) {
-                return new bootstrap.Popover(popoverTriggerEl);
-            });
-
-            // Active link handling
-            const currentUrl = window.location.pathname;
-            $('.navbar-nav .nav-link').each(function() {
-                const href = $(this).attr('href');
-                if (href === currentUrl || currentUrl.startsWith(href) && href !== '/') {
-                    $(this).addClass('active');
-                }
-            });
-
-            // Smooth scrolling for anchor links
-            $('a[href^="#"]').on('click', function (e) {
-                const target = $(this.getAttribute('href'));
-                if (target.length) {
-                    e.preventDefault();
-                    $('html, body').animate({
-                        scrollTop: target.offset().top - 70
-                    }, 500);
-                }
-            });
-
-            // Dropdown hover effect for desktop
-            if (window.innerWidth >= 992) {
-                $('.navbar .dropdown').hover(
-                    function() {
-                        $(this).find('.dropdown-menu').first().addClass('show');
-                    },
-                    function() {
-                        $(this).find('.dropdown-menu').first().removeClass('show');
-                    }
-                );
-            }
-
-            // Counter function for elements with data-count attribute
-            function startCounter() {
-                $('.counter').each(function() {
-                    const $this = $(this);
-                    const countTo = $this.attr('data-count');
-
-                    $({countNum: 0}).animate({
-                        countNum: countTo
-                    }, {
-                        duration: 1500,
-                        easing: 'swing',
-                        step: function() {
-                            $this.text(Math.floor(this.countNum));
-                        },
-                        complete: function() {
-                            $this.text(this.countNum);
-                        }
-                    });
-                });
-            }
-
-            // Global utility functions
-            window.AppUtils = {
-                // Format currency to VND
-                formatCurrency: function(amount) {
-                    return new Intl.NumberFormat('vi-VN', {
-                        style: 'currency',
-                        currency: 'VND'
-                    }).format(amount);
-                },
-
-                // Format date to Vietnamese format
-                formatDate: function(dateString) {
-                    const date = new Date(dateString);
-                    return new Intl.DateTimeFormat('vi-VN', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric'
-                    }).format(date);
-                },
-
-                // Show alert with SweetAlert2
-                showAlert: function(title, message, type = 'info') {
-                    return Swal.fire({
-                        title: title,
-                        text: message,
-                        icon: type,
-                        confirmButtonText: 'Đồng ý'
-                    });
-                },
-
-                // Confirm dialog with SweetAlert2
-                confirmDialog: function(title, message, callback) {
-                    Swal.fire({
-                        title: title,
-                        text: message,
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#3085d6',
-                        cancelButtonColor: '#d33',
-                        confirmButtonText: 'Xác nhận',
-                        cancelButtonText: 'Hủy bỏ'
-                    }).then((result) => {
-                        if (result.isConfirmed && typeof callback === 'function') {
-                            callback();
-                        }
-                    });
-                }
-            };
-        });
-    </script>
 
     <!-- Render any additional scripts from the view -->
     @await RenderSectionAsync("Scripts", required: false)
