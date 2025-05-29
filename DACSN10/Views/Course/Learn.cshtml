@@ -1,0 +1,149 @@
+﻿@model DACSN10.Models.Lesson
+@{
+    ViewData["Title"] = "Learn: " + Model.TenBaiHoc;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var progress = ViewBag.Progress as DACSN10.Models.LessonProgress;
+    bool isCompleted = progress != null && progress.IsCompleted;
+}
+
+<h2>@Model.TenBaiHoc</h2>
+<div>
+    <div>
+        <b>Thời lượng:</b> @Model.ThoiLuong phút
+        @if (!string.IsNullOrEmpty(Model.VideoUrl))
+        {
+            <span class="badge bg-info">Có video</span>
+        }
+        @if (isCompleted)
+        {
+            <span class="badge bg-success">Đã hoàn thành</span>
+        }
+    </div>
+    <hr />
+    @if (!string.IsNullOrEmpty(Model.VideoUrl))
+    {
+        <div id="videoBlock">
+            @if (Model.VideoUrl.Contains("youtube.com") || Model.VideoUrl.Contains("youtu.be"))
+            {
+                // YouTube
+                string videoId = "";
+                if (Model.VideoUrl.Contains("v="))
+                    videoId = Model.VideoUrl.Split("v=")[1].Split('&')[0];
+                else if (Model.VideoUrl.Contains("youtu.be/"))
+                    videoId = Model.VideoUrl.Split("youtu.be/")[1];
+                string embed = $"https://www.youtube.com/embed/{videoId}";
+                <iframe id="lessonVideo" width="560" height="315" src="@embed" frameborder="0" allowfullscreen></iframe>
+            }
+            else if (Model.VideoUrl.Contains("drive.google.com"))
+            {
+                // Google Drive
+                var fileId = "";
+                // extract Google Drive fileId
+                var match = System.Text.RegularExpressions.Regex.Match(Model.VideoUrl, @"d/([^/]+)");
+                if (match.Success)
+                    fileId = match.Groups[1].Value;
+                else if (Model.VideoUrl.Contains("id="))
+                    fileId = Model.VideoUrl.Split("id=")[1].Split('&')[0];
+
+                var embed = $"https://drive.google.com/file/d/{fileId}/preview";
+                <iframe id="lessonVideo" width="560" height="315" src="@embed" allowfullscreen></iframe>
+            }
+            else
+            {
+                // Link khác (tự embed)
+                <video id="lessonVideo" width="560" height="315" controls>
+                    <source src="@Model.VideoUrl" />
+                </video>
+            }
+        </div>
+    }
+    <div class="mt-3">
+        @if (!string.IsNullOrEmpty(Model.NoiDung) && Model.NoiDung.StartsWith("/Uploads/"))
+        {
+            <a href="@Model.NoiDung" target="_blank" class="btn btn-outline-info"><i class="fas fa-file"></i> Tải tài liệu</a>
+        }
+        else
+        {
+            <div class="border p-3" style="min-height:150px;">@Html.Raw(Model.NoiDung)</div>
+        }
+    </div>
+    <div class="mt-4">
+        <progress id="progressBar" value="0" max="100" style="width:300px;"></progress>
+        <span id="completionStatus"></span>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Tiến trình video
+        let isVideo = @((!string.IsNullOrEmpty(Model.VideoUrl)).ToString().ToLower());
+        let lessonId = @Model.LessonID;
+        let durationMinutes = @Model.ThoiLuong;
+        let userCompleted = @(isCompleted.ToString().ToLower());
+
+        function reportProgress(seconds, complete) {
+            $.post('@Url.Action("RecordProgress", "Lesson")', {
+                lessonId: lessonId,
+                watchedSeconds: seconds,
+                complete: complete
+            });
+        }
+
+        $(function() {
+            if (userCompleted) {
+                $("#progressBar").val(100);
+                $("#completionStatus").text("Đã hoàn thành");
+                return;
+            }
+
+            if (isVideo) {
+                let video = document.getElementById('lessonVideo');
+                let duration = 0;
+                let lastReported = 0;
+                // Nếu iframe (YouTube/Drive) thì không truy cập được duration, phải dùng thư viện (YouTube API, v.v.)
+                if (video.tagName === "VIDEO") {
+                    video.addEventListener('loadedmetadata', function() {
+                        duration = video.duration;
+                    });
+                    video.addEventListener('timeupdate', function() {
+                        let percent = (video.currentTime / video.duration) * 100;
+                        $("#progressBar").val(percent);
+                        if (video.currentTime - lastReported > 10 || video.ended) { // mỗi 10s hoặc khi kết thúc
+                            reportProgress(video.currentTime, video.ended);
+                            lastReported = video.currentTime;
+                        }
+                    });
+                    video.addEventListener('ended', function() {
+                        $("#progressBar").val(100);
+                        $("#completionStatus").text("Đã hoàn thành");
+                    });
+                }
+                else {
+                    // Iframe (YouTube/Drive): chỉ có thể check hoàn thành khi user click nút "Tôi đã xem hết video"
+                    // => Hiển thị nút xác nhận
+                    $("<button class='btn btn-success mt-3' id='btnConfirmWatch'>Tôi đã xem hết video</button>").insertAfter("#videoBlock");
+                    $("#btnConfirmWatch").on("click", function() {
+                        reportProgress(0, true);
+                        $("#progressBar").val(100);
+                        $("#completionStatus").text("Đã hoàn thành");
+                        $(this).prop("disabled", true);
+                    });
+                }
+            } else {
+                // Bài chỉ có text/tài liệu. Xem hết thì auto hoàn thành sau duration
+                let seconds = durationMinutes * 60;
+                let elapsed = 0;
+                let interval = setInterval(function(){
+                    elapsed++;
+                    let percent = Math.min(100, (elapsed / seconds) * 100);
+                    $("#progressBar").val(percent);
+                    if (percent >= 100) {
+                        clearInterval(interval);
+                        reportProgress(seconds, true);
+                        $("#completionStatus").text("Đã hoàn thành");
+                    }
+                }, 1000);
+            }
+        });
+    </script>
+}

@@ -427,5 +427,73 @@ namespace DACSN10.Controllers
 
             return Json(averageProgress);
         }
+
+        // Hiển thị danh sách bài học trong khoá học
+        [AllowAnonymous]
+        public async Task<IActionResult> CourseLessons(int courseId)
+        {
+            var course = await _context.Courses
+                .Include(c => c.Lessons)
+                .FirstOrDefaultAsync(c => c.CourseID == courseId && c.TrangThai == "Published");
+            if (course == null) return NotFound();
+
+            return View(course);
+        }
+
+        // Hiển thị chi tiết 1 bài học cho học viên
+        public async Task<IActionResult> Learn(int lessonId)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var lesson = await _context.Lessons
+                .Include(l => l.Course)
+                .FirstOrDefaultAsync(l => l.LessonID == lessonId);
+
+            if (lesson == null) return NotFound();
+
+            // lấy tiến trình cũ nếu có
+            var progress = await _context.LessonProgresses.FirstOrDefaultAsync(p => p.LessonID == lessonId && p.UserID == userId);
+
+            ViewBag.Progress = progress;
+            return View(lesson);
+        }
+
+        // API: Ghi nhận tiến trình học bài (AJAX gọi)
+        [HttpPost]
+        public async Task<IActionResult> RecordProgress(int lessonId, double watchedSeconds, bool complete = false)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var lesson = await _context.Lessons.FindAsync(lessonId);
+            if (lesson == null) return NotFound();
+
+            var progress = await _context.LessonProgresses.FirstOrDefaultAsync(p => p.LessonID == lessonId && p.UserID == userId);
+
+            if (progress == null)
+            {
+                progress = new LessonProgress
+                {
+                    LessonID = lessonId,
+                    UserID = userId,
+                    WatchedSeconds = watchedSeconds,
+                    IsCompleted = complete,
+                    CompletedAt = complete ? DateTime.Now : null
+                };
+                _context.LessonProgresses.Add(progress);
+            }
+            else
+            {
+                progress.WatchedSeconds = watchedSeconds;
+                if (complete && !progress.IsCompleted)
+                {
+                    progress.IsCompleted = true;
+                    progress.CompletedAt = DateTime.Now;
+                }
+            }
+            await _context.SaveChangesAsync();
+
+            // Gọi cập nhật tổng tiến trình khoá học nếu muốn (tùy)
+            return Json(new { success = true });
+        }
     }
 }

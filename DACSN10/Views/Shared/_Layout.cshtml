@@ -21,15 +21,12 @@
     <link rel="stylesheet" href="~/css/site.css" />
 
     <!-- Render any additional styles from the view -->
-    <!-- Render any additional styles from the view -->
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
     <header>
-        <!-- Modern Glassmorphism Navigation -->
         <nav class="navbar navbar-expand-lg sticky-top">
             <div class="container-fluid px-4">
-                <!-- Compact Brand Logo -->
                 <a class="navbar-brand d-flex align-items-center text-decoration-none" href="/">
                     <div class="brand-icon-wrapper">
                         <i class="fas fa-graduation-cap brand-icon"></i>
@@ -39,14 +36,10 @@
                         <span class="brand-main">Online</span><span class="brand-accent">Learning</span>
                     </div>
                 </a>
-
-                <!-- Mobile Toggle Button -->
                 <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                         aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-
-                <!-- Navbar Items -->
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0 align-items-center flex-nowrap">
                         <li class="nav-item">
@@ -115,8 +108,6 @@
                             </li>
                         }
                     </ul>
-
-                    <!-- Modern Search Form -->
                     <form class="d-flex me-3 search-form" method="get" action="@Url.Action("SearchByName", "Course")">
                         <div class="input-group">
                             <input class="form-control" type="search" name="keyword"
@@ -126,12 +117,9 @@
                             </button>
                         </div>
                     </form>
-
-                    <!-- User Navigation -->
                     <ul class="navbar-nav">
                         @if (User.Identity.IsAuthenticated)
                         {
-                            <!-- Modern Notifications dropdown -->
                             <li class="nav-item dropdown me-3">
                                 <a class="nav-link position-relative" href="#" id="notificationsDropdown"
                                    role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -180,8 +168,6 @@
                                     </div>
                                 </div>
                             </li>
-
-                            <!-- Modern User dropdown -->
                             <li class="nav-item dropdown">
                                 <a class="nav-link d-flex align-items-center" href="#" id="userDropdown"
                                    role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -247,7 +233,6 @@
                 </div>
             </div>
         </nav>
-
         @if (User.Identity.IsAuthenticated)
         {
             <div class="progress-container">
@@ -259,7 +244,6 @@
         }
     </header>
 
-    <!-- Main Content -->
     <main class="animate-fade-in">
         @if (TempData["SuccessMessage"] != null)
         {
@@ -283,28 +267,23 @@
             </div>
         }
 
-        <!-- Check if this is the Home page -->
         @if (ViewContext.RouteData.Values["controller"]?.ToString() == "Home" &&
         ViewContext.RouteData.Values["action"]?.ToString() == "Index")
         {
-            <!-- Home page content - full width -->
             @RenderBody()
         }
         else
         {
-            <!-- Other pages - with container -->
             <div class="container py-4">
                 @RenderBody()
             </div>
         }
     </main>
 
-    <!-- Modern Back to Top Button -->
     <a href="#" class="back-to-top" id="scrollToTop">
         <i class="fas fa-arrow-up"></i>
     </a>
 
-    <!-- Modern Loading Spinner -->
     <div id="loading-spinner" style="display: none;">
         <div class="spinner-content">
             <div class="spinner-border text-primary mb-3" role="status">
@@ -315,7 +294,6 @@
         </div>
     </div>
 
-    <!-- Modern Toast Container -->
     <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
         <div id="liveToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="toast-header">
@@ -340,8 +318,6 @@
     <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-
-    <!-- Render any additional scripts from the view -->
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

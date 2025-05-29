@@ -10,7 +10,7 @@ namespace DACSN10.Models
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }
-
+        public DbSet<LessonProgress> LessonProgresses { get; set; }
         public DbSet<Course> Courses { get; set; }
         public DbSet<Lesson> Lessons { get; set; }
         public DbSet<Assignment> Assignments { get; set; }

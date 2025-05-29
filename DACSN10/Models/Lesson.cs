@@ -9,6 +9,7 @@
         public string VideoUrl { get; set; }
         public int CourseID { get; set; }
         public Course Course { get; set; }
+        public bool IsVideoRequiredComplete { get; set; } // mới thêm
     }
 
 }

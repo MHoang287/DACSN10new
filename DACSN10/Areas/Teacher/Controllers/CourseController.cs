@@ -257,76 +257,144 @@ namespace DACSN10.Areas.TeacherArea.Controllers
             return View(course);
         }
 
-        // GET: /TeacherArea/Course/CreateLesson/5
-        public async Task<IActionResult> CreateLesson(int id)
+        // GET: /Teacher/Course/LessonDetail/5
+        public async Task<IActionResult> LessonDetail(int id)
         {
-            var currentUser = await _userManager.GetUserAsync(User);
-            var course = await _context.Courses
-                .FirstOrDefaultAsync(c => c.CourseID == id && c.UserID == currentUser.Id);
-
-            if (course == null)
+            var lesson = await _context.Lessons
+                .Include(l => l.Course)
+                .FirstOrDefaultAsync(l => l.LessonID == id);
+            if (lesson == null)
             {
                 return NotFound();
             }
+            return View(lesson);
+        }
 
-            var viewModel = new LessonViewModel
-            {
-                CourseID = id
-            };
+        public async Task<IActionResult> CreateLesson(int id)
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            var course = await _context.Courses.FirstOrDefaultAsync(c => c.CourseID == id && c.UserID == currentUser.Id);
+            if (course == null) return NotFound();
 
+            var viewModel = new LessonViewModel { CourseID = id };
             return View(viewModel);
         }
 
-        // POST: /TeacherArea/Course/CreateLesson
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateLesson(LessonViewModel viewModel)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
+                return View(viewModel);
+
+            var currentUser = await _userManager.GetUserAsync(User);
+            var course = await _context.Courses.FirstOrDefaultAsync(c => c.CourseID == viewModel.CourseID && c.UserID == currentUser.Id);
+            if (course == null) return NotFound();
+
+            var lesson = new Lesson
             {
-                var currentUser = await _userManager.GetUserAsync(User);
-                var course = await _context.Courses
-                    .FirstOrDefaultAsync(c => c.CourseID == viewModel.CourseID && c.UserID == currentUser.Id);
+                TenBaiHoc = viewModel.TenBaiHoc,
+                NoiDung = viewModel.NoiDung,
+                ThoiLuong = viewModel.ThoiLuong,
+                VideoUrl = viewModel.VideoUrl,
+                CourseID = viewModel.CourseID,
+                IsVideoRequiredComplete = viewModel.IsVideoRequiredComplete
+            };
 
-                if (course == null)
+            if (viewModel.DocumentFile != null && viewModel.DocumentFile.Length > 0)
+            {
+                var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "Uploads", "lessons");
+                Directory.CreateDirectory(uploadsFolder);
+                var uniqueFileName = Guid.NewGuid().ToString() + "_" + viewModel.DocumentFile.FileName;
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
                 {
-                    return NotFound();
+                    await viewModel.DocumentFile.CopyToAsync(fileStream);
                 }
-
-                var lesson = new Lesson
-                {
-                    TenBaiHoc = viewModel.TenBaiHoc,
-                    NoiDung = viewModel.NoiDung,
-                    ThoiLuong = viewModel.ThoiLuong,
-                    VideoUrl = viewModel.VideoUrl,
-                    CourseID = viewModel.CourseID
-                };
-
-                // Handle file upload if provided
-                if (viewModel.DocumentFile != null && viewModel.DocumentFile.Length > 0)
-                {
-                    var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "Uploads", "lessons");
-                    Directory.CreateDirectory(uploadsFolder); // Ensure directory exists
-
-                    var uniqueFileName = Guid.NewGuid().ToString() + "_" + viewModel.DocumentFile.FileName;
-                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                    using (var fileStream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await viewModel.DocumentFile.CopyToAsync(fileStream);
-                    }
-
-                    lesson.NoiDung = "/Uploads/lessons/" + uniqueFileName;
-                }
-
-                _context.Lessons.Add(lesson);
-                await _context.SaveChangesAsync();
-
-                return RedirectToAction(nameof(Lessons), new { id = viewModel.CourseID });
+                lesson.NoiDung = "/Uploads/lessons/" + uniqueFileName;
             }
 
-            return View(viewModel);
+            _context.Lessons.Add(lesson);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Upload bài học thành công!";
+            return RedirectToAction("Lessons", new { id = viewModel.CourseID });
         }
+
+        // GET: /Teacher/Course/EditLesson/5
+        public async Task<IActionResult> EditLesson(int lessonId)
+        {
+            var lesson = await _context.Lessons.FindAsync(lessonId);
+            if (lesson == null) return NotFound();
+            var vm = new LessonViewModel
+            {
+                LessonID = lesson.LessonID,
+                CourseID = lesson.CourseID,
+                TenBaiHoc = lesson.TenBaiHoc,
+                NoiDung = lesson.NoiDung,
+                ThoiLuong = lesson.ThoiLuong,
+                VideoUrl = lesson.VideoUrl,
+                IsVideoRequiredComplete = lesson.IsVideoRequiredComplete
+            };
+            return View(vm);
+        }
+
+        // POST: /TeacherArea/Course/EditLesson/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditLesson(int lessonId, LessonViewModel viewModel)
+        {
+            if (lessonId != viewModel.LessonID) return NotFound();
+            if (!ModelState.IsValid) return View(viewModel);
+
+            var lesson = await _context.Lessons.Include(l => l.Course).FirstOrDefaultAsync(l => l.LessonID == lessonId);
+            if (lesson == null) return NotFound();
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (lesson.Course.UserID != currentUser.Id) return Forbid();
+
+            lesson.TenBaiHoc = viewModel.TenBaiHoc;
+            lesson.ThoiLuong = viewModel.ThoiLuong;
+            lesson.VideoUrl = viewModel.VideoUrl;
+            lesson.IsVideoRequiredComplete = viewModel.IsVideoRequiredComplete;
+
+            // Nếu sửa file tài liệu
+            if (viewModel.DocumentFile != null && viewModel.DocumentFile.Length > 0)
+            {
+                var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "Uploads", "lessons");
+                Directory.CreateDirectory(uploadsFolder);
+                var uniqueFileName = Guid.NewGuid().ToString() + "_" + viewModel.DocumentFile.FileName;
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await viewModel.DocumentFile.CopyToAsync(fileStream);
+                }
+                lesson.NoiDung = "/Uploads/lessons/" + uniqueFileName;
+            }
+            else if (!string.IsNullOrEmpty(viewModel.NoiDung)) // Nếu là nội dung text
+            {
+                lesson.NoiDung = viewModel.NoiDung;
+            }
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Lessons), new { id = lesson.CourseID });
+        }
+        // GET: /Teacher/Course/DeleteLesson/3
+        [HttpGet]
+        public async Task<IActionResult> DeleteLesson(int id)
+        {
+            var lesson = await _context.Lessons.FindAsync(id);
+            if (lesson == null)
+            {
+                return NotFound();
+            }
+            var courseId = lesson.CourseID;
+            _context.Lessons.Remove(lesson);
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Xóa bài học thành công!";
+            return RedirectToAction("Lessons", new { id = courseId });
+        }
+
 
         // GET: /TeacherArea/Course/Students/5
         public async Task<IActionResult> Students(int id)

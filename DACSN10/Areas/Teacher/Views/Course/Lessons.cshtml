@@ -5,298 +5,70 @@
     Layout = "~/Areas/Teacher/Views/Shared/_Layout.cshtml";
 }
 
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
 <div class="container-fluid px-4 animate__animated animate__fadeIn">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mt-4">
-            <i class="fas fa-list-ul"></i> Lessons for "@Model.TenKhoaHoc"
-        </h1>
-        <div>
-            <a asp-action="Index" class="btn btn-outline-secondary me-2">
-                <i class="fas fa-arrow-left"></i> Back to Courses
-            </a>
-            <a asp-action="CreateLesson" asp-route-id="@Model.CourseID" class="btn btn-primary">
-                <i class="fas fa-plus-circle"></i> Add New Lesson
-            </a>
-        </div>
-    </div>
-
-    <div class="card mb-4">
-        <div class="card-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <i class="fas fa-book me-1"></i>
-                    Course Information
-                </div>
-                <div>
-                    <a asp-action="Edit" asp-route-id="@Model.CourseID" class="btn btn-sm btn-primary">
-                        <i class="fas fa-edit"></i> Edit Course
-                    </a>
-                </div>
-            </div>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <dl class="row">
-                        <dt class="col-sm-4">Status:</dt>
-                        <dd class="col-sm-8">
-                            @if (Model.TrangThai == "Published")
-                            {
-                                <span class="badge bg-success">Published</span>
-                            }
-                            else if (Model.TrangThai == "Draft")
-                            {
-                                <span class="badge bg-warning text-dark">Draft</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-secondary">@Model.TrangThai</span>
-                            }
-                        </dd>
-
-                        <dt class="col-sm-4">Price:</dt>
-                        <dd class="col-sm-8">@Model.Gia.ToString("N0") VND</dd>
-                    </dl>
-                </div>
-                <div class="col-md-6">
-                    <div class="d-flex justify-content-end">
-                        <div class="badge bg-info text-dark py-2 px-3 me-2">
-                            <i class="fas fa-clock"></i> @(Model.Lessons?.Sum(l => l.ThoiLuong) ?? 0) minutes total
-                        </div>
-                        <div class="badge bg-secondary py-2 px-3">
-                            <i class="fas fa-list"></i> @(Model.Lessons?.Count ?? 0) lesson(s)
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
+    <h1 class="mt-4 mb-4">
+        <i class="fas fa-list-ul"></i> Lessons for "@Model.TenKhoaHoc"
+    </h1>
+    <a asp-action="CreateLesson" asp-route-id="@Model.CourseID" class="btn btn-primary mb-3">
+        <i class="fas fa-plus-circle"></i> Add New Lesson
+    </a>
     @if (Model.Lessons == null || !Model.Lessons.Any())
     {
-        <div class="alert alert-info" role="alert">
-            <i class="fas fa-info-circle"></i>
-            No lessons have been added to this course yet.
-            <a asp-action="CreateLesson" asp-route-id="@Model.CourseID" class="alert-link">Create your first lesson</a> to get started.
-        </div>
+        <div class="alert alert-info">No lessons have been added to this course yet.</div>
     }
     else
     {
-        <div class="card mb-4">
-            <div class="card-header">
-                <i class="fas fa-list-alt me-1"></i> Course Lessons
-            </div>
-            <div class="card-body">
-                <div id="lessonsContainer">
-                    @foreach (var lesson in Model.Lessons.OrderBy(l => l.LessonID))
-                    {
-                        <div class="card mb-3 lesson-card" data-id="@lesson.LessonID">
-                            <div class="card-header">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <i class="fas fa-book-open"></i>
-                                        <span class="fw-bold">@lesson.TenBaiHoc</span>
-                                    </div>
-                                    <div>
-                                        <span class="badge bg-secondary">
-                                            <i class="fas fa-clock"></i> @lesson.ThoiLuong min
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-8">
-                                        @if (!string.IsNullOrEmpty(lesson.NoiDung) && lesson.NoiDung.StartsWith("/Uploads/"))
-                                        {
-                                            <div class="mb-2">
-                                                <i class="fas fa-file-pdf text-danger"></i>
-                                                <a href="@lesson.NoiDung" target="_blank" class="ms-1">Download Lesson Document</a>
-                                            </div>
-                                        }
-                                        else
-                                        {
-                                            <div class="mb-2 lesson-content">
-                                                @lesson.NoiDung
-                                            </div>
-                                        }
-
-                                        @if (!string.IsNullOrEmpty(lesson.VideoUrl))
-                                        {
-                                            <div class="mt-2">
-                                                <i class="fas fa-video text-primary"></i>
-                                                <a href="#" class="ms-1 video-preview-link" data-bs-toggle="modal"
-                                                   data-bs-target="#videoModal" data-video-url="@lesson.VideoUrl">
-                                                    Preview Video
-                                                </a>
-                                            </div>
-                                        }
-                                    </div>
-                                    <div class="col-md-4 text-end">
-                                        <div class="btn-group" role="group">
-                                            <button type="button" class="btn btn-sm btn-outline-primary edit-lesson-btn"
-                                                    data-id="@lesson.LessonID" data-bs-toggle="tooltip" title="Edit Lesson">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-outline-danger delete-lesson-btn"
-                                                    data-id="@lesson.LessonID" data-title="@lesson.TenBaiHoc" data-bs-toggle="tooltip" title="Delete Lesson">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    }
+        <div class="list-group">
+            @foreach (var lesson in Model.Lessons.OrderBy(l => l.LessonID))
+            {
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <a asp-action="LessonDetail" asp-route-id="@lesson.LessonID" class="fw-bold text-decoration-none flex-grow-1">
+                        @lesson.TenBaiHoc
+                        <span class="ms-2 text-muted">(@lesson.ThoiLuong phút)</span>
+                    </a>
+                    <div class="ms-3 btn-group">
+                        <a asp-action="EditLesson" asp-route-lessonId="@lesson.LessonID" class="btn btn-sm btn-outline-primary me-1" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <button class="btn btn-sm btn-outline-danger btn-delete-lesson" data-id="@lesson.LessonID" data-title="@lesson.TenBaiHoc" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        <a asp-action="LessonDetail" asp-route-id="@lesson.LessonID" class="btn btn-sm btn-outline-secondary ms-1" title="View">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </div>
                 </div>
-            </div>
+            }
         </div>
     }
 </div>
 
-<!-- Video Modal -->
-<div class="modal fade" id="videoModal" tabindex="-1" aria-labelledby="videoModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="videoModalLabel">Video Preview</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="ratio ratio-16x9">
-                    <iframe id="videoFrame" src="" allowfullscreen></iframe>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         $(document).ready(function() {
-            // Initialize tooltips
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl)
-            });
-
-            // Make lessons sortable
-            $("#lessonsContainer").sortable({
-                placeholder: "ui-state-highlight",
-                handle: ".card-header",
-                update: function(event, ui) {
-                    const lessonOrder = $(this).sortable('toArray', { attribute: 'data-id' });
-
-                    // Example of sending the new order to server
-                    // $.ajax({
-                    //     url: '/Teacher/Course/ReorderLessons',
-                    //     type: 'POST',
-                    //     data: { courseId: @Model.CourseID, lessonIds: lessonOrder },
-                    //     success: function(result) {
-                    //         toastr.success('Lesson order updated successfully!');
-                    //     }
-                    // });
-
-                    // For now just show a toast notification
-                    toastr.info('Lesson reordering feature coming soon!');
-                }
-            });
-
-            // Setup video modal
-            $('.video-preview-link').on('click', function() {
-                let videoUrl = $(this).data('video-url');
-
-                // Handle different video URLs (YouTube, Vimeo, etc.)
-                if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
-                    // Convert YouTube URL to embed URL
-                    let videoId = '';
-                    if (videoUrl.includes('v=')) {
-                        videoId = videoUrl.split('v=')[1].split('&')[0];
-                    } else if (videoUrl.includes('youtu.be/')) {
-                        videoId = videoUrl.split('youtu.be/')[1];
-                    }
-                    videoUrl = `https://www.youtube.com/embed/${videoId}`;
-                } else if (videoUrl.includes('vimeo.com')) {
-                    // Convert Vimeo URL to embed URL
-                    const vimeoId = videoUrl.split('/').pop();
-                    videoUrl = `https://player.vimeo.com/video/${vimeoId}`;
-                }
-
-                $('#videoFrame').attr('src', videoUrl);
-            });
-
-            // Close and reset video when modal is closed
-            $('#videoModal').on('hidden.bs.modal', function () {
-                $('#videoFrame').attr('src', '');
-            });
-
-            // Handle lesson deletion
-            $('.delete-lesson-btn').on('click', function() {
+            $('.btn-delete-lesson').on('click', function() {
                 const lessonId = $(this).data('id');
                 const lessonTitle = $(this).data('title');
-
                 Swal.fire({
-                    title: 'Delete Lesson',
-                    text: `Are you sure you want to delete the lesson "${lessonTitle}"?`,
+                    title: 'Xóa bài học',
+                    text: `Bạn có chắc chắn muốn xóa "${lessonTitle}"?`,
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonText: 'Yes, delete it!',
-                    confirmButtonColor: '#d33',
-                    cancelButtonText: 'Cancel'
+                    confirmButtonText: 'Xóa',
+                    cancelButtonText: 'Hủy',
+                    confirmButtonColor: '#d33'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        // Example AJAX call to delete lesson
-                        // $.ajax({
-                        //     url: '/Teacher/Course/DeleteLesson/' + lessonId,
-                        //     type: 'POST',
-                        //     success: function() {
-                        //         $(`div.lesson-card[data-id="${lessonId}"]`).fadeOut(function() {
-                        //             $(this).remove();
-                        //             toastr.success('Lesson deleted successfully!');
-                        //         });
-                        //     }
-                        // });
-
-                        // For now just show a success message
-                        toastr.success('Lesson deletion feature coming soon!');
+                        // Redirect để thực hiện xóa (action: DeleteLesson)
+                        window.location.href = '/Teacher/Course/DeleteLesson/' + lessonId;
                     }
                 });
             });
-
-            // Handle lesson edit
-            $('.edit-lesson-btn').on('click', function() {
-                const lessonId = $(this).data('id');
-                // Redirect to edit lesson page (you'll need to create this route and view)
-                // window.location.href = `/Teacher/Course/EditLesson/${lessonId}`;
-
-                // For now just show an info toast
-                toastr.info('Lesson editing feature coming soon!');
-            });
-
-            // Intro.js tour
-            const startTour = () => {
-                introJs().setOptions({
-                    steps: [
-                        {
-                            element: document.querySelector('h1'),
-                            intro: "This is the lessons management page for your course."
-                        },
-                        {
-                            element: document.querySelector('.btn-primary'),
-                            intro: "Click here to add a new lesson to your course."
-                        },
-                        {
-                            element: document.querySelector('#lessonsContainer'),
-                            intro: "You can drag and drop lessons to reorder them."
-                        }
-                    ]
-                }).start();
-            };
-
-            // Add a tour button
-            $('<button class="btn btn-sm btn-info position-fixed" style="bottom: 20px; right: 20px;"><i class="fas fa-question-circle"></i> Help</button>')
-                .appendTo('body')
-                .on('click', startTour);
         });
     </script>
 }

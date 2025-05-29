@@ -1,0 +1,82 @@
+﻿@model DACSN10.Models.Lesson
+
+@{
+    ViewData["Title"] = $"Bài học: {Model.TenBaiHoc}";
+    Layout = "~/Areas/Teacher/Views/Shared/_Layout.cshtml";
+    var isFile = !string.IsNullOrEmpty(Model.NoiDung) && Model.NoiDung.StartsWith("/Uploads/");
+    var hasText = !string.IsNullOrEmpty(Model.NoiDung) && !isFile;
+}
+
+<div class="container py-4">
+    <a asp-action="Lessons" asp-route-id="@Model.CourseID" class="btn btn-outline-secondary mb-3">
+        <i class="fas fa-arrow-left"></i> BACK TO LESSONS
+    </a>
+    <h2 class="mb-1 fw-bold">@Model.TenBaiHoc</h2>
+    <div class="mb-3 text-muted">Thời lượng: @Model.ThoiLuong phút</div>
+
+    @* 1. Hiện Text Content đầu tiên nếu có *@
+    @if (hasText)
+    {
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <h4 class="fw-bold mb-3"><i class="fas fa-info-circle me-2 text-primary"></i>Nội dung bài giảng</h4>
+                <div class="lesson-content" style="font-size:1.08rem;">
+                    @Html.Raw(Model.NoiDung)
+                </div>
+            </div>
+        </div>
+    }
+
+    @* 2. Video nằm ở giữa *@
+    <div class="mb-4">
+        <h5 class="fw-bold mb-2"><i class="fas fa-video me-2 text-danger"></i>Video bài giảng:</h5>
+        @if (!string.IsNullOrEmpty(Model.VideoUrl))
+        {
+            <div class="ratio ratio-16x9">
+                <iframe src="@(Model.VideoUrl.Contains("youtube")
+                            ? $"https://www.youtube.com/embed/{(Model.VideoUrl.Contains("v=") ? Model.VideoUrl.Split("v=")[1].Split('&')[0] : Model.VideoUrl.Split('/').Last())}"
+                            : Model.VideoUrl)"
+                        allowfullscreen
+                        style="border-radius: 8px; box-shadow: 0 2px 18px #00000022;">
+                </iframe>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-dark mt-3 text-center" style="font-weight:bold; font-size:1.1rem;">
+                Không có video nào được tìm thấy.
+            </div>
+        }
+    </div>
+
+    @* 3. Nếu có file thì hiện ở dưới cùng *@
+    @if (isFile)
+    {
+        <div class="card mt-4 shadow-sm">
+            <div class="card-body">
+                <h5 class="mb-3 fw-bold"><i class="fas fa-file-alt me-2 text-success"></i>Tài liệu bài học</h5>
+                <a href="@Model.NoiDung" target="_blank" class="btn btn-outline-primary">
+                    <i class="fas fa-file-pdf"></i> Tải tài liệu bài học
+                </a>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .lesson-content h1, .lesson-content h2, .lesson-content h3 {
+        font-weight: 700;
+        margin-top: 1.2em;
+        margin-bottom: 0.6em;
+        color: #2d3a4c;
+    }
+
+    .lesson-content ul, .lesson-content ol {
+        margin-left: 1.2em;
+        margin-bottom: 1em;
+    }
+
+    .lesson-content p {
+        margin-bottom: 0.9em;
+    }
+</style>

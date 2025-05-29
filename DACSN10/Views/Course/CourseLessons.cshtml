@@ -1,0 +1,21 @@
+﻿@model DACSN10.Models.Course
+@{
+    ViewData["Title"] = "Course Lessons";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<h2>@Model.TenKhoaHoc</h2>
+<ul class="list-group">
+    @foreach (var lesson in Model.Lessons.OrderBy(l => l.LessonID))
+    {
+        <li class="list-group-item">
+            <a asp-controller="Lesson" asp-action="Learn" asp-route-lessonId="@lesson.LessonID">
+                @lesson.TenBaiHoc
+            </a>
+            @if (!string.IsNullOrEmpty(lesson.VideoUrl))
+            {
+                <span class="badge bg-info">Video</span>
+            }
+            <span class="badge bg-secondary">@lesson.ThoiLuong phút</span>
+        </li>
+    }
+</ul>

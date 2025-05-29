@@ -216,6 +216,9 @@ namespace DACSN10.Migrations
                     b.Property<int>("CourseID")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsVideoRequiredComplete")
+                        .HasColumnType("bit");
+
                     b.Property<string>("NoiDung")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -236,6 +239,39 @@ namespace DACSN10.Migrations
                     b.HasIndex("CourseID");
 
                     b.ToTable("Lessons");
+                });
+
+            modelBuilder.Entity("DACSN10.Models.LessonProgress", b =>
+                {
+                    b.Property<int>("LessonProgressID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("LessonProgressID"));
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("LessonID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserID")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<double>("WatchedSeconds")
+                        .HasColumnType("float");
+
+                    b.HasKey("LessonProgressID");
+
+                    b.HasIndex("LessonID");
+
+                    b.HasIndex("UserID");
+
+                    b.ToTable("LessonProgresses");
                 });
 
             modelBuilder.Entity("DACSN10.Models.Payment", b =>
@@ -742,6 +778,25 @@ namespace DACSN10.Migrations
                         .IsRequired();
 
                     b.Navigation("Course");
+                });
+
+            modelBuilder.Entity("DACSN10.Models.LessonProgress", b =>
+                {
+                    b.HasOne("DACSN10.Models.Lesson", "Lesson")
+                        .WithMany()
+                        .HasForeignKey("LessonID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DACSN10.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Lesson");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("DACSN10.Models.Payment", b =>

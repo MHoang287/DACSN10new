@@ -1,0 +1,311 @@
+﻿@model DACSN10.Areas.Teacher.Models.LessonViewModel
+
+@{
+    ViewData["Title"] = "Edit Lesson";
+    Layout = "~/Areas/Teacher/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid px-4 animate__animated animate__fadeIn">
+    <h1 class="mt-4 mb-4">
+        <i class="fas fa-edit"></i> Edit Lesson
+    </h1>
+
+    <div class="row">
+        <div class="col-xl-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-book-open me-1"></i>
+                    Edit Lesson Details
+                </div>
+                <div class="card-body">
+                    <form asp-action="EditLesson" asp-route-lessonId="@Model.LessonID" enctype="multipart/form-data" id="editLessonForm">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="CourseID" />
+                        <input type="hidden" asp-for="LessonID" />
+
+                        <div class="mb-3">
+                            <label asp-for="TenBaiHoc" class="form-label">Lesson Title</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-heading"></i></span>
+                                <input asp-for="TenBaiHoc" class="form-control" placeholder="Enter lesson title" required />
+                            </div>
+                            <span asp-validation-for="TenBaiHoc" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ThoiLuong" class="form-label">Duration (minutes)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                <input asp-for="ThoiLuong" class="form-control" type="number" min="1" placeholder="Enter lesson duration" required />
+                            </div>
+                            <span asp-validation-for="ThoiLuong" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="VideoUrl" class="form-label">Video URL (YouTube, Vimeo, Google Drive...)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fab fa-youtube"></i></span>
+                                <input asp-for="VideoUrl" class="form-control" value="@Model.VideoUrl" placeholder="Enter video URL (optional)" />
+                            </div>
+                            <span asp-validation-for="VideoUrl" class="text-danger"></span>
+                            <div class="form-text">Ví dụ: https://www.youtube.com/watch?v=xxxx hoặc link Google Drive share public.</div>
+                        </div>
+
+                        <div class="form-check">
+                            <input asp-for="IsVideoRequiredComplete" class="form-check-input" type="checkbox" id="IsVideoRequiredComplete" />
+                            <label class="form-check-label" for="IsVideoRequiredComplete">
+                                Bắt buộc học viên xem hết video để hoàn thành
+                            </label>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Content Option</label>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="contentOption" id="contentTextOption" value="text" @(string.IsNullOrEmpty(Model.NoiDung) || !Model.NoiDung.StartsWith("/Uploads/") ? "checked" : "")>
+                                <label class="form-check-label" for="contentTextOption">Text Content</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="contentOption" id="contentFileOption" value="file" @(Model.NoiDung != null && Model.NoiDung.StartsWith("/Uploads/") ? "checked" : "")>
+                                <label class="form-check-label" for="contentFileOption">Upload Document</label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3" id="textContentSection" style="display:@((Model.NoiDung != null && Model.NoiDung.StartsWith("/Uploads/")) ? "none" : "block")">
+                            <label asp-for="NoiDung" class="form-label">Lesson Content</label>
+                            <textarea asp-for="NoiDung" id="lessonContent" class="form-control" rows="10">@((Model.NoiDung != null && !Model.NoiDung.StartsWith("/Uploads/")) ? Model.NoiDung : "")</textarea>
+                            <span asp-validation-for="NoiDung" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3" id="fileUploadSection" style="display:@((Model.NoiDung != null && Model.NoiDung.StartsWith("/Uploads/")) ? "block" : "none")">
+                            <label asp-for="DocumentFile" class="form-label">Upload Document</label>
+                            <input asp-for="DocumentFile" class="form-control" accept=".pdf,.doc,.docx,.ppt,.pptx" />
+                            <span asp-validation-for="DocumentFile" class="text-danger"></span>
+                            <div class="form-text">Chỉ nhận PDF, Word, PowerPoint</div>
+                            @if (Model.NoiDung != null && Model.NoiDung.StartsWith("/Uploads/"))
+                            {
+                                <div class="mt-2">
+                                    <a href="@Model.NoiDung" target="_blank" class="btn btn-outline-info btn-sm">
+                                        <i class="fas fa-file-alt"></i> Xem tài liệu hiện tại
+                                    </a>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="mt-4 text-end">
+                            <a asp-action="Lessons" asp-route-id="@Model.CourseID" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-arrow-left"></i> Back to Lessons
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="card mb-4 border-info">
+                <div class="card-header bg-info text-white">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Tips for Editing Lessons
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-3"><i class="fas fa-check-circle text-success"></i> <strong>Tiêu đề rõ ràng</strong></li>
+                        <li class="mb-3"><i class="fas fa-check-circle text-success"></i> <strong>Thời lượng chính xác</strong></li>
+                        <li class="mb-3"><i class="fas fa-check-circle text-success"></i> <strong>Video chất lượng (nếu có)</strong></li>
+                        <li class="mb-3"><i class="fas fa-check-circle text-success"></i> <strong>Nội dung có cấu trúc</strong></li>
+                    </ul>
+                    <div class="mt-4">
+                        <button id="previewBtn" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-eye"></i> Xem thử nội dung
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-video me-1"></i>
+                    Video Preview
+                </div>
+                <div class="card-body">
+                    <div id="videoPreviewContainer" class="ratio ratio-16x9 mb-3" style="display: none;">
+                        <iframe id="videoPreviewFrame" src="" allowfullscreen></iframe>
+                    </div>
+                    <p id="noVideoText" class="text-muted text-center">
+                        <i class="fas fa-film fa-2x mb-2"></i><br>
+                        Nhập video URL để xem thử tại đây
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewModalLabel">Lesson Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="card mb-3">
+                    <div class="card-header" id="previewTitle">Lesson Title</div>
+                    <div class="card-body">
+                        <div id="previewContent">
+                            <!-- Content will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        $(document).ready(function() {
+            // Rich text editor cho nội dung bài học
+            $("#lessonContent").kendoEditor({
+                tools: [
+                    "bold", "italic", "underline", "strikethrough",
+                    "justifyLeft", "justifyCenter", "justifyRight", "justifyFull",
+                    "insertUnorderedList", "insertOrderedList", "indent", "outdent",
+                    "createLink", "unlink", "insertImage", "subscript", "superscript",
+                    "tableWizard", "createTable", "addRowAbove", "addRowBelow", "addColumnLeft",
+                    "addColumnRight", "deleteRow", "deleteColumn", "viewHtml", "formatting",
+                    "cleanFormatting"
+                ],
+                resizable: {content: true, toolbar: true}
+            });
+
+            // Toggle text/file
+            $('input[name="contentOption"]').on('change', function() {
+                const selectedOption = $('input[name="contentOption"]:checked').val();
+                if (selectedOption === 'text') {
+                    $('#textContentSection').show();
+                    $('#fileUploadSection').hide();
+                } else {
+                    $('#textContentSection').hide();
+                    $('#fileUploadSection').show();
+                }
+            });
+
+            // Xem thử video
+            let timeoutId;
+            $('#VideoUrl').on('input', function() {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(function() {
+                    const videoUrl = $('#VideoUrl').val().trim();
+                    if (videoUrl) {
+                        let embedUrl = '';
+                        if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
+                            let videoId = '';
+                            if (videoUrl.includes('v=')) {
+                                videoId = videoUrl.split('v=')[1].split('&')[0];
+                            } else if (videoUrl.includes('youtu.be/')) {
+                                videoId = videoUrl.split('youtu.be/')[1];
+                            }
+                            if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                        }
+                        else if (videoUrl.includes('vimeo.com')) {
+                            const vimeoId = videoUrl.split('/').pop();
+                            embedUrl = `https://player.vimeo.com/video/${vimeoId}`;
+                        }
+                        else if (videoUrl.includes('drive.google.com')) {
+                            // Google Drive
+                            let fileId = '';
+                            let match = videoUrl.match(/d\/([^\/]+)/);
+                            if (match) fileId = match[1];
+                            else if (videoUrl.includes('id=')) fileId = videoUrl.split('id=')[1].split('&')[0];
+                            if (fileId) embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+                        }
+                        if (embedUrl) {
+                            $('#videoPreviewFrame').attr('src', embedUrl);
+                            $('#videoPreviewContainer').show();
+                            $('#noVideoText').hide();
+                        } else {
+                            $('#videoPreviewContainer').hide();
+                            $('#noVideoText').show();
+                        }
+                    } else {
+                        $('#videoPreviewContainer').hide();
+                        $('#noVideoText').show();
+                    }
+                }, 500);
+            });
+
+            // Preview button
+            $('#previewBtn').on('click', function() {
+                const lessonTitle = $('#TenBaiHoc').val() || 'Untitled Lesson';
+                let content = '';
+                const selectedOption = $('input[name="contentOption"]:checked').val();
+                if (selectedOption === 'text') {
+                    content = $('#lessonContent').data('kendoEditor').value();
+                } else {
+                    const fileInput = $('#DocumentFile')[0];
+                    if (fileInput.files.length > 0) {
+                        content = `<div class="alert alert-info">
+                                    <i class="fas fa-file-alt me-2"></i>
+                                    Selected file: ${fileInput.files[0].name}
+                                </div>`;
+                    } else {
+                        content = '<div class="alert alert-warning">No file selected</div>';
+                    }
+                }
+                $('#previewTitle').text(lessonTitle);
+                $('#previewContent').html(content);
+
+                const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+                previewModal.show();
+            });
+
+            // Validate form
+            $("#editLessonForm").validate({
+                rules: {
+                    TenBaiHoc: { required: true, minlength: 3 },
+                    ThoiLuong: { required: true, min: 1 }
+                },
+                messages: {
+                    TenBaiHoc: { required: "Vui lòng nhập tên bài học", minlength: "Tối thiểu 3 ký tự" },
+                    ThoiLuong: { required: "Vui lòng nhập thời lượng", min: "Tối thiểu 1 phút" }
+                },
+                errorElement: "div",
+                errorClass: "invalid-feedback",
+                highlight: function(element) {
+                    $(element).addClass("is-invalid").removeClass("is-valid");
+                },
+                unhighlight: function(element) {
+                    $(element).addClass("is-valid").removeClass("is-invalid");
+                },
+                errorPlacement: function(error, element) {
+                    error.insertAfter(element.closest(".input-group"));
+                }
+            });
+
+            // File bắt buộc nếu chọn upload
+            $('#editLessonForm').on('submit', function(e) {
+                const selectedOption = $('input[name="contentOption"]:checked').val();
+                if (selectedOption === 'file') {
+                    const fileInput = $('#DocumentFile')[0];
+                    // Nếu upload file mới phải chọn file
+                    if (fileInput.files.length === 0 && !('@Model.NoiDung'.startsWith('/Uploads/'))) {
+                        e.preventDefault();
+                        toastr.error('Vui lòng chọn file để upload');
+                        return false;
+                    }
+                }
+                return true;
+            });
+        });
+    </script>
+}

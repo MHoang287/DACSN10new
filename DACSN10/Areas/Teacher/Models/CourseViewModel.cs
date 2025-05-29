@@ -57,6 +57,9 @@ namespace DACSN10.Areas.Teacher.Models
         public IFormFile DocumentFile { get; set; }
 
         public int CourseID { get; set; }
+
+        [Display(Name = "Bắt buộc xem hết video để hoàn thành")]
+        public bool IsVideoRequiredComplete { get; set; }
     }
 
     public class QuizViewModel
