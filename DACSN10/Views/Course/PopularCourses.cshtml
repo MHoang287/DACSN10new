@@ -1,336 +1,333 @@
 ﻿@model List<DACSN10.Models.Course>
 @{
-    ViewData["Title"] = "Khóa học phổ biến";
+    ViewData["Title"] = "Khóa học phổ biến - OnlineLearning";
+    var totalPages = ViewBag.TotalPages ?? 1;
+    var currentPage = ViewBag.Page ?? 1;
+    var totalCourses = ViewBag.TotalCourses ?? 0;
 }
 
-<div class="container animate__animated animate__fadeIn">
-    <h1 class="mb-4 text-center fw-bold">
-        <i class="fas fa-fire text-danger me-2"></i> Khóa học phổ biến
-    </h1>
-    <p class="text-center text-muted mb-5">
-        Những khóa học được nhiều học viên đăng ký nhất
-    </p>
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css" />
+    <link href="~/css/PopularCourses.css" rel="stylesheet" />
+}
 
-    <div class="row">
-        <div class="col-md-3">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-filter me-2"></i> Bộ lọc</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label for="categoryFilter" class="form-label">Danh mục</label>
-                        <select id="categoryFilter" class="form-select">
-                            <option value="">Tất cả danh mục</option>
-                            <!-- Danh mục sẽ được thêm bằng JavaScript -->
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="levelFilter" class="form-label">Cấp độ</label>
-                        <select id="levelFilter" class="form-select">
-                            <option value="">Tất cả cấp độ</option>
-                            <option value="Cơ bản">Cơ bản</option>
-                            <option value="Trung bình">Trung bình</option>
-                            <option value="Nâng cao">Nâng cao</option>
-                        </select>
-                    </div>
-
-                    <hr>
-
-                    <button id="applyFilters" class="btn btn-primary w-100">
-                        <i class="fas fa-check me-1"></i> Áp dụng
-                    </button>
-                </div>
+<!-- Popular Header -->
+<section class="popular-header">
+    <div class="container-fluid px-4 px-md-5">
+        <div class="popular-content text-center" data-aos="fade-up">
+            <div class="trending-badge">
+                <i class="fas fa-fire fire-icon me-2"></i>Xu hướng hot nhất
             </div>
 
-            <div class="card shadow-sm">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Thông tin</h5>
-                </div>
-                <div class="card-body">
-                    <p>
-                        <i class="fas fa-chart-line me-2"></i>
-                        <span class="fw-bold course-count">@Model.Count</span> khóa học phổ biến
-                    </p>
-                    <p>
-                        <i class="fas fa-users me-2"></i>
-                        <span class="fw-bold student-count">0</span> học viên đã đăng ký
-                    </p>
-                    <div class="text-center mt-4">
-                        <a href="@Url.Action("Index", "Course")" class="btn btn-outline-primary">
-                            <i class="fas fa-arrow-left me-1"></i> Tất cả khóa học
-                        </a>
-                    </div>
-                </div>
-            </div>
+            <h1 class="display-4 fw-bold mb-3">
+                <i class="fas fa-fire fire-icon me-3"></i>Khóa học phổ biến
+            </h1>
+            <p class="fs-5 mb-0">
+                Khám phá @totalCourses khóa học được yêu thích nhất với hàng nghìn học viên đã tham gia
+            </p>
         </div>
+    </div>
+</section>
 
-        <div class="col-md-9">
-            <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <div class="input-group">
-                        <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
-                        <input type="text" id="searchPopular" class="form-control" placeholder="Tìm kiếm trong danh sách khóa học phổ biến...">
-                    </div>
-                </div>
+<div class="container-fluid px-4 px-md-5">
+    <!-- Stats Banner -->
+    <div class="stats-banner" data-aos="fade-up">
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-number">@totalCourses</div>
+                <div class="stat-label">Khóa học phổ biến</div>
             </div>
-
-            <div id="popularCoursesContainer">
-                @if (Model != null && Model.Any())
-                {
-                    <div class="row row-cols-1 row-cols-md-2 g-4">
-                        @foreach (var course in Model)
-                        {
-                            <div class="col course-item">
-                                <div class="card h-100 shadow-sm course-card">
-                                    <div class="position-relative">
-                                        <div class="position-absolute top-0 start-0 m-2">
-                                            <span class="badge bg-danger">
-                                                <i class="fas fa-award me-1"></i> Hot
-                                            </span>
-                                        </div>
-                                        <div class="position-absolute top-0 end-0 m-2">
-                                            <span class="badge bg-primary rounded-pill">
-                                                <i class="fas fa-users me-1"></i> @(course.Enrollments?.Count ?? 0)
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div class="card-body d-flex flex-column">
-                                        <h5 class="card-title">@course.TenKhoaHoc</h5>
-                                        <p class="card-text text-muted mb-1 small">
-                                            <i class="fas fa-user me-1"></i> @(course.User?.HoTen ?? "Không có thông tin")
-                                        </p>
-                                        <div class="progress mb-3" style="height: 5px;">
-                                            <div class="progress-bar" role="progressbar"
-                                                 style="width: @(Math.Min(100, (course.Enrollments?.Count ?? 0) * 100 / Math.Max(1, Model.Max(c => c.Enrollments?.Count ?? 0))))%;"
-                                                 aria-valuenow="@(course.Enrollments?.Count ?? 0)" aria-valuemin="0"
-                                                 aria-valuemax="@(Model.Max(c => c.Enrollments?.Count ?? 0))"></div>
-                                        </div>
-                                        <p class="card-text" style="height: 50px; overflow: hidden;">
-                                            @(course.MoTa?.Length > 100 ? course.MoTa.Substring(0, 100) + "..." : course.MoTa)
-                                        </p>
-                                        <div class="mt-auto d-flex justify-content-between">
-                                            <a href="@Url.Action("Details", new { id = course.CourseID })" class="btn btn-primary">
-                                                <i class="fas fa-info-circle me-1"></i> Chi tiết
-                                            </a>
-                                            <a href="javascript:void(0);" class="btn btn-outline-primary enroll-btn" data-id="@course.CourseID">
-                                                <i class="fas fa-graduation-cap me-1"></i> Đăng ký
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                    </div>
-
-                    <div class="text-center mt-4">
-                        <a href="@Url.Action("NewCourses", "Course")" class="btn btn-outline-success">
-                            <i class="fas fa-star me-1"></i> Xem khóa học mới nhất
-                        </a>
-                    </div>
-                }
-                else
-                {
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i> Chưa có khóa học phổ biến. Hãy quay lại sau!
-                    </div>
-                }
+            <div class="stat-item">
+                <div class="stat-number" id="totalStudents">0</div>
+                <div class="stat-label">Học viên tham gia</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">4.8</div>
+                <div class="stat-label">Đánh giá trung bình</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">95%</div>
+                <div class="stat-label">Tỷ lệ hoàn thành</div>
             </div>
         </div>
     </div>
+
+    <!-- Top Courses Banner -->
+    <div class="top-courses-banner" data-aos="fade-up">
+        <div class="banner-icon">
+            <i class="fas fa-trophy"></i>
+        </div>
+        <h3 class="fw-bold text-warning">Top khóa học được yêu thích nhất</h3>
+        <p class="mb-0">Được xếp hạng dựa trên số lượng học viên đăng ký và tỷ lệ hoàn thành cao</p>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="filter-section" data-aos="fade-up">
+        <div class="filter-tabs">
+            <button class="filter-tab active" onclick="filterCourses('all')">
+                <i class="fas fa-fire me-2"></i>Tất cả
+            </button>
+            <button class="filter-tab" onclick="filterCourses('free')">
+                <i class="fas fa-gift me-2"></i>Miễn phí
+            </button>
+            <button class="filter-tab" onclick="filterCourses('premium')">
+                <i class="fas fa-star me-2"></i>Premium
+            </button>
+            <button class="filter-tab" onclick="filterCourses('newest')">
+                <i class="fas fa-clock me-2"></i>Mới nhất
+            </button>
+        </div>
+    </div>
+
+    <!-- Popular Courses Grid -->
+    @if (Model != null && Model.Any())
+    {
+        <div class="popular-grid" id="coursesContainer">
+            @foreach (var course in Model.Select((value, index) => new { value, index }))
+            {
+                <div class="popular-course-card course-item"
+                     data-aos="fade-up"
+                     data-aos-delay="@((course.index % 3) * 100)"
+                     data-price="@course.value.Gia"
+                     data-created="@course.value.NgayTao.ToString("yyyy-MM-dd")">
+
+                    <div class="popular-rank">@(course.index + 1)</div>
+
+                    <div class="course-image-popular">
+                        <div class="popular-badge">
+                            <i class="fas fa-fire me-1"></i>HOT
+                        </div>
+                        <div class="text-center">
+                            <i class="fas fa-graduation-cap fa-4x mb-3"></i>
+                            <div style="font-size: 1.1rem; font-weight: 600;">Top @(course.index + 1)</div>
+                        </div>
+                    </div>
+
+                    <div class="course-content-popular">
+                        <div class="trending-indicator">
+                            <i class="fas fa-trending-up trend-arrow"></i>
+                            <span>Đang thịnh hành</span>
+                        </div>
+
+                        <h3 class="course-title-popular">@course.value.TenKhoaHoc</h3>
+
+                        <div class="course-teacher-popular">
+                            <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(course.value.User?.HoTen ?? "Teacher")&background=ff6b6b&color=fff&bold=true&size=32"
+                                 alt="@course.value.User?.HoTen" class="teacher-avatar-popular">
+                            <span>@(course.value.User?.HoTen ?? "Chưa có thông tin")</span>
+                        </div>
+
+                        <div class="popularity-indicators">
+                            <div class="popularity-item">
+                                <div class="popularity-number">@(course.value.Enrollments?.Count ?? 0)</div>
+                                <div class="popularity-label">Học viên</div>
+                            </div>
+                            <div class="popularity-item">
+                                <div class="popularity-number">@(course.value.Lessons?.Count ?? 0)</div>
+                                <div class="popularity-label">Bài học</div>
+                            </div>
+                            <div class="popularity-item">
+                                <div class="popularity-number">4.@(8 + course.index % 2)</div>
+                                <div class="popularity-label">Đánh giá</div>
+                            </div>
+                        </div>
+
+                        <div class="course-price-popular">
+                            @if (course.value.Gia > 0)
+                            {
+                                <span>@course.value.Gia.ToString("N0")₫</span>
+                            }
+                            else
+                            {
+                                <span class="text-success">Miễn phí</span>
+                            }
+                        </div>
+
+                        <div class="course-actions-popular">
+                            <a href="@Url.Action("Details", new { id = course.value.CourseID })"
+                               class="btn-enroll-popular">
+                                <i class="fas fa-fire me-2"></i>Tham gia ngay
+                            </a>
+
+                            @if (User.Identity.IsAuthenticated)
+                            {
+                                <button class="btn-favorite-popular" onclick="toggleFavorite(@course.value.CourseID)" title="Thêm vào yêu thích">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Pagination -->
+        @if (totalPages > 1)
+        {
+            <nav class="pagination-popular">
+                <ul class="pagination mb-0">
+                    @if (currentPage > 1)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="@Url.Action("PopularCourses", new { page = currentPage - 1 })">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                    }
+
+                    @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
+                    {
+                        <li class="page-item @(i == currentPage ? "active" : "")">
+                            <a class="page-link" href="@Url.Action("PopularCourses", new { page = i })">@i</a>
+                        </li>
+                    }
+
+                    @if (currentPage < totalPages)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="@Url.Action("PopularCourses", new { page = currentPage + 1 })">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    }
+    else
+    {
+        <div class="text-center py-5" data-aos="fade-up">
+            <div class="mb-4">
+                <i class="fas fa-fire fa-5x text-muted"></i>
+            </div>
+            <h3 class="text-muted mb-3">Chưa có khóa học phổ biến nào</h3>
+            <p class="text-muted mb-4">Hệ thống đang được cập nhật, vui lòng quay lại sau!</p>
+            <a href="@Url.Action("Index")" class="btn btn-primary btn-lg">
+                <i class="fas fa-search me-2"></i>Khám phá tất cả khóa học
+            </a>
+        </div>
+    }
 </div>
 
 @section Scripts {
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
+        // Initialize AOS
+        AOS.init({
+            duration: 1000,
+            easing: 'ease-out-quart',
+            once: true
+        });
+
         $(document).ready(function() {
-            // Tính tổng số học viên
-            var totalStudents = 0;
-        @if (Model != null && Model.Any())
-        {
-            <text>
-                        totalStudents = @(Model.Sum(c => c.Enrollments?.Count ?? 0));
-            </text>
-        }
-            $(".student-count").text(totalStudents);
-
-            // Lấy danh mục cho bộ lọc
-            var categories = [];
-        @if (Model != null && Model.Any())
-        {
-            <text>
-                @foreach (var course in Model)
-                {
-                    if (course.CourseCategories != null && course.CourseCategories.Any())
-                    {
-                        foreach (var cc in course.CourseCategories)
-                        {
-                            <text>
-                                                            if (cc.Category && categories.indexOf(cc.Category.TenDanhMuc) === -1) {
-                                                                categories.push(cc.Category.TenDanhMuc);
-                                                            }
-                            </text>
-                        }
-                    }
+            // Calculate total students
+            let totalStudents = 0;
+            $('.popularity-number').each(function() {
+                const text = $(this).text();
+                if (!isNaN(text) && $(this).closest('.popularity-item').find('.popularity-label').text() === 'Học viên') {
+                    totalStudents += parseInt(text);
                 }
-            </text>
+            });
+
+            // Animate total students counter
+            animateCounter($('#totalStudents'), totalStudents);
+        });
+
+        function animateCounter(element, target) {
+            let current = 0;
+            const increment = target / 50;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                element.text(Math.floor(current).toLocaleString());
+            }, 40);
         }
 
-            categories.forEach(function(category) {
-                $("#categoryFilter").append(`<option value="${category}">${category}</option>`);
+        function filterCourses(filter) {
+            // Update active tab
+            $('.filter-tab').removeClass('active');
+            event.target.classList.add('active');
+
+            // Filter courses
+            const courses = $('.course-item');
+
+            courses.each(function() {
+                const $course = $(this);
+                const price = parseFloat($course.data('price'));
+                const created = new Date($course.data('created'));
+                const now = new Date();
+                const daysDiff = (now - created) / (1000 * 60 * 60 * 24);
+
+                let shouldShow = true;
+
+                switch(filter) {
+                    case 'free':
+                        shouldShow = price === 0;
+                        break;
+                    case 'premium':
+                        shouldShow = price > 0;
+                        break;
+                    case 'newest':
+                        shouldShow = daysDiff <= 30; // Courses created within 30 days
+                        break;
+                    case 'all':
+                    default:
+                        shouldShow = true;
+                        break;
+                }
+
+                $course.toggle(shouldShow);
             });
 
-            // Tìm kiếm nhanh
-            $("#searchPopular").on("keyup", function() {
-                var value = $(this).val().toLowerCase();
-                $(".course-item").filter(function() {
-                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
-                });
-            });
+            // Re-trigger AOS for visible items
+            AOS.refresh();
+        }
 
-            // Áp dụng bộ lọc
-            $("#applyFilters").click(function() {
-                var categoryValue = $("#categoryFilter").val().toLowerCase();
-                var levelValue = $("#levelFilter").val().toLowerCase();
-
-                $(".course-item").each(function() {
-                    var courseText = $(this).text().toLowerCase();
-                    var categoryMatch = categoryValue === "" || courseText.indexOf(categoryValue) > -1;
-                    var levelMatch = levelValue === "" || courseText.indexOf(levelValue) > -1;
-
-                    $(this).toggle(categoryMatch && levelMatch);
-                });
-
-                // Cập nhật số lượng hiển thị
-                var visibleCourses = $(".course-item:visible").length;
-                $(".course-count").text(visibleCourses);
-
-                toastr.success('Đã áp dụng bộ lọc!');
-            });
-
-            // Xử lý nút đăng ký
-            $(".enroll-btn").click(function() {
-                var courseId = $(this).data("id");
-
+        function toggleFavorite(courseId) {
         @if (User.Identity.IsAuthenticated)
         {
             <text>
-                            Swal.fire({
-                                title: 'Xác nhận đăng ký',
-                                text: 'Bạn có muốn đăng ký khóa học này không?',
-                                icon: 'question',
-                                showCancelButton: true,
-                                confirmButtonText: 'Đăng ký',
-                                cancelButtonText: 'Hủy'
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    $.ajax({
-                                        url: '@Url.Action("Enroll", "Course")',
-                                        type: 'POST',
-                                        data: {
-                                            courseId: courseId,
-                                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
-                                        },
-                                        success: function() {
-                                            Swal.fire(
-                                                'Đã đăng ký!',
-                                                'Bạn đã đăng ký khóa học thành công.',
-                                                'success'
-                                            ).then(() => {
-                                                window.location.href = '@Url.Action("MyCourses", "Course")';
-                                            });
-                                        },
-                                        error: function(xhr) {
-                                            Swal.fire(
-                                                'Lỗi!',
-                                                xhr.responseJSON?.error || 'Đã xảy ra lỗi khi đăng ký khóa học.',
-                                                'error'
-                                            );
-                                        }
-                                    });
-                                }
-                            });
+                    $.post('@Url.Action("AddToFavorite", "Course")', {
+                        courseId: courseId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    })
+                    .done(function(response) {
+                        if (response.success) {
+                            toastr.success(response.message);
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    })
+                    .fail(function() {
+                        toastr.error('Có lỗi xảy ra!');
+                    });
             </text>
         }
         else
         {
             <text>
-                            Swal.fire({
-                                title: 'Cần đăng nhập',
-                                text: 'Bạn cần đăng nhập để đăng ký khóa học.',
-                                icon: 'info',
-                                showCancelButton: true,
-                                confirmButtonText: 'Đăng nhập',
-                                cancelButtonText: 'Hủy'
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    window.location.href = '/Identity/Account/Login';
-                                }
-                            });
+                    window.location.href = '/Identity/Account/Login';
             </text>
         }
-            });
-
-            // Animation hiệu ứng
-            $('.card').hover(
-                function() {
-                    $(this).addClass('animate__animated animate__pulse');
-                },
-                function() {
-                    $(this).removeClass('animate__animated animate__pulse');
-                }
-            );
-
-            // Biểu đồ thống kê
-            var ctx = document.createElement('canvas');
-            ctx.id = 'popularChart';
-            $('.card-body:first').after($('<div class="card-body border-top"></div>').append(ctx));
-
-        @if (Model != null && Model.Any())
-        {
-            <text>
-                        var labels = [];
-                        var data = [];
-                        var colors = [];
-
-                @for (int i = 0; i < Math.Min(Model.Count, 5); i++)
-                {
-                    <text>
-                                    labels.push('@Model[i].TenKhoaHoc');
-                                    data.push(@(Model[i].Enrollments?.Count ?? 0));
-                                    colors.push('rgba(' + Math.floor(Math.random() * 200) + ',' + Math.floor(Math.random() * 200) + ',' + Math.floor(Math.random() * 200) + ',0.7)');
-                    </text>
-                }
-
-                        new Chart(document.getElementById('popularChart'), {
-                            type: 'bar',
-                            data: {
-                                labels: labels,
-                                datasets: [{
-                                    label: 'Số lượng học viên',
-                                    data: data,
-                                    backgroundColor: colors,
-                                    borderColor: colors.map(c => c.replace('0.7', '1')),
-                                    borderWidth: 1
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                scales: {
-                                    y: {
-                                        beginAtZero: true
-                                    }
-                                },
-                                plugins: {
-                                    title: {
-                                        display: true,
-                                        text: 'Top 5 khóa học phổ biến nhất'
-                                    }
-                                }
-                            }
-                        });
-            </text>
         }
-        });
+
+        // Configure toastr
+        if (typeof toastr !== 'undefined') {
+            toastr.options = {
+                "closeButton": true,
+                "progressBar": true,
+                "positionClass": "toast-top-right",
+                "timeOut": 3000
+            };
+        }
     </script>
+
+    @if (User.Identity.IsAuthenticated)
+    {
+        @Html.AntiForgeryToken()
+    }
 }

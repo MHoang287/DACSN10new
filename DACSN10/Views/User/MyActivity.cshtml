@@ -1,0 +1,980 @@
+﻿@{
+    ViewData["Title"] = "Lịch sử hoạt động - OnlineLearning";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" />
+    <style>
+        .activity-section {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            padding: 2rem 0;
+        }
+
+        .activity-header {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .activity-header::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1.5" fill="rgba(255,255,255,0.1)"/></svg>');
+            }
+
+        .filter-tabs {
+            background: white;
+            border-radius: 20px;
+            padding: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-tab {
+            background: transparent;
+            border: 2px solid transparent;
+            color: #64748b;
+            padding: 0.75rem 1.5rem;
+            border-radius: 15px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+            .filter-tab:hover {
+                background: #f8fafc;
+                color: #3b82f6;
+            }
+
+            .filter-tab.active {
+                background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+                color: white;
+                border-color: #3b82f6;
+            }
+
+        .activity-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            transition: all 0.3s ease;
+        }
+
+            .activity-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+            }
+
+        .activity-header-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 2rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .activity-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .activity-count {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .activity-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #f1f5f9;
+            transition: all 0.3s ease;
+        }
+
+            .activity-item:hover {
+                background: #f8fafc;
+            }
+
+            .activity-item:last-child {
+                border-bottom: none;
+            }
+
+        .activity-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1.5rem;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .activity-content {
+            flex-grow: 1;
+        }
+
+        .activity-name {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .activity-course {
+            color: #64748b;
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-date {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .activity-meta {
+            text-align: right;
+        }
+
+        .activity-score {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+            .activity-score.excellent {
+                color: #059669;
+            }
+
+            .activity-score.good {
+                color: #3b82f6;
+            }
+
+            .activity-score.average {
+                color: #f59e0b;
+            }
+
+            .activity-score.poor {
+                color: #ef4444;
+            }
+
+        .activity-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-completed {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-in-progress {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-graded {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #64748b;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.5;
+        }
+
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-mini-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+            .stat-mini-card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+            }
+
+        .stat-mini-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-mini-label {
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .timeline-container {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+            .timeline::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 2px;
+                background: linear-gradient(to bottom, #3b82f6, #1d4ed8);
+            }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+            .timeline-item::before {
+                content: '';
+                position: absolute;
+                left: -2rem;
+                top: 0.5rem;
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: #3b82f6;
+                border: 3px solid white;
+                box-shadow: 0 0 0 3px #3b82f6;
+            }
+
+        .timeline-content {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-left: 1rem;
+        }
+
+        .search-filter {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+            .search-input:focus {
+                outline: none;
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+
+        .calendar-container {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+        }
+
+        #calendar {
+            font-family: inherit;
+        }
+
+        .fc-event {
+            border: none !important;
+            border-radius: 8px !important;
+            padding: 2px 6px !important;
+        }
+
+        .fc-event-enrollment {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+        }
+
+        .fc-event-quiz {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        }
+
+        .fc-event-assignment {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+        }
+    </style>
+}
+
+<div class="activity-section">
+    <div class="container-fluid px-4 px-md-5">
+        <!-- Activity Header -->
+        <div class="activity-header" data-aos="fade-up">
+            <div class="text-center">
+                <h1 class="mb-3">
+                    <i class="fas fa-history me-3"></i>
+                    Lịch sử hoạt động
+                </h1>
+                <p class="mb-0 opacity-90">Theo dõi quá trình học tập và thành tích của bạn</p>
+            </div>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="search-filter" data-aos="fade-up" data-aos-delay="100">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <input type="text" class="search-input" id="activitySearch"
+                           placeholder="Tìm kiếm theo tên khóa học, bài tập, kiểm tra...">
+                </div>
+                <div class="col-md-4 text-end">
+                    <select class="search-input" id="dateFilter">
+                        <option value="all">Tất cả thời gian</option>
+                        <option value="week">7 ngày qua</option>
+                        <option value="month">30 ngày qua</option>
+                        <option value="quarter">3 tháng qua</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="filter-tabs" data-aos="fade-up" data-aos-delay="200">
+            <button class="filter-tab active" data-filter="all">
+                <i class="fas fa-list"></i>
+                Tất cả
+            </button>
+            <button class="filter-tab" data-filter="enrollments">
+                <i class="fas fa-book-open"></i>
+                Khóa học
+            </button>
+            <button class="filter-tab" data-filter="quizzes">
+                <i class="fas fa-quiz"></i>
+                Kiểm tra
+            </button>
+            <button class="filter-tab" data-filter="assignments">
+                <i class="fas fa-tasks"></i>
+                Bài tập
+            </button>
+            <button class="filter-tab" data-filter="calendar">
+                <i class="fas fa-calendar"></i>
+                Lịch
+            </button>
+        </div>
+
+        <!-- Statistics Overview -->
+        <div class="stats-overview" data-aos="fade-up" data-aos-delay="300">
+            <div class="stat-mini-card">
+                <div class="stat-mini-number" id="totalEnrollments">@((List<DACSN10.Models.Enrollment>)ViewBag.Enrollments).Count</div>
+                <div class="stat-mini-label">Khóa học đã đăng ký</div>
+            </div>
+            <div class="stat-mini-card">
+                <div class="stat-mini-number" id="totalQuizzes">@((List<DACSN10.Models.QuizResult>)ViewBag.QuizResults).Count</div>
+                <div class="stat-mini-label">Bài kiểm tra đã làm</div>
+            </div>
+            <div class="stat-mini-card">
+                <div class="stat-mini-number" id="totalAssignments">@((List<DACSN10.Models.Submission>)ViewBag.Submissions).Count</div>
+                <div class="stat-mini-label">Bài tập đã nộp</div>
+            </div>
+            <div class="stat-mini-card">
+                <div class="stat-mini-number" id="avgScore">0</div>
+                <div class="stat-mini-label">Điểm TB</div>
+            </div>
+        </div>
+
+        <!-- Activity Content -->
+        <div id="activityContent">
+            <!-- All Activities -->
+            <div id="allActivities" class="activity-content-section">
+                <div class="timeline-container" data-aos="fade-up" data-aos-delay="400">
+                    <h3 class="activity-title mb-4">
+                        <i class="fas fa-clock"></i>
+                        Hoạt động gần đây
+                    </h3>
+                    <div class="timeline" id="activityTimeline">
+                        <!-- Timeline will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enrollments -->
+            <div id="enrollmentsContent" class="activity-content-section" style="display: none;">
+                <div class="activity-card" data-aos="fade-up" data-aos-delay="400">
+                    <div class="activity-header-card">
+                        <div class="activity-title">
+                            <i class="fas fa-book-open"></i>
+                            Khóa học đã đăng ký
+                            <span class="activity-count">@((List<DACSN10.Models.Enrollment>)ViewBag.Enrollments).Count</span>
+                        </div>
+                    </div>
+                    <div class="activity-list">
+                        @if (ViewBag.Enrollments != null && ((List<DACSN10.Models.Enrollment>)ViewBag.Enrollments).Any())
+                        {
+                            @foreach (var enrollment in (List<DACSN10.Models.Enrollment>)ViewBag.Enrollments)
+                            {
+                                <div class="activity-item">
+                                    <div class="activity-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+                                        <i class="fas fa-book"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <div class="activity-name">@enrollment.Course.TenKhoaHoc</div>
+                                        <div class="activity-course">Giảng viên: @enrollment.Course.User.HoTen</div>
+                                        <div class="activity-date">Đăng ký: @enrollment.EnrollDate.ToString("dd/MM/yyyy HH:mm")</div>
+                                    </div>
+                                    <div class="activity-meta">
+                                        <div class="activity-score @(enrollment.Progress >= 80 ? "excellent" : enrollment.Progress >= 60 ? "good" : enrollment.Progress >= 40 ? "average" : "poor")">
+                                            @enrollment.Progress%
+                                        </div>
+                                        <div class="activity-status @(enrollment.Progress >= 100 ? "status-completed" : enrollment.Progress > 0 ? "status-in-progress" : "status-pending")">
+                                            @(enrollment.Progress >= 100 ? "Hoàn thành" : enrollment.Progress > 0 ? "Đang học" : "Chưa bắt đầu")
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-book-open"></i>
+                                </div>
+                                <h4>Chưa có khóa học nào</h4>
+                                <p>Bạn chưa đăng ký khóa học nào</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz Results -->
+            <div id="quizzesContent" class="activity-content-section" style="display: none;">
+                <div class="activity-card" data-aos="fade-up" data-aos-delay="500">
+                    <div class="activity-header-card">
+                        <div class="activity-title">
+                            <i class="fas fa-quiz"></i>
+                            Kết quả kiểm tra
+                            <span class="activity-count">@((List<DACSN10.Models.QuizResult>)ViewBag.QuizResults).Count</span>
+                        </div>
+                    </div>
+                    <div class="activity-list">
+                        @if (ViewBag.QuizResults != null && ((List<DACSN10.Models.QuizResult>)ViewBag.QuizResults).Any())
+                        {
+                            @foreach (var result in (List<DACSN10.Models.QuizResult>)ViewBag.QuizResults)
+                            {
+                                <div class="activity-item">
+                                    <div class="activity-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                                        <i class="fas fa-quiz"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <div class="activity-name">@result.Quiz.Title</div>
+                                        <div class="activity-course">Khóa học: @result.Quiz.Course.TenKhoaHoc</div>
+                                        <div class="activity-date">Làm bài: @result.TakenAt.ToString("dd/MM/yyyy HH:mm")</div>
+                                    </div>
+                                    <div class="activity-meta">
+                                        <div class="activity-score @(result.Score >= 80 ? "excellent" : result.Score >= 60 ? "good" : result.Score >= 40 ? "average" : "poor")">
+                                            @result.Score.ToString("F1")
+                                        </div>
+                                        <div class="activity-status status-graded">
+                                            @(result.Score >= 80 ? "Xuất sắc" : result.Score >= 60 ? "Tốt" : result.Score >= 40 ? "Trung bình" : "Cần cải thiện")
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-quiz"></i>
+                                </div>
+                                <h4>Chưa có bài kiểm tra nào</h4>
+                                <p>Bạn chưa làm bài kiểm tra nào</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assignments -->
+            <div id="assignmentsContent" class="activity-content-section" style="display: none;">
+                <div class="activity-card" data-aos="fade-up" data-aos-delay="600">
+                    <div class="activity-header-card">
+                        <div class="activity-title">
+                            <i class="fas fa-tasks"></i>
+                            Bài tập đã nộp
+                            <span class="activity-count">@((List<DACSN10.Models.Submission>)ViewBag.Submissions).Count</span>
+                        </div>
+                    </div>
+                    <div class="activity-list">
+                        @if (ViewBag.Submissions != null && ((List<DACSN10.Models.Submission>)ViewBag.Submissions).Any())
+                        {
+                            @foreach (var submission in (List<DACSN10.Models.Submission>)ViewBag.Submissions)
+                            {
+                                <div class="activity-item">
+                                    <div class="activity-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                                        <i class="fas fa-file-alt"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <div class="activity-name">@submission.Assignment.TenBaiTap</div>
+                                        <div class="activity-course">Khóa học: @submission.Assignment.Course.TenKhoaHoc</div>
+                                        <div class="activity-date">Nộp bài: @submission.NgayNop.ToString("dd/MM/yyyy HH:mm")</div>
+                                    </div>
+                                    <div class="activity-meta">
+                                        @if (submission.Diem.HasValue)
+                                        {
+                                            <div class="activity-score @(submission.Diem >= 8 ? "excellent" : submission.Diem >= 6 ? "good" : submission.Diem >= 4 ? "average" : "poor")">
+                                                @submission.Diem.Value.ToString("F1")
+                                            </div>
+                                            <div class="activity-status status-graded">
+                                                Đã chấm điểm
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="activity-score" style="color: #64748b;">--</div>
+                                            <div class="activity-status status-pending">
+                                                Chờ chấm điểm
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-tasks"></i>
+                                </div>
+                                <h4>Chưa có bài tập nào</h4>
+                                <p>Bạn chưa nộp bài tập nào</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calendar View -->
+            <div id="calendarContent" class="activity-content-section" style="display: none;">
+                <div class="calendar-container" data-aos="fade-up" data-aos-delay="700">
+                    <h3 class="activity-title mb-4">
+                        <i class="fas fa-calendar"></i>
+                        Lịch hoạt động
+                    </h3>
+                    <div id="calendar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <script>
+        // Initialize AOS
+        AOS.init({
+            duration: 1000,
+            easing: 'ease-out-quart',
+            once: true
+        });
+
+        let calendar;
+        let allActivities = [];
+
+        $(document).ready(function() {
+            initializeData();
+            initializeFilters();
+            initializeSearch();
+            calculateAverageScore();
+            buildActivityTimeline();
+
+            // Initialize calendar when calendar tab is first clicked
+            $('.filter-tab[data-filter="calendar"]').one('click', function() {
+                setTimeout(initializeCalendar, 100);
+            });
+        });
+
+        function initializeData() {
+            // Collect all activities from server data
+        @if (ViewBag.Enrollments != null)
+        {
+            @foreach (var enrollment in (List<DACSN10.Models.Enrollment>)ViewBag.Enrollments)
+            {
+                <text>
+                            allActivities.push({
+                                type: 'enrollment',
+                                title: '@Html.Raw(enrollment.Course.TenKhoaHoc.Replace("'", "\\'"))',
+                                course: '@Html.Raw(enrollment.Course.TenKhoaHoc.Replace("'", "\\'"))',
+                                date: new Date('@enrollment.EnrollDate.ToString("yyyy-MM-ddTHH:mm:ss")'),
+                                score: @enrollment.Progress,
+                                status: '@(enrollment.Progress >= 100 ? "completed" : enrollment.Progress > 0 ? "in-progress" : "pending")',
+                                icon: 'fas fa-book',
+                                color: '#3b82f6'
+                            });
+                </text>
+            }
+        }
+
+        @if (ViewBag.QuizResults != null)
+        {
+            @foreach (var result in (List<DACSN10.Models.QuizResult>)ViewBag.QuizResults)
+            {
+                <text>
+                            allActivities.push({
+                                type: 'quiz',
+                                title: '@Html.Raw(result.Quiz.Title.Replace("'", "\\'"))',
+                                course: '@Html.Raw(result.Quiz.Course.TenKhoaHoc.Replace("'", "\\'"))',
+                                date: new Date('@result.TakenAt.ToString("yyyy-MM-ddTHH:mm:ss")'),
+                                score: @result.Score,
+                                status: 'graded',
+                                icon: 'fas fa-quiz',
+                                color: '#10b981'
+                            });
+                </text>
+            }
+        }
+
+        @if (ViewBag.Submissions != null)
+        {
+            @foreach (var submission in (List<DACSN10.Models.Submission>)ViewBag.Submissions)
+            {
+                <text>
+                            allActivities.push({
+                                type: 'assignment',
+                                title: '@Html.Raw(submission.Assignment.TenBaiTap.Replace("'", "\\'"))',
+                                course: '@Html.Raw(submission.Assignment.Course.TenKhoaHoc.Replace("'", "\\'"))',
+                                date: new Date('@submission.NgayNop.ToString("yyyy-MM-ddTHH:mm:ss")'),
+                                score: @(submission.Diem?.ToString("F1") ?? "null"),
+                                status: '@(submission.Diem.HasValue ? "graded" : "pending")',
+                                icon: 'fas fa-file-alt',
+                                color: '#f59e0b'
+                            });
+                </text>
+            }
+        }
+
+            // Sort activities by date (newest first)
+            allActivities.sort((a, b) => b.date - a.date);
+        }
+
+        function initializeFilters() {
+            $('.filter-tab').click(function() {
+                const filter = $(this).data('filter');
+
+                // Update active tab
+                $('.filter-tab').removeClass('active');
+                $(this).addClass('active');
+
+                // Show/hide content sections
+                $('.activity-content-section').hide();
+
+                if (filter === 'all') {
+                    $('#allActivities').show();
+                } else if (filter === 'enrollments') {
+                    $('#enrollmentsContent').show();
+                } else if (filter === 'quizzes') {
+                    $('#quizzesContent').show();
+                } else if (filter === 'assignments') {
+                    $('#assignmentsContent').show();
+                } else if (filter === 'calendar') {
+                    $('#calendarContent').show();
+                    if (calendar) {
+                        calendar.render();
+                    }
+                }
+            });
+        }
+
+        function initializeSearch() {
+            let searchTimeout;
+
+            $('#activitySearch').on('input', function() {
+                const query = $(this).val().toLowerCase();
+
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    filterActivities(query);
+                }, 300);
+            });
+
+            $('#dateFilter').on('change', function() {
+                const period = $(this).val();
+                filterActivitiesByDate(period);
+            });
+        }
+
+        function filterActivities(query) {
+            $('.activity-item').each(function() {
+                const text = $(this).text().toLowerCase();
+                const matches = text.includes(query);
+                $(this).toggle(matches);
+            });
+
+            // Update timeline if on all activities view
+            if ($('.filter-tab.active').data('filter') === 'all') {
+                buildActivityTimeline(query);
+            }
+        }
+
+        function filterActivitiesByDate(period) {
+            const now = new Date();
+            let cutoffDate;
+
+            switch (period) {
+                case 'week':
+                    cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    break;
+                case 'month':
+                    cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                    break;
+                case 'quarter':
+                    cutoffDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+                    break;
+                default:
+                    cutoffDate = null;
+            }
+
+            $('.activity-item').each(function() {
+                if (!cutoffDate) {
+                    $(this).show();
+                    return;
+                }
+
+                const dateText = $(this).find('.activity-date').text();
+                const match = dateText.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+
+                if (match) {
+                    const itemDate = new Date(match[3], match[2] - 1, match[1]);
+                    $(this).toggle(itemDate >= cutoffDate);
+                }
+            });
+
+            // Update timeline
+            if ($('.filter-tab.active').data('filter') === 'all') {
+                buildActivityTimeline(null, period);
+            }
+        }
+
+        function calculateAverageScore() {
+            const quizScores = allActivities
+                .filter(a => a.type === 'quiz' && a.score !== null)
+                .map(a => a.score);
+
+            const assignmentScores = allActivities
+                .filter(a => a.type === 'assignment' && a.score !== null)
+                .map(a => a.score);
+
+            const allScores = [...quizScores, ...assignmentScores];
+            const average = allScores.length > 0
+                ? (allScores.reduce((sum, score) => sum + score, 0) / allScores.length)
+                : 0;
+
+            $('#avgScore').text(average.toFixed(1));
+        }
+
+        function buildActivityTimeline(searchQuery = null, datePeriod = 'all') {
+            const timeline = $('#activityTimeline');
+            timeline.empty();
+
+            let filteredActivities = [...allActivities];
+
+            // Apply search filter
+            if (searchQuery) {
+                filteredActivities = filteredActivities.filter(activity =>
+                    activity.title.toLowerCase().includes(searchQuery) ||
+                    activity.course.toLowerCase().includes(searchQuery)
+                );
+            }
+
+            // Apply date filter
+            if (datePeriod !== 'all') {
+                const now = new Date();
+                let cutoffDate;
+
+                switch (datePeriod) {
+                    case 'week':
+                        cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                        break;
+                    case 'month':
+                        cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                        break;
+                    case 'quarter':
+                        cutoffDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+                        break;
+                }
+
+                if (cutoffDate) {
+                    filteredActivities = filteredActivities.filter(activity => activity.date >= cutoffDate);
+                }
+            }
+
+            if (filteredActivities.length === 0) {
+                timeline.html(`
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <h4>Không có hoạt động nào</h4>
+                        <p>Không tìm thấy hoạt động phù hợp với bộ lọc</p>
+                    </div>
+                `);
+                return;
+            }
+
+            filteredActivities.slice(0, 20).forEach(activity => {
+                const timelineItem = $(`
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <i class="${activity.icon} me-2" style="color: ${activity.color}"></i>
+                                        ${activity.title}
+                                    </h6>
+                                    <p class="text-muted mb-1">${activity.course}</p>
+                                    <small class="text-muted">${activity.date.toLocaleDateString('vi-VN')} ${activity.date.toLocaleTimeString('vi-VN', {hour: '2-digit', minute: '2-digit'})}</small>
+                                </div>
+                                <div class="text-end">
+                                    ${activity.score !== null ? `<div class="fw-bold" style="color: ${activity.color}">${activity.score}${activity.type === 'enrollment' ? '%' : ' điểm'}</div>` : ''}
+                                    <span class="badge" style="background: ${activity.color}20; color: ${activity.color}">
+                                        ${getStatusText(activity.status, activity.type)}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `);
+                timeline.append(timelineItem);
+            });
+        }
+
+        function getStatusText(status, type) {
+            const statusMap = {
+                'completed': 'Hoàn thành',
+                'in-progress': 'Đang học',
+                'pending': 'Chờ xử lý',
+                'graded': 'Đã chấm điểm'
+            };
+            return statusMap[status] || 'Không xác định';
+        }
+
+        function initializeCalendar() {
+            const calendarEl = document.getElementById('calendar');
+
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'vi',
+                height: 'auto',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,listWeek'
+                },
+                events: allActivities.map(activity => ({
+                    title: activity.title,
+                    start: activity.date,
+                    className: `fc-event-${activity.type}`,
+                    extendedProps: {
+                        course: activity.course,
+                        score: activity.score,
+                        type: activity.type
+                    }
+                })),
+                eventClick: function(info) {
+                    const event = info.event;
+                    const props = event.extendedProps;
+
+                    Swal.fire({
+                        title: event.title,
+                        html: `
+                            <div class="text-start">
+                                <p><strong>Khóa học:</strong> ${props.course}</p>
+                                <p><strong>Ngày:</strong> ${event.start.toLocaleDateString('vi-VN')}</p>
+                                ${props.score !== null ? `<p><strong>Điểm:</strong> ${props.score}${props.type === 'enrollment' ? '%' : ' điểm'}</p>` : ''}
+                                <p><strong>Loại:</strong> ${getTypeText(props.type)}</p>
+                            </div>
+                        `,
+                        icon: 'info',
+                        confirmButtonText: 'Đóng'
+                    });
+                }
+            });
+
+            calendar.render();
+        }
+
+        function getTypeText(type) {
+            const typeMap = {
+                'enrollment': 'Đăng ký khóa học',
+                'quiz': 'Bài kiểm tra',
+                'assignment': 'Bài tập'
+            };
+            return typeMap[type] || 'Không xác định';
+        }
+
+        // Configure toastr
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": 3000
+        };
+    </script>
+}

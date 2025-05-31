@@ -3,264 +3,178 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Trang quản trị DACSN10</title>
+    <title>@ViewData["Title"] - Admin Panel | OnlineLearning</title>
 
-    <!-- Favicon -->
-    <link rel="shortcut icon" href="~/favicon.ico" />
-
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-
-    <!-- Font Awesome CSS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
-
-    <!-- Material Design Bootstrap CSS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.2.0/mdb.min.css" rel="stylesheet" />
-
-    <!-- jQuery UI CSS -->
-    <link href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" rel="stylesheet" />
-
-    <!-- DataTables Bootstrap 5 CSS -->
-    <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
-    <link href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css" rel="stylesheet" />
-
-    <!-- Toastr CSS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
-
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+    <!-- Bootswatch Theme -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.0/dist/lux/bootstrap.min.css" />
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <!-- Animate.css -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <!-- AOS -->
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
+    <!-- Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    <!-- DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
+    <!-- Select2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
 
-    <!-- SweetAlert2 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/admin-site.css"  />
 
-    <!-- Intro.js CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/intro.js@7.0.1/minified/introjs.min.css" rel="stylesheet" />
-
-    <!-- Syncfusion Essential Studio CSS -->
-    <link href="https://cdn.syncfusion.com/ej2/20.1.55/material.css" rel="stylesheet" />
-
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="~/css/admin.css" />
-
-    <!-- Render any additional styles from the view -->
-    @await RenderSectionAsync("Styles", required: false)
+    @RenderSection("Styles", required: false)
 </head>
-<body class="sb-nav-fixed">
-    <!-- Top Navigation -->
-    <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
-        <!-- Navbar Brand-->
-        <a class="navbar-brand ps-3" href="/Admin">DACSN10 Admin</a>
-
-        <!-- Sidebar Toggle-->
-        <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" href="#!">
-            <i class="fas fa-bars"></i>
-        </button>
-
-        <!-- Navbar Search-->
-        <form class="d-none d-md-inline-block form-inline ms-auto me-0 me-md-3 my-2 my-md-0">
-            <div class="input-group">
-                <input class="form-control" type="text" placeholder="Tìm kiếm..." aria-label="Tìm kiếm..." aria-describedby="btnNavbarSearch" />
-                <button class="btn btn-primary" id="btnNavbarSearch" type="button"><i class="fas fa-search"></i></button>
-            </div>
-        </form>
-
-        <!-- Navbar-->
-        <ul class="navbar-nav ms-auto ms-md-0 me-3 me-lg-4">
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-user fa-fw"></i>
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                    <li><a class="dropdown-item" href="#!"><i class="fas fa-user-cog me-2"></i>Cài đặt</a></li>
-                    <li><a class="dropdown-item" href="#!"><i class="fas fa-list me-2"></i>Hoạt động</a></li>
-                    <li><hr class="dropdown-divider" /></li>
-                    <li>
-                        <form id="logoutForm" class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-                            <button type="submit" class="dropdown-item">
-                                <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
-                            </button>
-                        </form>
-                    </li>
-                </ul>
-            </li>
-        </ul>
-    </nav>
-
-    <div id="layoutSidenav">
-        <!-- Sidebar Navigation -->
-        <div id="layoutSidenav_nav">
-            <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
-                <div class="sb-sidenav-menu">
-                    <div class="nav">
-                        <div class="sb-sidenav-menu-heading">Trang chính</div>
-                        <a class="nav-link" href="/Admin/Dashboard">
-                            <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
-                            Bảng điều khiển
-                        </a>
-
-                        <div class="sb-sidenav-menu-heading">Quản lý người dùng</div>
-
-                        <!-- Quản lý học viên -->
-                        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseStudents" aria-expanded="false" aria-controls="collapseStudents">
-                            <div class="sb-nav-link-icon"><i class="fas fa-user-graduate"></i></div>
-                            Học viên
-                            <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
-                        </a>
-                        <div class="collapse" id="collapseStudents" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
-                            <nav class="sb-sidenav-menu-nested nav">
-                                <a class="nav-link" href="/Admin/StudentAdmin">Danh sách</a>
-                                <a class="nav-link" href="/Admin/StudentAdmin/Create">Thêm mới</a>
-                                <a class="nav-link" href="/Admin/StudentAdmin/Search">Tìm kiếm</a>
-                            </nav>
-                        </div>
-
-                        <!-- Quản lý giảng viên -->
-                        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseTeachers" aria-expanded="false" aria-controls="collapseTeachers">
-                            <div class="sb-nav-link-icon"><i class="fas fa-chalkboard-teacher"></i></div>
-                            Giảng viên
-                            <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
-                        </a>
-                        <div class="collapse" id="collapseTeachers" aria-labelledby="headingTwo" data-bs-parent="#sidenavAccordion">
-                            <nav class="sb-sidenav-menu-nested nav">
-                                <a class="nav-link" href="/Admin/TeacherAdmin">Danh sách</a>
-                                <a class="nav-link" href="/Admin/TeacherAdmin/Create">Thêm mới</a>
-                                <a class="nav-link" href="/Admin/TeacherAdmin/Search">Tìm kiếm</a>
-                            </nav>
-                        </div>
-
-                        <div class="sb-sidenav-menu-heading">Quản lý nội dung</div>
-
-                        <!-- Quản lý khóa học -->
-                        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseCourses" aria-expanded="false" aria-controls="collapseCourses">
-                            <div class="sb-nav-link-icon"><i class="fas fa-book"></i></div>
-                            Khóa học
-                            <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
-                        </a>
-                        <div class="collapse" id="collapseCourses" aria-labelledby="headingThree" data-bs-parent="#sidenavAccordion">
-                            <nav class="sb-sidenav-menu-nested nav">
-                                <a class="nav-link" href="/Admin/CourseAdmin">Danh sách</a>
-                                <a class="nav-link" href="/Admin/CourseAdmin/Create">Thêm mới</a>
-                                <a class="nav-link" href="/Admin/CourseAdmin/Search">Tìm kiếm</a>
-                                <a class="nav-link" href="/Admin/CourseAdmin/Categories">Danh mục</a>
-                            </nav>
-                        </div>
-
-                        <!-- Quản lý bài học -->
-                        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseLessons" aria-expanded="false" aria-controls="collapseLessons">
-                            <div class="sb-nav-link-icon"><i class="fas fa-file-alt"></i></div>
-                            Bài học
-                            <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
-                        </a>
-                        <div class="collapse" id="collapseLessons" aria-labelledby="headingFour" data-bs-parent="#sidenavAccordion">
-                            <nav class="sb-sidenav-menu-nested nav">
-                                <a class="nav-link" href="/Admin/LessonAdmin">Danh sách</a>
-                                <a class="nav-link" href="/Admin/LessonAdmin/Create">Thêm mới</a>
-                            </nav>
-                        </div>
-
-                        <div class="sb-sidenav-menu-heading">Giao dịch</div>
-
-                        <!-- Quản lý đơn hàng -->
-                        <a class="nav-link" href="/Admin/OrderAdmin">
-                            <div class="sb-nav-link-icon"><i class="fas fa-shopping-cart"></i></div>
-                            Đơn hàng
-                        </a>
-
-                        <!-- Quản lý thanh toán -->
-                        <a class="nav-link" href="/Admin/PaymentAdmin">
-                            <div class="sb-nav-link-icon"><i class="fas fa-credit-card"></i></div>
-                            Thanh toán
-                        </a>
-
-                        <div class="sb-sidenav-menu-heading">Hệ thống</div>
-
-                        <!-- Cấu hình hệ thống -->
-                        <a class="nav-link" href="/Admin/Settings">
-                            <div class="sb-nav-link-icon"><i class="fas fa-cogs"></i></div>
-                            Cấu hình
-                        </a>
-
-                        <!-- Nhật ký -->
-                        <a class="nav-link" href="/Admin/Logs">
-                            <div class="sb-nav-link-icon"><i class="fas fa-clipboard-list"></i></div>
-                            Nhật ký
-                        </a>
-                    </div>
-                </div>
-                <div class="sb-sidenav-footer">
-                    <div class="small">Đăng nhập với:</div>
-                    Administrator
-                </div>
-            </nav>
-        </div>
-
-        <!-- Main Content -->
-        <div id="layoutSidenav_content">
-            <main>
-                @RenderBody()
-            </main>
-
-            <!-- Footer -->
-            <footer class="py-4 bg-light mt-auto">
-                <div class="container-fluid px-4">
-                    <div class="d-flex align-items-center justify-content-between small">
-                        <div class="text-muted">Bản quyền &copy; DACSN10 @DateTime.Now.Year</div>
-                        <div>
-                            <a href="#">Chính sách bảo mật</a>
-                            &middot;
-                            <a href="#">Điều khoản sử dụng</a>
-                        </div>
-                    </div>
-                </div>
-            </footer>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner-grow text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
         </div>
     </div>
 
-    <!-- jQuery JS -->
-    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <!-- Sidebar -->
+    <nav class="admin-sidebar" id="adminSidebar">
+        <div class="admin-logo">
+            <h3><i class="fas fa-graduation-cap"></i> Admin</h3>
+        </div>
+        <div class="admin-menu">
+            <a href="@Url.Action("Dashboard", "Admin")" class="admin-menu-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Dashboard" ? "active" : "")">
+                <i class="fas fa-tachometer-alt"></i>
+                <span class="admin-menu-text">Dashboard</span>
+            </a>
+            <a href="@Url.Action("Courses", "Admin")" class="admin-menu-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Courses" ? "active" : "")">
+                <i class="fas fa-book"></i>
+                <span class="admin-menu-text">Khóa học</span>
+            </a>
+            <a href="@Url.Action("Categories", "Admin")" class="admin-menu-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Categories" ? "active" : "")">
+                <i class="fas fa-tags"></i>
+                <span class="admin-menu-text">Danh mục</span>
+            </a>
+            <a href="@Url.Action("Students", "Admin")" class="admin-menu-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Students" ? "active" : "")">
+                <i class="fas fa-user-graduate"></i>
+                <span class="admin-menu-text">Học viên</span>
+            </a>
+            <a href="@Url.Action("Teachers", "Admin")" class="admin-menu-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Teachers" ? "active" : "")">
+                <i class="fas fa-chalkboard-teacher"></i>
+                <span class="admin-menu-text">Giảng viên</span>
+            </a>
+            <a href="@Url.Action("Payments", "Admin")" class="admin-menu-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Payments" ? "active" : "")">
+                <i class="fas fa-credit-card"></i>
+                <span class="admin-menu-text">Thanh toán</span>
+            </a>
+            <a href="@Url.Action("Statistics", "Admin")" class="admin-menu-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Statistics" ? "active" : "")">
+                <i class="fas fa-chart-line"></i>
+                <span class="admin-menu-text">Thống kê</span>
+            </a>
+            <a href="@Url.Action("RevenueReport", "Admin")" class="admin-menu-item @(ViewContext.RouteData.Values["action"]?.ToString() == "RevenueReport" ? "active" : "")">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <span class="admin-menu-text">Báo cáo doanh thu</span>
+            </a>
+            <a href="@Url.Action("Analytics", "Admin")" class="admin-menu-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Analytics" ? "active" : "")">
+                <i class="fas fa-analytics"></i>
+                <span class="admin-menu-text">Phân tích</span>
+            </a>
+            <a href="@Url.Action("SystemHealth", "Admin")" class="admin-menu-item @(ViewContext.RouteData.Values["action"]?.ToString() == "SystemHealth" ? "active" : "")">
+                <i class="fas fa-heartbeat"></i>
+                <span class="admin-menu-text">Hệ thống</span>
+            </a>
+            <a href="@Url.Action("Settings", "Admin")" class="admin-menu-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Settings" ? "active" : "")">
+                <i class="fas fa-cog"></i>
+                <span class="admin-menu-text">Cài đặt</span>
+            </a>
+        </div>
+    </nav>
 
-    <!-- Bootstrap Bundle JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Main Content -->
+    <main class="admin-main" id="adminMain">
+        <!-- Top Bar -->
+        <div class="admin-topbar">
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
 
-    <!-- jQuery UI JS -->
-    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+            <div class="admin-user-menu">
+                <div class="dropdown">
+                    <button class="btn btn-link text-decoration-none dropdown-toggle d-flex align-items-center gap-2"
+                            data-bs-toggle="dropdown">
+                        <div class="admin-user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <span class="d-none d-md-inline">@User.Identity.Name</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item" href="@Url.Action("Index", "Home")">
+                                <i class="fas fa-home me-2"></i>Trang chủ
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form class="d-inline" asp-area="Identity" asp-page="/Account/Logout"
+                                  asp-route-returnUrl="@Url.Action("Index", "Home")">
+                                <button type="submit" class="dropdown-item">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
 
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+        <!-- Content Area -->
+        <div class="admin-content">
+            @RenderBody()
+        </div>
+    </main>
 
-    <!-- DataTables JS -->
-    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-    <script src="https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js"></script>
-    <script src="https://cdn.datatables.net/responsive/2.4.1/js/responsive.bootstrap5.min.js"></script>
-
-    <!-- Toastr JS -->
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- SweetAlert2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
-
-    <!-- Bootbox JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/6.0.0/bootbox.min.js"></script>
-
-    <!-- Intro.js -->
-    <script src="https://cdn.jsdelivr.net/npm/intro.js@7.0.1/minified/intro.min.js"></script>
-
-    <!-- jQuery Validation -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js"></script>
-
-    <!-- Syncfusion Essential Studio JS -->
-    <script src="https://cdn.syncfusion.com/ej2/20.1.55/dist/ej2.min.js"></script>
-
-    <!-- Material Design Bootstrap JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.2.0/mdb.min.js"></script>
-
-    <!-- Core Admin JS -->
-    <script src="~/js/admin.js"></script>
-
-    <!-- Config toastr -->
     <script>
+        // Initialize AOS
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true
+        });
+
+        // Sidebar Toggle
+        $('#sidebarToggle').click(function() {
+            $('#adminSidebar').toggleClass('collapsed');
+            $('#adminMain').toggleClass('expanded');
+
+            // Save state to localStorage
+            localStorage.setItem('sidebarCollapsed', $('#adminSidebar').hasClass('collapsed'));
+        });
+
+        // Restore sidebar state
+        if (localStorage.getItem('sidebarCollapsed') === 'true') {
+            $('#adminSidebar').addClass('collapsed');
+            $('#adminMain').addClass('expanded');
+        }
+
+        // Mobile sidebar
+        if (window.innerWidth < 768) {
+            $('#sidebarToggle').click(function() {
+                $('#adminSidebar').toggleClass('show');
+            });
+        }
+
+        // Toastr Configuration
         toastr.options = {
             "closeButton": true,
             "progressBar": true,
@@ -274,45 +188,84 @@
             "showMethod": "fadeIn",
             "hideMethod": "fadeOut"
         };
-    </script>
 
-    <!-- Sidebar Toggle -->
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            // Toggle sidebar
-            const sidebarToggle = document.querySelector("#sidebarToggle");
+        // Show toastr messages from TempData
+        @if (TempData["Success"] != null)
+        {
+            <text>toastr.success('@TempData["Success"]');</text>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <text>toastr.error('@TempData["Error"]');</text>
+        }
+        @if (TempData["Warning"] != null)
+        {
+            <text>toastr.warning('@TempData["Warning"]');</text>
+        }
+        @if (TempData["Info"] != null)
+        {
+            <text>toastr.info('@TempData["Info"]');</text>
+        }
 
-            if (sidebarToggle) {
-                sidebarToggle.addEventListener("click", () => {
-                    document.body.classList.toggle("sb-sidenav-toggled");
-                    localStorage.setItem("sb|sidebar-toggle", document.body.classList.contains("sb-sidenav-toggled"));
-                });
-            }
+        // Loading functions
+        function showLoading() {
+            $('#loadingOverlay').addClass('show');
+        }
 
-            // Highlight active menu item based on current URL
-            const currentUrl = window.location.pathname;
-            const navLinks = document.querySelectorAll(".nav-link");
+        function hideLoading() {
+            $('#loadingOverlay').removeClass('show');
+        }
 
-            navLinks.forEach(link => {
-                if (link.getAttribute("href") === currentUrl) {
-                    link.classList.add("active");
+        // AJAX loading
+        $(document).ajaxStart(function() {
+            showLoading();
+        }).ajaxStop(function() {
+            hideLoading();
+        });
 
-                    // If the active link is in a collapse, expand it
-                    const parentCollapseElement = link.closest(".collapse");
-                    if (parentCollapseElement) {
-                        parentCollapseElement.classList.add("show");
-                        const parentTrigger = document.querySelector(`[data-bs-target="#${parentCollapseElement.id}"]`);
-                        if (parentTrigger) {
-                            parentTrigger.setAttribute("aria-expanded", "true");
-                            parentTrigger.classList.remove("collapsed");
-                        }
-                    }
+        // Confirm delete function
+        function confirmDelete(url, message = 'Bạn có chắc chắn muốn xóa?') {
+            Swal.fire({
+                title: 'Xác nhận xóa',
+                text: message,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Xóa',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post(url, { __RequestVerificationToken: $('[name="__RequestVerificationToken"]').val() })
+                        .done(function(response) {
+                            if (response.success) {
+                                toastr.success(response.message);
+                                setTimeout(() => location.reload(), 1500);
+                            } else {
+                                toastr.error(response.message);
+                            }
+                        })
+                        .fail(function() {
+                            toastr.error('Có lỗi xảy ra!');
+                        });
                 }
             });
-        });
+        }
+
+        // Format currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(amount);
+        }
+
+        // Format date
+        function formatDate(date) {
+            return new Date(date).toLocaleDateString('vi-VN');
+        }
     </script>
 
-    <!-- Render any additional scripts from the view -->
-    @await RenderSectionAsync("Scripts", required: false)
+    @RenderSection("Scripts", required: false)
 </body>
 </html>

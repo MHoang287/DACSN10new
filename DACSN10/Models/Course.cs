@@ -6,7 +6,7 @@
         public string TenKhoaHoc { get; set; }
         public string MoTa { get; set; }
         public decimal Gia { get; set; }
-        public string TrangThai { get; set; }
+        public string TrangThai { get; set; } // "Active", "Inactive", "Archived"
         public DateTime NgayTao { get; set; }
 
         public string UserID { get; set; }

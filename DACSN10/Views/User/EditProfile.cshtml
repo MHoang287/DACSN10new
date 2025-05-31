@@ -1,144 +1,234 @@
 ﻿@model DACSN10.Models.User
 @{
-    ViewData["Title"] = "Cập nhật thông tin cá nhân";
+    ViewData["Title"] = "Chỉnh sửa hồ sơ - OnlineLearning";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<head>
-    <link rel="stylesheet" href="~/css/profile.css" />
-</head>
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
+    <link rel="stylesheet" href="~/css/EditProfile.css" />
+}
 
-<div class="container profile-container">
-    <div class="row">
-        <!-- Sidebar Profile -->
-        <div class="col-lg-3 mb-4">
-            <div class="card profile-sidebar">
-                <div class="card-body text-center">
-                    <div class="profile-avatar mb-3">
-                        <img src="/api/placeholder/150/150" class="rounded-circle img-fluid" alt="Profile Picture" />
-                    </div>
-                    <h5 class="mb-1">@Model.HoTen</h5>
-                    <p class="text-muted small mb-3">@Model.Email</p>
-                    <div class="profile-info mb-3">
-                        <div class="badge bg-primary w-100 p-2 mb-2">@Model.LoaiNguoiDung</div>
-                        <div class="badge bg-info w-100 p-2">Đã tham gia @Model.NgayDangKy.ToString("dd/MM/yyyy")</div>
-                    </div>
-                </div>
-                <div class="list-group list-group-flush">
-                    <a href="@Url.Action("EditProfile", "User")" class="list-group-item list-group-item-action active">
-                        <i class="fas fa-user-edit me-2"></i> Thông tin cá nhân
-                    </a>
-                    <a href="@Url.Action("MyCourses", "Course")" class="list-group-item list-group-item-action">
-                        <i class="fas fa-book me-2"></i> Khóa học của tôi
-                    </a>
-                    <a href="@Url.Action("Progress", "Course")" class="list-group-item list-group-item-action">
-                        <i class="fas fa-chart-line me-2"></i> Tiến độ học tập
-                    </a>
-                    <a href="@Url.Action("FavoriteCourses", "Course")" class="list-group-item list-group-item-action">
-                        <i class="fas fa-heart me-2"></i> Khóa học yêu thích
-                    </a>
-                    <a href="@Url.Action("History", "Payment")" class="list-group-item list-group-item-action">
-                        <i class="fas fa-history me-2"></i> Lịch sử thanh toán
-                    </a>
-
-                    @if (Model.LoaiNguoiDung == "teacher")
-                    {
-                        <a href="@Url.Action("TeacherProfile", "User", new { id = Model.Id })" class="list-group-item list-group-item-action">
-                            <i class="fas fa-chalkboard-teacher me-2"></i> Trang giảng viên
-                        </a>
-                    }
-                </div>
+<div class="profile-section">
+    <div class="container-fluid px-4 px-md-5">
+        <!-- Profile Header -->
+        <div class="profile-header" data-aos="fade-up">
+            <div class="text-center">
+                <h1 class="mb-3">
+                    <i class="fas fa-user-edit me-3"></i>
+                    Chỉnh sửa hồ sơ cá nhân
+                </h1>
+                <p class="mb-0 opacity-90">Cập nhật thông tin để có trải nghiệm tốt hơn</p>
             </div>
         </div>
 
-        <!-- Main Content -->
-        <div class="col-lg-9">
-            <div class="card">
-                <div class="card-header bg-white">
-                    <h4 class="mb-0"><i class="fas fa-user-edit me-2"></i>Thông tin cá nhân</h4>
-                </div>
-                <div class="card-body">
-                    @if (TempData["Success"] != null)
+        <!-- Profile Form -->
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="profile-card" data-aos="fade-up" data-aos-delay="200">
+
+                    <!-- Progress Indicator -->
+                    <div class="progress-indicator">
+                        <div class="progress-step active">1</div>
+                        <div class="progress-step">2</div>
+                        <div class="progress-step">3</div>
+                    </div>
+
+                    <!-- Info Card -->
+                    <div class="info-card">
+                        <div class="d-flex align-items-start">
+                            <div class="info-card-icon">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-2">Thông tin cá nhân</h5>
+                                <p class="mb-0 text-muted">
+                                    Cập nhật thông tin cá nhân để chúng tôi có thể phục vụ bạn tốt hơn.
+                                    Tất cả thông tin của bạn được bảo mật tuyệt đối.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Avatar Section -->
+                    <div class="avatar-section" data-aos="fade-up" data-aos-delay="300">
+                        <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(Model.HoTen ?? "User")&background=3b82f6&color=fff&bold=true&size=120"
+                             alt="Avatar" class="avatar-large" id="avatarPreview">
+                        <div>
+                            <button type="button" class="avatar-upload-btn" onclick="$('#avatarInput').click()">
+                                <i class="fas fa-camera"></i>
+                                Thay đổi avatar
+                            </button>
+                            <input type="file" id="avatarInput" accept="image/*" style="display: none;" onchange="previewAvatar(event)">
+                        </div>
+                    </div>
+
+                    <!-- Validation Summary -->
+                    @if (!ViewData.ModelState.IsValid)
                     {
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <i class="fas fa-check-circle me-2"></i> @TempData["Success"]
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <div class="validation-summary" data-aos="fade-up" data-aos-delay="400">
+                            <h6 class="text-danger mb-3">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Vui lòng kiểm tra các lỗi sau:
+                            </h6>
+                            <div asp-validation-summary="All" class="text-danger"></div>
                         </div>
                     }
 
-                    <form method="post" action="@Url.Action("EditProfile", "User")">
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="HoTen" class="form-label">Họ và tên</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-user"></i></span>
-                                    <input type="text" class="form-control" id="HoTen" name="HoTen" value="@Model.HoTen" required>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="UserName" class="form-label">Tên đăng nhập</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-user-tag"></i></span>
-                                    <input type="text" class="form-control" id="UserName" value="@Model.UserName" disabled>
-                                </div>
-                                <small class="text-muted">Tên đăng nhập không thể thay đổi</small>
-                            </div>
-                        </div>
+                    <!-- Profile Form -->
+                    <form asp-action="EditProfile" method="post" id="profileForm" data-aos="fade-up" data-aos-delay="500">
+                        @Html.AntiForgeryToken()
 
-                        <div class="row mb-3">
+                        <div class="row">
                             <div class="col-md-6">
-                                <label for="Email" class="form-label">Email</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-envelope"></i></span>
-                                    <input type="email" class="form-control" id="Email" name="Email" value="@Model.Email" required>
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-user text-primary"></i>
+                                        Họ và tên
+                                    </label>
+                                    <div class="input-group-custom">
+                                        <i class="fas fa-user input-icon"></i>
+                                        <input asp-for="HoTen" class="form-control-custom form-control-with-icon"
+                                               placeholder="Nhập họ và tên của bạn" required>
+                                    </div>
+                                    <span asp-validation-for="HoTen" class="field-validation-error"></span>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <label for="PhoneNumber" class="form-label">Số điện thoại</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-phone"></i></span>
-                                    <input type="tel" class="form-control" id="PhoneNumber" name="PhoneNumber" value="@Model.PhoneNumber">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Loại tài khoản</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-user-shield"></i></span>
-                                    <input type="text" class="form-control" value="@Model.LoaiNguoiDung" disabled>
-                                </div>
-                                <small class="text-muted">Loại tài khoản do quản trị viên quản lý</small>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Ngày đăng ký</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
-                                    <input type="text" class="form-control" value="@Model.NgayDangKy.ToString("dd/MM/yyyy")" disabled>
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-envelope text-primary"></i>
+                                        Email
+                                    </label>
+                                    <div class="input-group-custom">
+                                        <i class="fas fa-envelope input-icon"></i>
+                                        <input asp-for="Email" class="form-control-custom form-control-with-icon"
+                                               placeholder="Nhập địa chỉ email" type="email" required>
+                                    </div>
+                                    <span asp-validation-for="Email" class="field-validation-error"></span>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-1"></i> Lưu thay đổi
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-phone text-primary"></i>
+                                        Số điện thoại
+                                    </label>
+                                    <div class="input-group-custom">
+                                        <i class="fas fa-phone input-icon"></i>
+                                        <input asp-for="PhoneNumber" class="form-control-custom form-control-with-icon"
+                                               placeholder="Nhập số điện thoại" type="tel">
+                                    </div>
+                                    <span asp-validation-for="PhoneNumber" class="field-validation-error"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-calendar text-primary"></i>
+                                        Ngày đăng ký
+                                    </label>
+                                    <div class="input-group-custom">
+                                        <i class="fas fa-calendar input-icon"></i>
+                                        <input value="@Model.NgayDangKy.ToString("dd/MM/yyyy")"
+                                               class="form-control-custom form-control-with-icon"
+                                               readonly disabled>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-user-tag text-primary"></i>
+                                        Loại tài khoản
+                                    </label>
+                                    <div class="input-group-custom">
+                                        <i class="fas fa-user-tag input-icon"></i>
+                                        <input value="@Model.LoaiNguoiDung"
+                                               class="form-control-custom form-control-with-icon"
+                                               readonly disabled>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-toggle-on text-primary"></i>
+                                        Trạng thái
+                                    </label>
+                                    <div class="input-group-custom">
+                                        <i class="fas fa-toggle-on input-icon"></i>
+                                        <input value="@Model.TrangThai"
+                                               class="form-control-custom form-control-with-icon"
+                                               readonly disabled>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hidden fields -->
+                        <input asp-for="Id" type="hidden">
+                        <input asp-for="UserName" type="hidden">
+                        <input asp-for="NormalizedUserName" type="hidden">
+                        <input asp-for="NormalizedEmail" type="hidden">
+                        <input asp-for="EmailConfirmed" type="hidden">
+                        <input asp-for="PasswordHash" type="hidden">
+                        <input asp-for="SecurityStamp" type="hidden">
+                        <input asp-for="ConcurrencyStamp" type="hidden">
+                        <input asp-for="PhoneNumberConfirmed" type="hidden">
+                        <input asp-for="TwoFactorEnabled" type="hidden">
+                        <input asp-for="LockoutEnd" type="hidden">
+                        <input asp-for="LockoutEnabled" type="hidden">
+                        <input asp-for="AccessFailedCount" type="hidden">
+                        <input asp-for="NgayDangKy" type="hidden">
+                        <input asp-for="TrangThai" type="hidden">
+                        <input asp-for="LoaiNguoiDung" type="hidden">
+
+                        <!-- Form Actions -->
+                        <div class="d-flex gap-3 justify-content-center mt-4">
+                            <button type="submit" class="btn-primary-custom" id="saveBtn">
+                                <i class="fas fa-save"></i>
+                                <span>Lưu thay đổi</span>
+                                <div class="spinner-border spinner-border-sm ms-2" style="display: none;" id="saveSpinner"></div>
                             </button>
+                            <a href="@Url.Action("Dashboard")" class="btn-secondary-custom">
+                                <i class="fas fa-arrow-left"></i>
+                                Quay lại
+                            </a>
                         </div>
                     </form>
                 </div>
             </div>
+        </div>
 
-            <!-- Change Password Card -->
-            <div class="card mt-4">
-                <div class="card-header bg-white">
-                    <h4 class="mb-0"><i class="fas fa-key me-2"></i>Thay đổi mật khẩu</h4>
-                </div>
-                <div class="card-body">
-                    <p class="text-muted mb-4">Để thay đổi mật khẩu, vui lòng sử dụng trang đổi mật khẩu chính thức.</p>
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <a href="/Identity/Account/Manage/ChangePassword" class="btn btn-outline-primary">
-                            <i class="fas fa-key me-1"></i> Đổi mật khẩu
-                        </a>
+        <!-- Security Section -->
+        <div class="row justify-content-center mt-4">
+            <div class="col-lg-8">
+                <div class="security-section" data-aos="fade-up" data-aos-delay="600">
+                    <div class="text-center">
+                        <div class="security-icon mx-auto">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h4 class="mb-3">Bảo mật tài khoản</h4>
+                        <p class="text-muted mb-4">
+                            Để tăng cường bảo mật, hãy thay đổi mật khẩu định kỳ và kích hoạt xác thực hai yếu tố.
+                        </p>
+                        <div class="d-flex gap-3 justify-content-center flex-wrap">
+                            <a href="/Identity/Account/Manage/ChangePassword" class="btn btn-warning rounded-pill px-4">
+                                <i class="fas fa-key me-2"></i>
+                                Đổi mật khẩu
+                            </a>
+                            <a href="/Identity/Account/Manage/TwoFactorAuthentication" class="btn btn-success rounded-pill px-4">
+                                <i class="fas fa-mobile-alt me-2"></i>
+                                Xác thực 2FA
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -146,104 +236,18 @@
     </div>
 </div>
 
+<!-- Hidden data for JavaScript -->
+<script type="text/javascript">
+    window.EditProfileData = {
+        hasSuccess: @(TempData["Success"] != null ? "true" : "false"),
+        hasError: @(TempData["Error"] != null ? "true" : "false"),
+        successMessage: '@(TempData["Success"]?.ToString() ?? "")',
+        errorMessage: '@(TempData["Error"]?.ToString() ?? "")'
+    };
+</script>
+
 @section Scripts {
-    <script>
-        $(document).ready(function() {
-            // Hiển thị thông báo thành công sử dụng SweetAlert2
-        @if (TempData["Success"] != null)
-        {
-            <text>
-                    Swal.fire({
-                        title: 'Thành công!',
-                        text: '@TempData["Success"]',
-                        icon: 'success',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-            </text>
-        }
-
-            // Xác nhận trước khi gửi form
-            $('form').submit(function(e) {
-                e.preventDefault();
-
-                Swal.fire({
-                    title: 'Xác nhận thay đổi',
-                    text: 'Bạn có chắc chắn muốn cập nhật thông tin cá nhân?',
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonText: 'Cập nhật',
-                    cancelButtonText: 'Hủy'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        this.submit();
-                    }
-                });
-            });
-        });
-    </script>
-
-    <style>
-        .profile-container {
-            max-width: 1100px;
-        }
-
-        .profile-sidebar {
-            border-radius: 1rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 20px;
-        }
-
-        .profile-avatar img {
-            width: 120px;
-            height: 120px;
-            object-fit: cover;
-            border: 4px solid #f8f9fa;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .card {
-            border-radius: 1rem;
-            border: none;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .card-header {
-            border-radius: 1rem 1rem 0 0 !important;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-        }
-
-        .list-group-item {
-            border-left: none;
-            border-right: none;
-            padding: 0.75rem 1.25rem;
-            transition: all 0.2s;
-        }
-
-            .list-group-item:first-child {
-                border-top: none;
-            }
-
-            .list-group-item:last-child {
-                border-bottom: none;
-                border-radius: 0 0 1rem 1rem;
-            }
-
-            .list-group-item:hover {
-                background-color: #f8f9fa;
-            }
-
-            .list-group-item.active {
-                background-color: #0d6efd;
-                border-color: #0d6efd;
-            }
-
-        .input-group-text {
-            background-color: #f8f9fa;
-        }
-
-        
-
-    </style>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="~/js/EditProfile.js"></script>
+    @Html.AntiForgeryToken()
 }

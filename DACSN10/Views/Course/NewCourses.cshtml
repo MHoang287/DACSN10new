@@ -1,358 +1,738 @@
 ﻿@model List<DACSN10.Models.Course>
 @{
-    ViewData["Title"] = "Khóa học mới";
+    ViewData["Title"] = "Khóa học mới nhất - OnlineLearning";
+    var totalPages = ViewBag.TotalPages ?? 1;
+    var currentPage = ViewBag.Page ?? 1;
+    var totalCourses = ViewBag.TotalCourses ?? 0;
 }
 
-<div class="container animate__animated animate__fadeIn">
-    <h1 class="mb-4 text-center fw-bold">
-        <i class="fas fa-star text-warning me-2"></i> Khóa học mới nhất
-    </h1>
-    <p class="text-center text-muted mb-5">
-        Khám phá những khóa học mới nhất trên hệ thống
-    </p>
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
+    <style>
+        .new-header {
+            background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+            color: white;
+            padding: 4rem 0 2rem;
+            position: relative;
+            overflow: hidden;
+        }
 
-    <div class="row">
-        <div class="col-md-8">
-            @if (Model != null && Model.Any())
-            {
-                <div class="row row-cols-1 row-cols-md-2 g-4 mb-4" id="newCoursesContainer">
-                    @foreach (var course in Model)
-                    {
-                        <div class="col course-item">
-                            <div class="card h-100 shadow-sm course-card">
-                                <div class="position-relative">
-                                    <div class="position-absolute top-0 start-0 m-2">
-                                        <span class="badge bg-warning text-dark">
-                                            <i class="fas fa-star me-1"></i> Mới
-                                        </span>
-                                    </div>
-                                    <div class="position-absolute top-0 end-0 m-2">
-                                        <span class="badge bg-light text-dark">
-                                            <i class="fas fa-calendar-alt me-1"></i> @((DateTime.Now - course.NgayTao).Days) ngày trước
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="card-body d-flex flex-column">
-                                    <h5 class="card-title">@course.TenKhoaHoc</h5>
-                                    <p class="card-text text-muted small">
-                                        <i class="fas fa-user me-1"></i> @(course.User?.HoTen ?? "Không có thông tin")
-                                    </p>
-                                    <p class="card-text" style="height: 50px; overflow: hidden;">
-                                        @(course.MoTa?.Length > 100 ? course.MoTa.Substring(0, 100) + "..." : course.MoTa)
-                                    </p>
-                                    <div class="mt-auto d-flex justify-content-between">
-                                        <a href="@Url.Action("Details", new { id = course.CourseID })" class="btn btn-primary">
-                                            <i class="fas fa-info-circle me-1"></i> Chi tiết
-                                        </a>
-                                        <div>
-                                            <a href="javascript:void(0);" class="btn btn-outline-primary btn-follow" data-id="@course.CourseID" title="Theo dõi">
-                                                <i class="far fa-bell"></i>
-                                            </a>
-                                            <a href="javascript:void(0);" class="btn btn-outline-danger btn-favorite" data-id="@course.CourseID" title="Yêu thích">
-                                                <i class="far fa-heart"></i>
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                </div>
-
-                <div class="text-center mt-4">
-                    <a href="@Url.Action("PopularCourses", "Course")" class="btn btn-outline-primary">
-                        <i class="fas fa-fire me-1"></i> Xem khóa học phổ biến
-                    </a>
-                </div>
+            .new-header::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1.5" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="80" r="1" fill="rgba(255,255,255,0.1)"/></svg>');
             }
-            else
-            {
-                <div class="alert alert-info text-center">
-                    <i class="fas fa-info-circle me-2"></i> Chưa có khóa học mới. Hãy quay lại sau!
-                </div>
-            }
-        </div>
 
-        <div class="col-md-4">
-            <!-- Timeline các khóa học mới -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-warning text-dark">
-                    <h5 class="mb-0"><i class="fas fa-history me-2"></i> Timeline</h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="timeline-container">
-                        @if (Model != null && Model.Any())
-                        {
-                            <ol class="timeline">
-                                @foreach (var course in Model.Take(7))
-                                {
-                                    <li class="timeline-item">
-                                        <div class="timeline-info">
-                                            <span>@course.NgayTao.ToString("dd/MM/yyyy")</span>
-                                        </div>
-                                        <div class="timeline-marker"></div>
-                                        <div class="timeline-content">
-                                            <h5 class="timeline-title">
-                                                <a href="@Url.Action("Details", new { id = course.CourseID })">@course.TenKhoaHoc</a>
-                                            </h5>
-                                            <p class="text-muted small">
-                                                <i class="fas fa-user me-1"></i> @(course.User?.HoTen ?? "Không có thông tin")
-                                            </p>
-                                        </div>
-                                    </li>
-                                }
-                            </ol>
-                        }
-                        else
-                        {
-                            <div class="p-3">
-                                <div class="alert alert-info">
-                                    <i class="fas fa-info-circle me-2"></i> Chưa có khóa học mới.
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </div>
+        .new-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .sparkle-icon {
+            animation: sparkle 1.5s infinite;
+        }
+
+        @keyframes sparkle {
+            0%, 100%
+
+        {
+            transform: scale(1) rotate(0deg);
+            opacity: 1;
+        }
+
+        50% {
+            transform: scale(1.2) rotate(180deg);
+            opacity: 0.8;
+        }
+
+        }
+
+        .fresh-badge {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            padding: 0.75rem 1.5rem;
+            margin-bottom: 2rem;
+            display: inline-block;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .timeline-section {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin: -2rem 0 3rem;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 3;
+        }
+
+        .timeline-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .timeline-filters {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .timeline-filter {
+            background: #f1f5f9;
+            border: none;
+            color: #64748b;
+            padding: 0.875rem 1.5rem;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+            .timeline-filter.active {
+                background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+                color: white;
+                box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+            }
+
+        .new-course-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+            .new-course-card:hover {
+                transform: translateY(-15px) scale(1.02);
+                box-shadow: 0 25px 50px rgba(78, 205, 196, 0.2);
+            }
+
+        .new-badge {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            z-index: 2;
+            box-shadow: 0 4px 15px rgba(78, 205, 196, 0.4);
+            animation: new-pulse 2s infinite;
+        }
+
+        @keyframes new-pulse {
+            0%, 100%
+
+        {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.05);
+        }
+
+        }
+
+        .course-image-new {
+            height: 220px;
+            background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .course-image-new::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="0.8" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="80" r="1.2" fill="rgba(255,255,255,0.1)"/></svg>');
+            }
+
+        .release-date {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            color: #1e293b;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+        }
+
+        .course-content-new {
+            padding: 2rem;
+        }
+
+        .course-title-new {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 1rem;
+            line-height: 1.3;
+        }
+
+        .course-teacher-new {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            color: #64748b;
+        }
+
+        .teacher-avatar-new {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid #e2e8f0;
+        }
+
+        .freshness-indicators {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
+            border-radius: 12px;
+            border: 1px solid #5eead4;
+        }
+
+        .freshness-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .freshness-number {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #0d9488;
+            margin-bottom: 0.25rem;
+        }
+
+        .freshness-label {
+            color: #134e4a;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .release-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            color: #059669;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .days-ago {
+            animation: fade-in-out 2s infinite;
+        }
+
+        @keyframes fade-in-out {
+            0%, 100%
+
+        {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.7;
+        }
+
+        }
+
+        .course-price-new {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #059669;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .course-actions-new {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn-explore-new {
+            background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+            border: none;
+            color: white;
+            padding: 0.875rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            flex: 1;
+            text-decoration: none;
+            text-align: center;
+        }
+
+            .btn-explore-new:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 25px rgba(78, 205, 196, 0.4);
+                color: white;
+            }
+
+        .btn-favorite-new {
+            background: transparent;
+            border: 2px solid #a7f3d0;
+            color: #059669;
+            padding: 0.875rem 1rem;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+            .btn-favorite-new:hover {
+                border-color: #059669;
+                background: rgba(5, 150, 105, 0.1);
+                transform: scale(1.05);
+            }
+
+        .new-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .launch-banner {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+            text-align: center;
+        }
+
+        .banner-icon {
+            font-size: 3rem;
+            color: #d97706;
+            margin-bottom: 1rem;
+        }
+
+        .pagination-new {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 3rem;
+        }
+
+            .pagination-new .page-link {
+                border: none;
+                background: white;
+                color: #64748b;
+                padding: 0.875rem 1.25rem;
+                border-radius: 12px;
+                font-weight: 600;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+                transition: all 0.3s ease;
+            }
+
+                .pagination-new .page-link:hover {
+                    background: #4ecdc4;
+                    color: white;
+                    transform: translateY(-2px);
+                }
+
+            .pagination-new .page-item.active .page-link {
+                background: #4ecdc4;
+                color: white;
+                box-shadow: 0 10px 25px rgba(78, 205, 196, 0.3);
+            }
+
+        .stats-new {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .stat-new {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stat-number-new {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label-new {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            .new-grid
+
+        {
+            grid-template-columns: 1fr;
+        }
+
+        .timeline-filters {
+            flex-direction: column;
+        }
+
+        .timeline-filter {
+            text-align: center;
+        }
+
+        .stats-new {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        }
+    </style>
+}
+
+<!-- New Courses Header -->
+<section class="new-header">
+    <div class="container-fluid px-4 px-md-5">
+        <div class="new-content text-center" data-aos="fade-up">
+            <div class="fresh-badge">
+                <i class="fas fa-star sparkle-icon me-2"></i>Mới ra mắt
             </div>
 
-            <!-- Giới thiệu -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Thông tin</h5>
-                </div>
-                <div class="card-body">
-                    <p>
-                        <i class="fas fa-star me-2 text-warning"></i>
-                        <span class="fw-bold">@(Model?.Count ?? 0)</span> khóa học mới trong tháng này
-                    </p>
-                    <p>
-                        <i class="fas fa-users me-2 text-primary"></i>
-                        <span id="totalUsers" class="fw-bold">0</span> học viên đã đăng ký
-                    </p>
-                    <p>
-                        <i class="fas fa-list-alt me-2 text-success"></i>
-                        <span id="totalCategories" class="fw-bold">0</span> danh mục nội dung
-                    </p>
+            <h1 class="display-4 fw-bold mb-3">
+                <i class="fas fa-star sparkle-icon me-3"></i>Khóa học mới nhất
+            </h1>
+            <p class="fs-5 mb-4">
+                Cập nhật liên tục với @totalCourses khóa học mới từ các chuyên gia hàng đầu
+            </p>
 
-                    <hr>
-
-                    <p class="mb-0 text-muted small">
-                        <i class="fas fa-bell me-1"></i> Đăng ký nhận thông báo về các khóa học mới
-                    </p>
-                    <div class="input-group mt-2">
-                        <input type="email" class="form-control" placeholder="Email của bạn...">
-                        <button class="btn btn-primary" type="button" id="subscribeBtn">Đăng ký</button>
-                    </div>
+            <!-- Stats -->
+            <div class="stats-new">
+                <div class="stat-new">
+                    <div class="stat-number-new">@totalCourses</div>
+                    <div class="stat-label-new">Khóa học mới</div>
                 </div>
-            </div>
-
-            <!-- Tags / Chủ đề -->
-            <div class="card shadow-sm">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0"><i class="fas fa-tags me-2"></i> Chủ đề phổ biến</h5>
+                <div class="stat-new">
+                    <div class="stat-number-new" id="newStudents">0</div>
+                    <div class="stat-label-new">Học viên mới</div>
                 </div>
-                <div class="card-body">
-                    <div class="d-flex flex-wrap gap-2" id="popularTags">
-                        <div class="placeholder-glow w-100">
-                            <span class="placeholder col-4"></span>
-                            <span class="placeholder col-3"></span>
-                            <span class="placeholder col-5"></span>
-                            <span class="placeholder col-6"></span>
-                            <span class="placeholder col-3"></span>
-                        </div>
-                    </div>
+                <div class="stat-new">
+                    <div class="stat-number-new">100%</div>
+                    <div class="stat-label-new">Nội dung mới</div>
+                </div>
+                <div class="stat-new">
+                    <div class="stat-number-new">7</div>
+                    <div class="stat-label-new">Ngày/tuần</div>
                 </div>
             </div>
         </div>
     </div>
+</section>
+
+<div class="container-fluid px-4 px-md-5">
+    <!-- Timeline Section -->
+    <div class="timeline-section" data-aos="fade-up">
+        <div class="timeline-header">
+            <h3 class="fw-bold mb-3">Lọc theo thời gian phát hành</h3>
+            <p class="text-muted">Khám phá khóa học theo thời gian bạn quan tâm</p>
+        </div>
+
+        <div class="timeline-filters">
+            <button class="timeline-filter active" onclick="filterByTime('all')">
+                <i class="fas fa-calendar me-2"></i>Tất cả
+            </button>
+            <button class="timeline-filter" onclick="filterByTime('today')">
+                <i class="fas fa-clock me-2"></i>Hôm nay
+            </button>
+            <button class="timeline-filter" onclick="filterByTime('week')">
+                <i class="fas fa-calendar-week me-2"></i>Tuần này
+            </button>
+            <button class="timeline-filter" onclick="filterByTime('month')">
+                <i class="fas fa-calendar-alt me-2"></i>Tháng này
+            </button>
+        </div>
+    </div>
+
+    <!-- Launch Banner -->
+    <div class="launch-banner" data-aos="fade-up">
+        <div class="banner-icon">
+            <i class="fas fa-rocket"></i>
+        </div>
+        <h3 class="fw-bold text-warning">Khóa học vừa ra mắt</h3>
+        <p class="mb-0">Trở thành những học viên đầu tiên trải nghiệm nội dung mới nhất</p>
+    </div>
+
+    <!-- New Courses Grid -->
+    @if (Model != null && Model.Any())
+    {
+        <div class="new-grid" id="coursesContainer">
+            @foreach (var course in Model)
+            {
+                var daysAgo = (DateTime.Now - course.NgayTao).Days;
+                var timeLabel = daysAgo == 0 ? "Hôm nay" : daysAgo == 1 ? "Hôm qua" : $"{daysAgo} ngày trước";
+
+                <div class="new-course-card course-item"
+                     data-aos="fade-up"
+                     data-days="@daysAgo"
+                     data-price="@course.Gia"
+                     data-created="@course.NgayTao.ToString("yyyy-MM-dd")">
+
+                    <div class="new-badge">
+                        <i class="fas fa-sparkles me-1"></i>MỚI
+                    </div>
+
+                    <div class="course-image-new">
+                        <div class="release-date">@timeLabel</div>
+                        <div class="text-center">
+                            <i class="fas fa-graduation-cap fa-4x mb-3"></i>
+                            <div style="font-size: 1.1rem; font-weight: 600;">Khóa học mới</div>
+                        </div>
+                    </div>
+
+                    <div class="course-content-new">
+                        <div class="release-info">
+                            <i class="fas fa-calendar-plus"></i>
+                            <span class="days-ago">Phát hành @timeLabel</span>
+                        </div>
+
+                        <h3 class="course-title-new">@course.TenKhoaHoc</h3>
+
+                        <div class="course-teacher-new">
+                            <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(course.User?.HoTen ?? "Teacher")&background=4ecdc4&color=fff&bold=true&size=32"
+                                 alt="@course.User?.HoTen" class="teacher-avatar-new">
+                            <span>@(course.User?.HoTen ?? "Chưa có thông tin")</span>
+                        </div>
+
+                        <div class="freshness-indicators">
+                            <div class="freshness-item">
+                                <div class="freshness-number">@(course.Enrollments?.Count ?? 0)</div>
+                                <div class="freshness-label">Đăng ký</div>
+                            </div>
+                            <div class="freshness-item">
+                                <div class="freshness-number">@(course.Lessons?.Count ?? 0)</div>
+                                <div class="freshness-label">Bài học</div>
+                            </div>
+                            <div class="freshness-item">
+                                <div class="freshness-number">@(course.Quizzes?.Count ?? 0)</div>
+                                <div class="freshness-label">Kiểm tra</div>
+                            </div>
+                        </div>
+
+                        <div class="course-price-new">
+                            @if (course.Gia > 0)
+                            {
+                                <span>@course.Gia.ToString("N0")₫</span>
+                            }
+                            else
+                            {
+                                <span class="text-success">Miễn phí</span>
+                            }
+                        </div>
+
+                        <div class="course-actions-new">
+                            <a href="@Url.Action("Details", new { id = course.CourseID })"
+                               class="btn-explore-new">
+                                <i class="fas fa-rocket me-2"></i>Khám phá ngay
+                            </a>
+
+                            @if (User.Identity.IsAuthenticated)
+                            {
+                                <button class="btn-favorite-new" onclick="toggleFavorite(@course.CourseID)" title="Thêm vào yêu thích">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Pagination -->
+        @if (totalPages > 1)
+        {
+            <nav class="pagination-new">
+                <ul class="pagination mb-0">
+                    @if (currentPage > 1)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="@Url.Action("NewCourses", new { page = currentPage - 1 })">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                    }
+
+                    @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
+                    {
+                        <li class="page-item @(i == currentPage ? "active" : "")">
+                            <a class="page-link" href="@Url.Action("NewCourses", new { page = i })">@i</a>
+                        </li>
+                    }
+
+                    @if (currentPage < totalPages)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="@Url.Action("NewCourses", new { page = currentPage + 1 })">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    }
+    else
+    {
+        <div class="text-center py-5" data-aos="fade-up">
+            <div class="mb-4">
+                <i class="fas fa-star fa-5x text-muted"></i>
+            </div>
+            <h3 class="text-muted mb-3">Chưa có khóa học mới nào</h3>
+            <p class="text-muted mb-4">Hệ thống đang được cập nhật, vui lòng quay lại sau!</p>
+            <a href="@Url.Action("Index")" class="btn btn-primary btn-lg">
+                <i class="fas fa-search me-2"></i>Khám phá tất cả khóa học
+            </a>
+        </div>
+    }
 </div>
 
-<style>
-    /* Timeline styling */
-    .timeline {
-        border-left: 3px solid #007bff;
-        border-bottom-right-radius: 4px;
-        border-top-right-radius: 4px;
-        margin: 0 auto;
-        position: relative;
-        padding: 0;
-        list-style: none;
-        text-align: left;
-        max-width: 40rem;
-    }
-
-    .timeline-item {
-        position: relative;
-        margin-left: 20px;
-        padding: 1rem 0;
-    }
-
-    .timeline-info {
-        font-size: 12px;
-        font-weight: 700;
-        letter-spacing: 1px;
-        margin: 0 0 0.5em 0;
-        text-transform: uppercase;
-        white-space: nowrap;
-    }
-
-    .timeline-marker {
-        position: absolute;
-        top: 1.1rem;
-        left: -31px;
-        width: 15px;
-        height: 15px;
-        border-radius: 50%;
-        border: 3px solid #007bff;
-        background: white;
-    }
-
-    .timeline-content {
-        padding-bottom: 0.5rem;
-        border-bottom: 1px dashed #e9ecef;
-    }
-
-    .timeline-title {
-        font-size: 1rem;
-        margin: 0 0 0.5rem;
-    }
-
-    .timeline-container {
-        max-height: 400px;
-        overflow-y: auto;
-        padding: 1rem;
-    }
-</style>
-
 @section Scripts {
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
+        // Initialize AOS
+        AOS.init({
+            duration: 1000,
+            easing: 'ease-out-quart',
+            once: true
+        });
+
         $(document).ready(function() {
-            // Nạp số liệu thống kê
-            $('#totalUsers').text(Math.floor(Math.random() * 5000) + 1000);
-            $('#totalCategories').text(Math.floor(Math.random() * 20) + 5);
+            // Calculate total new students
+            let totalNewStudents = 0;
+            $('.freshness-number').each(function() {
+                const text = $(this).text();
+                if (!isNaN(text) && $(this).closest('.freshness-item').find('.freshness-label').text() === 'Đăng ký') {
+                    totalNewStudents += parseInt(text);
+                }
+            });
 
-            // Nạp tags phổ biến
-            var popularTags = [
-                'Web Development', 'Programming', 'Data Science', 'Machine Learning', 'UI/UX Design',
-                'Mobile App', 'JavaScript', 'Python', 'Java', 'HTML/CSS', 'React', 'Angular',
-                'Database', 'AI', 'Game Development', 'DevOps', 'Cloud Computing'
-            ];
+            // Animate new students counter
+            animateCounter($('#newStudents'), totalNewStudents);
+        });
 
-            var tagsHtml = '';
-            popularTags.forEach(function(tag) {
-                var size = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3
-                var colorClass = '';
+        function animateCounter(element, target) {
+            let current = 0;
+            const increment = target / 40;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                element.text(Math.floor(current).toLocaleString());
+            }, 50);
+        }
 
-                switch(size) {
-                    case 1:
-                        colorClass = 'bg-light text-dark';
+        function filterByTime(period) {
+            // Update active tab
+            $('.timeline-filter').removeClass('active');
+            event.target.classList.add('active');
+
+            // Filter courses
+            const courses = $('.course-item');
+            const now = new Date();
+
+            courses.each(function() {
+                const $course = $(this);
+                const daysAgo = parseInt($course.data('days'));
+
+                let shouldShow = true;
+
+                switch(period) {
+                    case 'today':
+                        shouldShow = daysAgo === 0;
                         break;
-                    case 2:
-                        colorClass = 'bg-primary text-white';
+                    case 'week':
+                        shouldShow = daysAgo <= 7;
                         break;
-                    case 3:
-                        colorClass = 'bg-warning text-dark';
+                    case 'month':
+                        shouldShow = daysAgo <= 30;
+                        break;
+                    case 'all':
+                    default:
+                        shouldShow = true;
                         break;
                 }
 
-                tagsHtml += '<a href="@Url.Action("SearchByTopic")?topic=' + tag + '" class="badge ' + colorClass + ' py-2 px-3 text-decoration-none">' + tag + '</a>';
+                $course.toggle(shouldShow);
             });
 
-            $('#popularTags').html(tagsHtml);
+            // Re-trigger AOS for visible items
+            AOS.refresh();
+        }
 
-            // Xử lý nút đăng ký nhận thông báo
-            $('#subscribeBtn').on('click', function() {
-                var email = $(this).prev('input').val();
-                if (!email || !email.includes('@@')){
-                    toastr.error('Vui lòng nhập email hợp lệ!');
-                    return;
-                }
-
-                toastr.success('Đã đăng ký nhận thông báo thành công!');
-                $(this).prev('input').val('');
-            });
-
-            // Xử lý nút theo dõi và yêu thích
-            $('.btn-follow, .btn-favorite').on('click', function() {
-                var btn = $(this);
-                var isFollow = btn.hasClass('btn-follow');
-                var courseId = btn.data('id');
-
+        function toggleFavorite(courseId) {
         @if (User.Identity.IsAuthenticated)
         {
             <text>
-                        var actionUrl = isFollow ? '@Url.Action("FollowCourse")' : '@Url.Action("AddToFavorite")';
-                        var successMsg = isFollow ? 'Đã theo dõi khóa học thành công!' : 'Đã thêm vào danh sách yêu thích!';
-
-                        $.ajax({
-                            url: actionUrl,
-                            type: 'POST',
-                            data: {
-                                courseId: courseId,
-                                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
-                            },
-                            success: function(result) {
-                                btn.find('i').removeClass('far').addClass('fas');
-                                toastr.success(successMsg);
-                            },
-                            error: function(xhr) {
-                                if (xhr.status === 401) {
-                                    Swal.fire({
-                                        title: 'Cần đăng nhập',
-                                        text: 'Bạn cần đăng nhập để thực hiện chức năng này.',
-                                        icon: 'info',
-                                        showCancelButton: true,
-                                        confirmButtonText: 'Đăng nhập',
-                                        cancelButtonText: 'Hủy'
-                                    }).then((result) => {
-                                        if (result.isConfirmed) {
-                                            window.location.href = '/Identity/Account/Login';
-                                        }
-                                    });
-                                } else {
-                                    toastr.error(xhr.responseJSON?.error || 'Đã xảy ra lỗi!');
-                                }
-                            }
-                        });
+                    $.post('@Url.Action("AddToFavorite", "Course")', {
+                        courseId: courseId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    })
+                    .done(function(response) {
+                        if (response.success) {
+                            toastr.success(response.message);
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    })
+                    .fail(function() {
+                        toastr.error('Có lỗi xảy ra!');
+                    });
             </text>
         }
         else
         {
             <text>
-                        Swal.fire({
-                            title: 'Cần đăng nhập',
-                            text: 'Bạn cần đăng nhập để thực hiện chức năng này.',
-                            icon: 'info',
-                            showCancelButton: true,
-                            confirmButtonText: 'Đăng nhập',
-                            cancelButtonText: 'Hủy'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                window.location.href = '/Identity/Account/Login';
-                            }
-                        });
+                    window.location.href = '/Identity/Account/Login';
             </text>
         }
-            });
+        }
 
-            // Animation cho các thẻ
-            $('.card').hover(
-                function() {
-                    $(this).addClass('shadow');
-                    $(this).css('transform', 'translateY(-5px)');
-                    $(this).css('transition', 'transform 0.3s ease, box-shadow 0.3s ease');
-                },
-                function() {
-                    $(this).removeClass('shadow');
-                    $(this).css('transform', 'translateY(0)');
-                }
-            );
-
-            // Animation khi load trang
-            $('.timeline-item').each(function(index) {
-                $(this).addClass('animate__animated animate__fadeInLeft');
-                $(this).css('animation-delay', (index * 0.1) + 's');
-            });
-        });
+        // Configure toastr
+        if (typeof toastr !== 'undefined') {
+            toastr.options = {
+                "closeButton": true,
+                "progressBar": true,
+                "positionClass": "toast-top-right",
+                "timeOut": 3000
+            };
+        }
     </script>
+
+    @if (User.Identity.IsAuthenticated)
+    {
+        @Html.AntiForgeryToken()
+    }
 }

@@ -1,4 +1,5 @@
 ﻿using DACSN10.Models;
+using DACSN10.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -18,6 +19,8 @@ builder.Host.UseSerilog((context, services, configuration) =>
         .WriteTo.Console()
         .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day);
 });
+
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 // Add services to the container
 builder.Services.AddControllersWithViews();

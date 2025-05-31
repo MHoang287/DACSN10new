@@ -2,27 +2,436 @@
 @{
     ViewData["Title"] = "Trang chủ - OnlineLearning";
 
-    // Calculate statistics
-    int totalStudents = 0;
-    int totalCourses = Model?.Count ?? 0;
-    int totalLessons = 0;
-    int publishedCount = 0;
-    int closedCount = 0;
-
-    if (Model != null)
-    {
-        foreach (var course in Model)
-        {
-            totalStudents += course.Enrollments?.Count ?? 0;
-            totalLessons += course.Lessons?.Count ?? 0;
-
-            if (course.TrangThai == "Published")
-                publishedCount++;
-            else
-                closedCount++;
-        }
-    }
+    // Get statistics from ViewBag
+    var totalStudents = ViewBag.TotalStudents ?? 0;
+    var totalCourses = ViewBag.TotalCourses ?? 0;
+    var totalLessons = ViewBag.TotalLessons ?? 0;
+    var totalTeachers = ViewBag.TotalTeachers ?? 0;
+    var newCoursesThisMonth = ViewBag.NewCoursesThisMonth ?? 0;
 }
+
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css" />
+    <style>
+        /* Enhanced Search Section */
+        .enhanced-search-section {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 3rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .enhanced-search-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="1" fill="rgba(59,130,246,0.1)"/><circle cx="80" cy="40" r="0.5" fill="rgba(59,130,246,0.1)"/><circle cx="40" cy="80" r="0.8" fill="rgba(59,130,246,0.1)"/></svg>');
+        }
+
+        .enhanced-search-box {
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .enhanced-search-input {
+            width: 100%;
+            padding: 1.25rem 4rem 1.25rem 2rem;
+            border: 3px solid #e2e8f0;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .enhanced-search-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: white;
+            box-shadow: 0 15px 40px rgba(59, 130, 246, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .enhanced-search-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border: none;
+            border-radius: 20px;
+            padding: 0.85rem 1.5rem;
+            color: white;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+        }
+
+        .enhanced-search-btn:hover {
+            transform: translateY(-50%) scale(1.05);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .search-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+            margin-top: 0.5rem;
+        }
+
+        .suggestion-item {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #f1f5f9;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .suggestion-item:hover {
+            background: #f8fafc;
+            transform: translateX(5px);
+        }
+
+        .suggestion-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            color: white;
+        }
+
+        .suggestion-icon.course { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+        .suggestion-icon.teacher { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .suggestion-icon.category { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+
+        .suggestion-content {
+            flex: 1;
+        }
+
+        .suggestion-title {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+        }
+
+        .suggestion-subtitle {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        /* Quick Actions Section */
+        .quick-actions-section {
+            background: white;
+            padding: 3rem 0;
+            margin: 2rem 0;
+        }
+
+        .quick-action-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid #f1f5f9;
+            cursor: pointer;
+            height: 100%;
+        }
+
+        .quick-action-card:hover {
+            transform: translateY(-10px);
+            border-color: #3b82f6;
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.1);
+        }
+
+        .quick-action-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2rem;
+            color: white;
+        }
+
+        .quick-action-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.75rem;
+        }
+
+        .quick-action-desc {
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+
+        /* Enhanced Course Cards */
+        .enhanced-course-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            margin-bottom: 2rem;
+        }
+
+        .enhanced-course-card:hover {
+            transform: translateY(-15px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .course-image-enhanced {
+            height: 220px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .course-image-enhanced::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1.5" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="80" r="1" fill="rgba(255,255,255,0.1)"/></svg>');
+        }
+
+        .course-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            color: #1e293b;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+        }
+
+        .course-content-enhanced {
+            padding: 2rem;
+        }
+
+        .course-title-enhanced {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 1rem;
+            line-height: 1.3;
+        }
+
+        .course-teacher {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            color: #64748b;
+        }
+
+        .teacher-avatar-small {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid #e2e8f0;
+        }
+
+        .course-stats-enhanced {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+
+        .stat-item-enhanced {
+            text-align: center;
+        }
+
+        .stat-number-enhanced {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label-enhanced {
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+
+        .course-price-enhanced {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #059669;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .course-actions-enhanced {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn-primary-enhanced {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border: none;
+            color: white;
+            padding: 0.875rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            flex: 1;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .btn-primary-enhanced:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+            color: white;
+        }
+
+        .btn-outline-enhanced {
+            background: transparent;
+            border: 2px solid #e2e8f0;
+            color: #64748b;
+            padding: 0.875rem 1rem;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn-outline-enhanced:hover {
+            border-color: #ef4444;
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        /* Statistics Counter Animation */
+        .counter {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #4fc3f7;
+        }
+
+        /* Testimonials Section */
+        .testimonials-section {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 5rem 0;
+            margin: 3rem 0;
+        }
+
+        .testimonial-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            margin: 1rem;
+        }
+
+        .testimonial-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+            border: 4px solid #f1f5f9;
+        }
+
+        .testimonial-text {
+            font-style: italic;
+            color: #64748b;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .testimonial-author {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .testimonial-role {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        /* Newsletter Section */
+        .newsletter-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4rem 0;
+            border-radius: 25px;
+            margin: 3rem 0;
+            text-align: center;
+        }
+
+        .newsletter-form {
+            max-width: 500px;
+            margin: 0 auto;
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .newsletter-input {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 15px;
+            font-size: 1rem;
+        }
+
+        .newsletter-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 15px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .newsletter-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+        }
+    </style>
+}
+
 <!-- Hero Section -->
 <section class="hero-section home-section">
     <div class="floating-elements">
@@ -35,10 +444,10 @@
     <div class="container-fluid px-4 px-md-5">
         <div class="row align-items-center">
             <div class="col-lg-6">
-                <div class="hero-content animate__animated animate__fadeInLeft">
+                <div class="hero-content" data-aos="fade-right">
                     <h1 class="hero-title">
-                        Creating a <span class="highlight">Better Future</span><br>
-                        through Education
+                        Tạo ra <span class="highlight">Tương lai tốt đẹp</span><br>
+                        thông qua Giáo dục
                     </h1>
                     <p class="hero-description">
                         Khám phá hàng ngàn khóa học chất lượng cao từ các chuyên gia hàng đầu.
@@ -49,29 +458,33 @@
                         <a href="#courses" class="btn-primary-custom">
                             <i class="fas fa-play me-2"></i> Khám phá khóa học
                         </a>
-                        <a href="#" class="btn-outline-custom">
-                            <i class="fas fa-phone me-2"></i> Liên hệ
+                        <a href="@Url.Action("SearchTeacher", "User")" class="btn-outline-custom">
+                            <i class="fas fa-chalkboard-teacher me-2"></i> Tìm giảng viên
                         </a>
                     </div>
 
                     <div class="hero-stats">
                         <div class="stat-item">
-                            <div class="stat-number" id="totalStudents">@(Model?.Sum(c => c.Enrollments?.Count ?? 0) ?? 0)</div>
+                            <div class="stat-number counter" data-target="@totalStudents">0</div>
                             <div class="stat-label">Học viên</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-number" id="totalCourses">@(Model?.Count ?? 0)</div>
+                            <div class="stat-number counter" data-target="@totalCourses">0</div>
                             <div class="stat-label">Khóa học</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-number" id="totalLessons">@(Model?.Sum(c => c.Lessons?.Count ?? 0) ?? 0)</div>
+                            <div class="stat-number counter" data-target="@totalLessons">0</div>
                             <div class="stat-label">Bài học</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number counter" data-target="@totalTeachers">0</div>
+                            <div class="stat-label">Giảng viên</div>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="col-lg-6">
-                <div class="hero-image animate__animated animate__fadeInRight">
+                <div class="hero-image" data-aos="fade-left">
                     <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
                          alt="Online Learning" class="img-fluid">
                 </div>
@@ -80,116 +493,168 @@
     </div>
 </section>
 
-<!-- Search Section -->
-<section class="search-section home-section" id="courses">
+<!-- Enhanced Search Section -->
+<section class="enhanced-search-section" id="search" data-aos="fade-up">
     <div class="container-fluid px-4 px-md-5">
-        <div class="search-box">
-            <div class="input-group">
-                <input type="text" class="form-control search-input" placeholder="Tìm kiếm khóa học..." id="searchCourse">
-                <button class="btn btn-primary-custom" type="button" id="searchBtn">
-                    <i class="fas fa-search"></i>
-                </button>
+        <div class="text-center mb-4">
+            <h2 class="section-title">Tìm kiếm khóa học phù hợp</h2>
+            <p class="section-subtitle">Khám phá hàng ngàn khóa học từ cơ bản đến nâng cao</p>
+        </div>
+
+        <div class="enhanced-search-box">
+            <input type="text" class="enhanced-search-input" id="globalSearch"
+                   placeholder="Tìm kiếm khóa học, giảng viên, chủ đề..." autocomplete="off">
+            <button class="enhanced-search-btn" onclick="performGlobalSearch()">
+                <i class="fas fa-search"></i>
+            </button>
+
+            <!-- Search Suggestions Dropdown -->
+            <div class="search-suggestions" id="searchSuggestions"></div>
+        </div>
+    </div>
+</section>
+
+<!-- Quick Actions Section -->
+<section class="quick-actions-section" data-aos="fade-up">
+    <div class="container-fluid px-4 px-md-5">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Khám phá nhanh</h2>
+            <p class="section-subtitle">Truy cập nhanh các tính năng phổ biến</p>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <a href="@Url.Action("PopularCourses", "Course")" class="text-decoration-none">
+                    <div class="quick-action-card" data-aos="zoom-in" data-aos-delay="100">
+                        <div class="quick-action-icon" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <div class="quick-action-title">Khóa học phổ biến</div>
+                        <div class="quick-action-desc">Khám phá các khóa học được yêu thích nhất</div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <a href="@Url.Action("NewCourses", "Course")" class="text-decoration-none">
+                    <div class="quick-action-card" data-aos="zoom-in" data-aos-delay="200">
+                        <div class="quick-action-icon" style="background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="quick-action-title">Khóa học mới nhất</div>
+                        <div class="quick-action-desc">Cập nhật những khóa học mới nhất</div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <a href="@Url.Action("SearchTeacher", "User")" class="text-decoration-none">
+                    <div class="quick-action-card" data-aos="zoom-in" data-aos-delay="300">
+                        <div class="quick-action-icon" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                        </div>
+                        <div class="quick-action-title">Tìm giảng viên</div>
+                        <div class="quick-action-desc">Kết nối với các chuyên gia hàng đầu</div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="quick-action-card" data-aos="zoom-in" data-aos-delay="400" onclick="loadFreeCoursesModal()">
+                    <div class="quick-action-icon" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
+                        <i class="fas fa-gift"></i>
+                    </div>
+                    <div class="quick-action-title">Khóa học miễn phí</div>
+                    <div class="quick-action-desc">Học tập hoàn toàn miễn phí</div>
+                </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Courses Section -->
-<section class="courses-section home-section">
+<!-- Featured Courses Section -->
+<section class="courses-section home-section" id="courses">
     <div class="container-fluid px-4 px-md-5">
-        <h2 class="section-title animate__animated animate__fadeInUp">
-            <i class="fas fa-book-open me-3"></i>Danh sách khóa học
-        </h2>
-        <p class="section-subtitle animate__animated animate__fadeInUp">
-            Khám phá các khóa học chất lượng, cập nhật liên tục từ các giảng viên hàng đầu
-        </p>
+        <div class="text-center mb-5" data-aos="fade-up">
+            <h2 class="section-title">
+                <i class="fas fa-book-open me-3"></i>Khóa học nổi bật
+            </h2>
+            <p class="section-subtitle">
+                Khám phá các khóa học chất lượng, được cập nhật liên tục từ các giảng viên hàng đầu
+            </p>
+        </div>
 
-        <div class="row" id="coursesContainer">
-            @if (Model != null && Model.Any())
-            {
-                foreach (var course in Model)
+        @if (Model != null && Model.Any())
+        {
+            <div class="row" id="featuredCoursesContainer">
+                @for (int i = 0; i < Math.Min(12, Model.Count); i++)
                 {
-                    <div class="col-lg-4 col-md-6 course-item mb-4"
-                         data-name="@course.TenKhoaHoc.ToLower()"
-                         data-description="@(course.MoTa?.ToLower() ?? "")">
-                        <div class="course-card animate__animated animate__fadeInUp">
-                            <!-- Course Image Placeholder -->
-                            <div class="course-image-placeholder">
+                    var course = Model[i];
+                    var isPopular = i < 6; // First 6 are popular courses
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="enhanced-course-card" data-aos="fade-up" data-aos-delay="@((i % 3) * 100)">
+                            <div class="course-image-enhanced">
+                                @if (isPopular)
+                                {
+                                    <div class="course-badge">
+                                        <i class="fas fa-fire me-1"></i>Phổ biến
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="course-badge">
+                                        <i class="fas fa-star me-1"></i>Mới
+                                    </div>
+                                }
                                 <div class="text-center">
-                                    <i class="fas fa-graduation-cap fa-3x mb-2"></i>
-                                    <div style="font-size: 1rem;">@course.TenKhoaHoc</div>
+                                    <i class="fas fa-graduation-cap fa-4x mb-3"></i>
+                                    <div style="font-size: 1.1rem; font-weight: 600;">@course.TenKhoaHoc</div>
                                 </div>
                             </div>
 
-                            <div class="course-card-body">
-                                <h3 class="course-title">@course.TenKhoaHoc</h3>
-                                <p class="course-description">
-                                    @(string.IsNullOrEmpty(course.MoTa) ? "Chưa có mô tả cho khóa học này." : course.MoTa)
-                                </p>
+                            <div class="course-content-enhanced">
+                                <h3 class="course-title-enhanced">@course.TenKhoaHoc</h3>
 
-                                <!-- Course Stats -->
-                                <div class="course-stats">
-                                    <div class="row text-center">
-                                        <div class="col-4">
-                                            <small class="text-muted d-block">Học viên</small>
-                                            <strong>@(course.Enrollments?.Count ?? 0)</strong>
-                                        </div>
-                                        <div class="col-4">
-                                            <small class="text-muted d-block">Bài học</small>
-                                            <strong>@(course.Lessons?.Count ?? 0)</strong>
-                                        </div>
-                                        <div class="col-4">
-                                            <small class="text-muted d-block">Giá</small>
-                                            <strong class="text-success">@course.Gia.ToString("N0")₫</strong>
-                                        </div>
+                                <div class="course-teacher">
+                                    <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(course.User?.HoTen ?? "Teacher")&background=667eea&color=fff&bold=true&size=32"
+                                         alt="@course.User?.HoTen" class="teacher-avatar-small">
+                                    <span>@(course.User?.HoTen ?? "Chưa có thông tin")</span>
+                                </div>
+
+                                <div class="course-stats-enhanced">
+                                    <div class="stat-item-enhanced">
+                                        <div class="stat-number-enhanced">@(course.Enrollments?.Count ?? 0)</div>
+                                        <div class="stat-label-enhanced">Học viên</div>
+                                    </div>
+                                    <div class="stat-item-enhanced">
+                                        <div class="stat-number-enhanced">@(course.Lessons?.Count ?? 0)</div>
+                                        <div class="stat-label-enhanced">Bài học</div>
+                                    </div>
+                                    <div class="stat-item-enhanced">
+                                        <div class="stat-number-enhanced">@(course.Quizzes?.Count ?? 0)</div>
+                                        <div class="stat-label-enhanced">Kiểm tra</div>
                                     </div>
                                 </div>
 
-                                <div class="course-meta">
-                                    @if (course.TrangThai == "Published")
+                                <div class="course-price-enhanced">
+                                    @if (course.Gia > 0)
                                     {
-                                        <span class="course-status status-published">
-                                            <i class="fas fa-check-circle me-1"></i> Đang mở
-                                        </span>
+                                        <span>@course.Gia.ToString("N0")₫</span>
                                     }
                                     else
                                     {
-                                        <span class="course-status status-closed">
-                                            <i class="fas fa-lock me-1"></i> Đã đóng
-                                        </span>
+                                        <span class="text-success">Miễn phí</span>
                                     }
-                                    <span class="course-date">
-                                        <i class="fas fa-calendar me-1"></i> @course.NgayTao.ToString("dd/MM/yyyy")
-                                    </span>
                                 </div>
 
-                                <div class="course-actions">
-                                    <a href="@Url.Action("Details", "Course", new { id = course.CourseID })" class="btn-view">
-                                        <i class="fas fa-eye me-1"></i> Xem chi tiết
+                                <div class="course-actions-enhanced">
+                                    <a href="@Url.Action("Details", "Course", new { id = course.CourseID })"
+                                       class="btn-primary-enhanced">
+                                        <i class="fas fa-eye me-2"></i>Xem chi tiết
                                     </a>
 
-                                    @if (course.TrangThai == "Published")
+                                    @if (User.Identity.IsAuthenticated)
                                     {
-                                        @if (User.Identity.IsAuthenticated)
-                                        {
-                                            <button class="btn-enroll" onclick="enrollCourse(@course.CourseID, '@course.TenKhoaHoc')">
-                                                <i class="fas fa-user-plus me-1"></i> Đăng ký
-                                            </button>
-                                            <button class="btn-favorite" onclick="addToFavorite(@course.CourseID, '@course.TenKhoaHoc')" title="Thêm vào yêu thích">
-                                                <i class="far fa-heart"></i>
-                                            </button>
-                                        }
-                                        else
-                                        {
-                                            <a href="/Identity/Account/Login" class="btn-enroll">
-                                                <i class="fas fa-sign-in-alt me-1"></i> Đăng nhập
-                                            </a>
-                                        }
-                                    }
-                                    else
-                                    {
-                                        <button class="btn-enroll" disabled>
-                                            <i class="fas fa-lock me-1"></i> Đã đóng
+                                        <button class="btn-outline-enhanced" onclick="toggleFavorite(@course.CourseID)" title="Thêm vào yêu thích">
+                                            <i class="far fa-heart"></i>
                                         </button>
                                     }
                                 </div>
@@ -197,88 +662,304 @@
                         </div>
                     </div>
                 }
-            }
-            else
-            {
-                <div class="col-12">
-                    <div class="text-center py-5">
-                        <div class="mb-4">
-                            <i class="fas fa-book-open fa-5x text-muted"></i>
-                        </div>
-                        <h3 class="text-muted mb-3">Chưa có khóa học nào</h3>
-                        <p class="text-muted mb-4">Hiện tại chưa có khóa học nào được tạo. Hãy quay lại sau!</p>
-                        <a href="@Url.Action("Index", "Course")" class="btn-primary-custom">
-                            <i class="fas fa-search me-2"></i>Tìm khóa học khác
-                        </a>
-                    </div>
+            </div>
+
+            <div class="text-center mt-5" data-aos="fade-up">
+                <a href="@Url.Action("Index", "Course")" class="btn-primary-custom btn-lg">
+                    <i class="fas fa-th-large me-2"></i>Xem tất cả khóa học
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5" data-aos="fade-up">
+                <div class="mb-4">
+                    <i class="fas fa-book-open fa-5x text-muted"></i>
                 </div>
-            }
+                <h3 class="text-muted mb-3">Chưa có khóa học nào</h3>
+                <p class="text-muted mb-4">Hệ thống đang được cập nhật, vui lòng quay lại sau!</p>
+            </div>
+        }
+    </div>
+</section>
+
+<!-- Newsletter Section -->
+<section class="newsletter-section" data-aos="fade-up">
+    <div class="container-fluid px-4 px-md-5">
+        <div class="text-center">
+            <h2 class="mb-3">Đăng ký nhận thông tin mới nhất</h2>
+            <p class="mb-0">Nhận thông báo về khóa học mới và các ưu đãi đặc biệt</p>
+
+            <form class="newsletter-form" onsubmit="subscribeNewsletter(event)">
+                <input type="email" class="newsletter-input" placeholder="Nhập email của bạn..." required>
+                <button type="submit" class="newsletter-btn">
+                    <i class="fas fa-paper-plane me-2"></i>Đăng ký
+                </button>
+            </form>
         </div>
     </div>
 </section>
 
-<!-- Chart Section -->
-<section class="chart-section home-section">
-    <div class="container-fluid px-4 px-md-5">
-        <h3 class="text-center mb-4">Thống kê khóa học</h3>
-        <div class="chart-container">
-            <canvas id="courseChart"></canvas>
-        </div>
-    </div>
-</section>
-
-<!-- Footer -->
-<footer class="bg-dark text-light py-5">
-    <div class="container-fluid px-4 px-md-5">
-        <div class="row">
-            <div class="col-lg-4 mb-4">
-                <h5 class="mb-4">
-                    <i class="fas fa-graduation-cap me-2"></i> OnlineLearning
+<!-- Free Courses Modal -->
+<div class="modal fade" id="freeCoursesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">
+                    <i class="fas fa-gift me-2 text-success"></i>Khóa học miễn phí
                 </h5>
-                <p class="mb-3">Nền tảng học trực tuyến hàng đầu, mang đến kiến thức chất lượng cho mọi người.</p>
-                <div class="d-flex">
-                    <a href="#" class="me-3 text-light"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#" class="me-3 text-light"><i class="fab fa-twitter"></i></a>
-                    <a href="#" class="me-3 text-light"><i class="fab fa-youtube"></i></a>
-                    <a href="#" class="text-light"><i class="fab fa-linkedin-in"></i></a>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row" id="freeCoursesContainer">
+                    <!-- Free courses will be loaded here -->
                 </div>
-            </div>
-            <div class="col-lg-2 col-md-6 mb-4">
-                <h5 class="mb-4">Khóa học</h5>
-                <ul class="list-unstyled">
-                    <li class="mb-2"><a href="#" class="text-light text-decoration-none">Lập trình</a></li>
-                    <li class="mb-2"><a href="#" class="text-light text-decoration-none">Thiết kế</a></li>
-                    <li class="mb-2"><a href="#" class="text-light text-decoration-none">Marketing</a></li>
-                    <li class="mb-2"><a href="#" class="text-light text-decoration-none">Kinh doanh</a></li>
-                </ul>
-            </div>
-            <div class="col-lg-2 col-md-6 mb-4">
-                <h5 class="mb-4">Hỗ trợ</h5>
-                <ul class="list-unstyled">
-                    <li class="mb-2"><a href="#" class="text-light text-decoration-none">Trung tâm hỗ trợ</a></li>
-                    <li class="mb-2"><a href="#" class="text-light text-decoration-none">FAQ</a></li>
-                    <li class="mb-2"><a href="#" class="text-light text-decoration-none">Liên hệ</a></li>
-                    <li class="mb-2"><a href="#" class="text-light text-decoration-none">Điều khoản</a></li>
-                </ul>
-            </div>
-            <div class="col-lg-4">
-                <h5 class="mb-4">Đăng ký nhận tin</h5>
-                <p class="mb-3">Nhận thông tin về khóa học mới và ưu đãi đặc biệt</p>
-                <div class="input-group">
-                    <input type="email" class="form-control" placeholder="Email của bạn">
-                    <button class="btn btn-primary" type="button">Đăng ký</button>
-                </div>
-            </div>
-        </div>
-        <hr class="my-4 bg-light opacity-25" />
-        <div class="row">
-            <div class="col-md-6 text-center text-md-start">
-                <p class="mb-0">&copy; 2024 OnlineLearning. All rights reserved.</p>
-            </div>
-            <div class="col-md-6 text-center text-md-end">
-                <a href="#" class="text-light text-decoration-none me-3">Chính sách bảo mật</a>
-                <a href="#" class="text-light text-decoration-none">Điều khoản sử dụng</a>
             </div>
         </div>
     </div>
-</footer>
+</div>
+
+@section Scripts {
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script>
+    <script>
+        // Initialize AOS
+        AOS.init({
+            duration: 1000,
+            easing: 'ease-out-quart',
+            once: true
+        });
+
+        let searchTimeout;
+
+        $(document).ready(function() {
+            // Initialize counters animation
+            initializeCounters();
+
+            // Search functionality
+            $('#globalSearch').on('input', function() {
+                const query = $(this).val().trim();
+
+                clearTimeout(searchTimeout);
+
+                if (query.length >= 2) {
+                    searchTimeout = setTimeout(() => {
+                        loadSearchSuggestions(query);
+                    }, 300);
+                } else {
+                    hideSuggestions();
+                }
+            });
+
+            // Hide suggestions when clicking outside
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('.enhanced-search-box').length) {
+                    hideSuggestions();
+                }
+            });
+
+            // Search on Enter key
+            $('#globalSearch').keypress(function(e) {
+                if (e.which === 13) {
+                    performGlobalSearch();
+                }
+            });
+        });
+
+        function initializeCounters() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const counter = entry.target;
+                        const target = parseInt(counter.getAttribute('data-target'));
+                        animateCounter(counter, target);
+                        observer.unobserve(counter);
+                    }
+                });
+            });
+
+            $('.counter').each(function() {
+                observer.observe(this);
+            });
+        }
+
+        function animateCounter(element, target) {
+            let current = 0;
+            const increment = target / 100;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                element.textContent = Math.floor(current).toLocaleString();
+            }, 20);
+        }
+
+        function loadSearchSuggestions(query) {
+            $.get('@Url.Action("GetSearchSuggestions")', { term: query })
+                .done(function(data) {
+                    if (data && data.length > 0) {
+                        showSuggestions(data);
+                    } else {
+                        hideSuggestions();
+                    }
+                })
+                .fail(function() {
+                    hideSuggestions();
+                });
+        }
+
+        function showSuggestions(suggestions) {
+            const container = $('#searchSuggestions');
+            let html = '';
+
+            suggestions.forEach(item => {
+                html += `
+                    <div class="suggestion-item" onclick="selectSuggestion('${item.url}')">
+                        <div class="suggestion-icon ${item.type}">
+                            <i class="fas ${getSuggestionIcon(item.type)}"></i>
+                        </div>
+                        <div class="suggestion-content">
+                            <div class="suggestion-title">${item.title}</div>
+                            <div class="suggestion-subtitle">${item.subtitle}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.html(html).show();
+        }
+
+        function hideSuggestions() {
+            $('#searchSuggestions').hide();
+        }
+
+        function getSuggestionIcon(type) {
+            switch (type) {
+                case 'course': return 'fa-book-open';
+                case 'teacher': return 'fa-chalkboard-teacher';
+                case 'category': return 'fa-tags';
+                default: return 'fa-search';
+            }
+        }
+
+        function selectSuggestion(url) {
+            window.location.href = url;
+        }
+
+        function performGlobalSearch() {
+            const query = $('#globalSearch').val().trim();
+            if (query) {
+                window.location.href = '@Url.Action("Search")' + '?keyword=' + encodeURIComponent(query);
+            }
+        }
+
+        function loadFreeCoursesModal() {
+            $('#freeCoursesModal').modal('show');
+
+            // Load free courses
+            $.get('@Url.Action("Index", "Course")', { minPrice: 0, maxPrice: 0 })
+                .done(function(data) {
+                    // Parse and display free courses
+                    $('#freeCoursesContainer').html('<p class="text-center">Đang tải khóa học miễn phí...</p>');
+
+                    // Simulate loading free courses
+                    setTimeout(() => {
+                        let html = '';
+                        // Add some sample free courses or redirect to filtered view
+                        html = `
+                            <div class="col-12 text-center">
+                                <p class="mb-3">Khám phá các khóa học miễn phí</p>
+                                <a href="@Url.Action("Index", "Course")" class="btn btn-primary">
+                                    <i class="fas fa-search me-2"></i>Tìm khóa học miễn phí
+                                </a>
+                            </div>
+                        `;
+                        $('#freeCoursesContainer').html(html);
+                    }, 1000);
+                });
+        }
+
+        function toggleFavorite(courseId) {
+        @if (User.Identity.IsAuthenticated)
+        {
+            <text>
+                    $.post('@Url.Action("AddToFavorite", "Course")', {
+                        courseId: courseId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    })
+                    .done(function(response) {
+                        if (response.success) {
+                            toastr.success(response.message);
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    })
+                    .fail(function() {
+                        toastr.error('Có lỗi xảy ra!');
+                    });
+            </text>
+        }
+        else
+        {
+            <text>
+                    window.location.href = '/Identity/Account/Login';
+            </text>
+        }
+        }
+
+        function subscribeNewsletter(event) {
+            event.preventDefault();
+
+            const email = event.target.querySelector('input[type="email"]').value;
+
+            // Simulate newsletter subscription
+            toastr.success('Đăng ký thành công! Cảm ơn bạn đã quan tâm đến OnlineLearning.');
+            event.target.reset();
+        }
+
+        // Add CSRF token to all AJAX requests
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (settings.type === 'POST') {
+                    xhr.setRequestHeader("RequestVerificationToken",
+                        $('input[name="__RequestVerificationToken"]').val());
+                }
+            }
+        });
+
+        // Configure toastr
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": 3000
+        };
+
+        // Smooth scrolling for anchor links
+        $('a[href^="#"]').on('click', function(event) {
+            var target = $(this.getAttribute('href'));
+            if (target.length) {
+                event.preventDefault();
+                $('html, body').stop().animate({
+                    scrollTop: target.offset().top - 100
+                }, 1000);
+            }
+        });
+
+        // Add scroll effects
+        $(window).scroll(function() {
+            const scrolled = $(this).scrollTop();
+            const parallax = $('.hero-section');
+            const speed = scrolled * 0.5;
+
+            parallax.css('transform', 'translate3d(0, ' + speed + 'px, 0)');
+        });
+    </script>
+
+    @if (User.Identity.IsAuthenticated)
+    {
+        @Html.AntiForgeryToken()
+    }
+}

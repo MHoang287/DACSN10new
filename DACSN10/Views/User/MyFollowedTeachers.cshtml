@@ -1,0 +1,253 @@
+﻿@model List<DACSN10.Models.TeacherSearchViewModel>
+@{
+    ViewData["Title"] = "Giảng viên theo dõi - OnlineLearning";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css" />
+	<link rel="stylesheet" href="~/css/MyFollowedTeachers.css" />
+}
+
+<div class="followed-section">
+    <div class="container-fluid px-4 px-md-5">
+        <!-- Header -->
+        <div class="followed-header" data-aos="fade-up">
+            <div class="text-center">
+                <h1 class="mb-3">
+                    <i class="fas fa-users me-3"></i>
+                    Giảng viên theo dõi
+                </h1>
+                <p class="mb-0 opacity-90">Quản lý danh sách giảng viên bạn đang theo dõi</p>
+            </div>
+        </div>
+
+        <!-- Statistics Bar -->
+        <div class="stats-bar" data-aos="fade-up" data-aos-delay="100">
+            <div class="stat-item">
+                <div class="stat-number">@ViewBag.TotalFollowed</div>
+                <div class="stat-label">Đang theo dõi</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">@(Model?.SelectMany(t => t.Courses).Count() ?? 0)</div>
+                <div class="stat-label">Tổng khóa học</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">@(Model?.SelectMany(t => t.Courses).SelectMany(c => c.Enrollments).Count() ?? 0)</div>
+                <div class="stat-label">Lượt đăng ký</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">@(Model?.Count(t => t.Courses.Any(c => c.NgayTao >= DateTime.Now.AddDays(-30))) ?? 0)</div>
+                <div class="stat-label">Hoạt động gần đây</div>
+            </div>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="filter-controls" data-aos="fade-up" data-aos-delay="200">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <input type="text" class="search-input" id="teacherSearch"
+                           placeholder="Tìm kiếm giảng viên theo tên...">
+                </div>
+                <div class="col-md-4">
+                    <select class="sort-select w-100" id="sortTeachers">
+                        <option value="name">Sắp xếp theo tên</option>
+                        <option value="courses">Số khóa học</option>
+                        <option value="students">Số học viên</option>
+                        <option value="recent">Hoạt động gần đây</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teachers Grid -->
+        @if (Model != null && Model.Any())
+        {
+            <div class="row" id="teachersContainer">
+                @for (int i = 0; i < Model.Count; i++)
+                {
+                    var teacher = Model[i];
+                    <div class="col-lg-6 col-xl-4 mb-4 teacher-item"
+                         data-name="@teacher.Teacher.HoTen.ToLower()"
+                         data-courses="@teacher.Courses.Count"
+                         data-students="@teacher.Courses.SelectMany(c => c.Enrollments).Count()"
+                         data-recent="@(teacher.Courses.Any(c => c.NgayTao >= DateTime.Now.AddDays(-30)) ? "1" : "0")">
+                        <div class="teacher-card" data-aos="fade-up" data-aos-delay="@((i % 3) * 100)">
+                            <div class="teacher-header-card">
+                                @if (teacher.Courses.Any(c => c.NgayTao >= DateTime.Now.AddDays(-7)))
+                                {
+                                    <div class="activity-indicator">
+                                        <i class="fas fa-circle me-1"></i>
+                                        Hoạt động
+                                    </div>
+                                }
+
+                                <button class="unfollow-btn" onclick="unfollowTeacher('@teacher.Teacher.Id', this)">
+                                    <i class="fas fa-user-minus me-1"></i>
+                                    Bỏ theo dõi
+                                </button>
+
+                                <div class="text-center">
+                                    <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(teacher.Teacher.HoTen)&background=random&color=fff&bold=true&size=80"
+                                         alt="@teacher.Teacher.HoTen" class="teacher-avatar">
+                                    <div class="teacher-name">@teacher.Teacher.HoTen</div>
+                                    <div class="teacher-email">@teacher.Teacher.Email</div>
+                                    <div class="follow-status">
+                                        <i class="fas fa-check-circle"></i>
+                                        Đang theo dõi
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="teacher-content">
+                                <div class="teacher-stats">
+                                    <div class="teacher-stat-item">
+                                        <div class="teacher-stat-number">@teacher.Courses.Count</div>
+                                        <div class="teacher-stat-label">Khóa học</div>
+                                    </div>
+                                    <div class="teacher-stat-item">
+                                        <div class="teacher-stat-number">@teacher.Courses.SelectMany(c => c.Enrollments).Count()</div>
+                                        <div class="teacher-stat-label">Học viên</div>
+                                    </div>
+                                    <div class="teacher-stat-item">
+                                        <div class="teacher-stat-number">4.8</div>
+                                        <div class="teacher-stat-label">Đánh giá</div>
+                                    </div>
+                                </div>
+
+                                @if (teacher.Courses.Any())
+                                {
+                                    <div class="courses-section">
+                                        <h6 class="mb-3">
+                                            <i class="fas fa-book me-2"></i>
+                                            Khóa học gần đây (@teacher.Courses.Count)
+                                        </h6>
+                                        <div class="courses-grid">
+                                            @foreach (var course in teacher.Courses.Take(3))
+                                            {
+                                                <div class="course-mini-card">
+                                                    <div class="course-title">@course.TenKhoaHoc</div>
+                                                    <div class="course-meta">
+                                                        <div class="course-price">
+                                                            @(course.Gia > 0 ? course.Gia.ToString("N0") + "₫" : "Miễn phí")
+                                                        </div>
+                                                        <div class="course-students">
+                                                            <i class="fas fa-users"></i>
+                                                            @course.Enrollments.Count
+                                                        </div>
+                                                    </div>
+                                                    <div class="course-date">
+                                                        <i class="fas fa-calendar me-1"></i>
+                                                        @course.NgayTao.ToString("dd/MM/yyyy")
+                                                    </div>
+                                                    <div class="course-actions">
+                                                        <a href="@Url.Action("Details", "Course", new { id = course.CourseID })"
+                                                           class="btn-view-course">
+                                                            <i class="fas fa-eye me-1"></i>
+                                                            Xem chi tiết
+                                                        </a>
+                                                        <button class="btn-favorite" onclick="toggleFavorite(@course.CourseID)"
+                                                                title="Thêm vào yêu thích">
+                                                            <i class="far fa-heart"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+
+                                        @if (teacher.Courses.Count > 3)
+                                        {
+                                            <div class="text-center mt-3">
+                                                <a href="@Url.Action("TeacherProfile", new { id = teacher.Teacher.Id })"
+                                                   class="btn btn-outline-primary btn-sm rounded-pill">
+                                                    <i class="fas fa-plus me-1"></i>
+                                                    Xem thêm @(teacher.Courses.Count - 3) khóa học
+                                                </a>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="text-center py-3">
+                                        <i class="fas fa-book-open fa-2x text-muted mb-2"></i>
+                                        <p class="text-muted mb-0">Chưa có khóa học nào</p>
+                                    </div>
+                                }
+
+                                <div class="mt-3 text-center">
+                                    <a href="@Url.Action("TeacherProfile", new { id = teacher.Teacher.Id })"
+                                       class="btn btn-primary rounded-pill px-4">
+                                        <i class="fas fa-user me-2"></i>
+                                        Xem hồ sơ chi tiết
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Pagination -->
+            @if (ViewBag.TotalPages > 1)
+            {
+                <div class="pagination-custom" data-aos="fade-up">
+                    @if (ViewBag.Page > 1)
+                    {
+                        <a href="@Url.Action("MyFollowedTeachers", new { page = ViewBag.Page - 1 })"
+                           class="page-btn">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    }
+
+                    @for (int i = Math.Max(1, ViewBag.Page - 2); i <= Math.Min(ViewBag.TotalPages, ViewBag.Page + 2); i++)
+                    {
+                        <a href="@Url.Action("MyFollowedTeachers", new { page = i })"
+                           class="page-btn @(i == ViewBag.Page ? "active" : "")">
+                            @i
+                        </a>
+                    }
+
+                    @if (ViewBag.Page < ViewBag.TotalPages)
+                    {
+                        <a href="@Url.Action("MyFollowedTeachers", new { page = ViewBag.Page + 1 })"
+                           class="page-btn">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    }
+                </div>
+            }
+        }
+        else
+        {
+            <div class="no-teachers" data-aos="fade-up">
+                <div class="no-teachers-icon">
+                    <i class="fas fa-user-friends"></i>
+                </div>
+                <h3>Chưa theo dõi giảng viên nào</h3>
+                <p>Bắt đầu theo dõi các giảng viên để nhận thông báo về khóa học mới và cập nhật từ họ</p>
+                <a href="@Url.Action("SearchTeacher")" class="btn-find-teachers">
+                    <i class="fas fa-search"></i>
+                    Tìm kiếm giảng viên
+                </a>
+            </div>
+        }
+
+        <!-- Loading Template (Hidden) -->
+        <div class="teacher-card-loading" style="display: none;" id="loadingTemplate">
+            <div class="loading-skeleton" style="width: 60%; height: 30px;"></div>
+            <div class="loading-skeleton" style="width: 80%;"></div>
+            <div class="loading-skeleton" style="width: 40%;"></div>
+            <div class="loading-skeleton" style="width: 90%;"></div>
+            <div class="loading-skeleton" style="width: 70%;"></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+	<script src="~/js/MyFollowedTeachers.js"></script>
+
+    @Html.AntiForgeryToken()
+}

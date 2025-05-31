@@ -1,232 +1,488 @@
 ﻿@model DACSN10.Models.Course
 @{
-    ViewData["Title"] = Model?.TenKhoaHoc ?? "Chi tiết khóa học";
+    ViewData["Title"] = $"{Model.TenKhoaHoc} - OnlineLearning";
+    var isEnrolled = ViewBag.IsEnrolled ?? false;
+    var isFavorite = ViewBag.IsFavorite ?? false;
+    var isFollowed = ViewBag.IsFollowed ?? false;
+    var hasPaid = ViewBag.HasPaid ?? false;
+    var pendingPayment = ViewBag.PendingPayment ?? false;
+    var progress = ViewBag.Progress ?? 0f;
 }
 
-<div class="container animate__animated animate__fadeIn">
-    @if (Model == null)
-    {
-        <div class="alert alert-danger">
-            <i class="fas fa-exclamation-triangle me-2"></i> Không tìm thấy khóa học
-        </div>
-    }
-    else
-    {
-        <div class="row mb-4">
-            <div class="col-md-8">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">Trang chủ</a></li>
-                        <li class="breadcrumb-item"><a href="@Url.Action("Index", "Course")">Khóa học</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">@Model.TenKhoaHoc</li>
-                    </ol>
-                </nav>
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css" />
+    <link href="~/css/CourseDetails.css" rel="stylesheet" />
+}
+
+<!-- Course Header -->
+<section class="course-header">
+    <div class="container-fluid px-4 px-md-5">
+        <div class="course-hero-content" data-aos="fade-up">
+            <!-- Breadcrumb -->
+            <div class="breadcrumb-custom">
+                <a href="@Url.Action("Index", "Home")">Trang chủ</a> /
+                <a href="@Url.Action("Index", "Course")">Khóa học</a> /
+                <span>@Model.TenKhoaHoc</span>
             </div>
-            <div class="col-md-4 text-end">
-                <div class="d-flex justify-content-end">
-                    @if (User.Identity.IsAuthenticated)
+
+            <h1 class="display-4 fw-bold mb-0">@Model.TenKhoaHoc</h1>
+        </div>
+    </div>
+</section>
+
+<div class="container-fluid px-4 px-md-5">
+    <!-- Course Title Section -->
+    <div class="course-title-section" data-aos="fade-up">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="mb-3">
+                    @if (Model.CourseCategories != null && Model.CourseCategories.Any())
                     {
-                        <form asp-area="" asp-controller="Course" asp-action="FollowCourse" method="post" class="me-2">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="courseId" value="@Model.CourseID" />
-                            <button type="submit" class="btn btn-outline-primary btn-sm">
-                                <i class="far fa-bell me-1"></i> Theo dõi
-                            </button>
-                        </form>
-                        <form asp-action="AddToFavorite" method="post" class="me-2">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="courseId" value="@Model.CourseID" />
-                            <button type="submit" class="btn btn-outline-danger btn-sm">
-                                <i class="far fa-heart me-1"></i> Yêu thích
-                            </button>
-                        </form>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var cc in Model.CourseCategories)
+                            {
+                                <span class="badge bg-primary">@cc.Category.Name</span>
+                            }
+                        </div>
                     }
-                    <a href="#" class="btn btn-outline-secondary btn-sm share-course" data-url="@Url.Action("Details", "Course", new { id = Model.CourseID }, Context.Request.Scheme)">
-                        <i class="fas fa-share-alt me-1"></i> Chia sẻ
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <!-- Chi tiết khóa học -->
-            <div class="col-md-8">
-                <div class="card shadow-sm mb-4">
-                    <div class="card-body">
-                        <h1 class="card-title fw-bold mb-3">@Model.TenKhoaHoc</h1>
-                        <div class="d-flex align-items-center mb-3">
-                            <div>
-                                <div>Giảng viên: <a href="/User/TeacherProfile/@Model.UserID">@Model.User?.HoTen</a></div>
-                                <div class="text-muted small">Ngày tạo: @Model.NgayTao.ToString("dd/MM/yyyy")</div>
-                            </div>
-                        </div>
-
-                        <!-- Hiển thị danh mục -->
-                        @if (Model.CourseCategories != null && Model.CourseCategories.Any())
-                        {
-                            <div class="mb-3">
-                                @foreach (var cc in Model.CourseCategories)
-                                {
-                                    <a href="@Url.Action("SearchByCategory", new { categoryId = cc.CategoryID })" class="badge bg-secondary me-1">
-                                        @cc.Category?.Name
-                                    </a>
-                                }
-                            </div>
-                        }
-
-                        <!-- Nút đăng ký khóa học -->
-                        <div class="mb-4">
-                            <form asp-action="Enroll" method="post">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="courseId" value="@Model.CourseID" />
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-graduation-cap me-1"></i> Đăng ký khóa học
-                                </button>
-                                <a href="@Url.Action("PreviewVideo", new { courseId = Model.CourseID })" class="btn btn-outline-primary ms-2">
-                                    <i class="fas fa-play-circle me-1"></i> Xem thử
-                                </a>
-                            </form>
-                        </div>
-
-                        <!-- Thông tin chi tiết -->
-                        <div class="card mb-4">
-                            <div class="card-header bg-light">
-                                <ul class="nav nav-tabs card-header-tabs" role="tablist">
-                                    <li class="nav-item">
-                                        <a class="nav-link active" id="description-tab" data-bs-toggle="tab" href="#description" role="tab">Mô tả</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" id="lessons-tab" data-bs-toggle="tab" href="#lessons" role="tab">Bài học</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" id="requirements-tab" data-bs-toggle="tab" href="#requirements" role="tab">Yêu cầu</a>
-                                    </li>
-                                </ul>
-                            </div>
-                            <div class="card-body">
-                                <div class="tab-content">
-                                    <!-- Tab Mô tả -->
-                                    <div class="tab-pane fade show active" id="description" role="tabpanel">
-                                        <div class="course-description">
-                                            @Html.Raw(Model.MoTa)
-                                        </div>
-                                    </div>
-
-                                    <!-- Tab Bài học -->
-                                    <div class="tab-pane fade" id="lessons" role="tabpanel">
-                                        @if (Model.Lessons != null && Model.Lessons.Any())
-                                        {
-                                            <div class="list-group">
-                                                @foreach (var lesson in Model.Lessons)
-                                                {
-                                                    <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                                                        <div>
-                                                            <div class="fw-bold"><i class="fas fa-play-circle me-2"></i> @lesson.TenBaiHoc</div>
-                                                        </div>
-                                                    </div>
-                                                }
-                                            </div>
-                                        }
-                                        else
-                                        {
-                                            <div class="alert alert-info">
-                                                <i class="fas fa-info-circle me-2"></i> Chưa có bài học nào được thêm vào khóa học này.
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sidebar thông tin bên phải -->
-            <div class="col-md-4">
-                <!-- Ảnh khóa học -->
-                <div class="card shadow-sm mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title">Thông tin khóa học</h5>
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <span><i class="fas fa-users me-2"></i> Học viên:</span>
-                                <span class="badge bg-primary rounded-pill">@(Model.Enrollments?.Count ?? 0)</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <span><i class="fas fa-list-ol me-2"></i> Số bài học:</span>
-                                <span>@(Model.Lessons?.Count ?? 0)</span>
-                            </li>
-                        </ul>
-                    </div>
                 </div>
 
-                <!-- Giảng viên -->
-                @if (Model.User != null)
+                <p class="fs-5 text-muted mb-3">
+                    @(string.IsNullOrEmpty(Model.MoTa) ? "Khóa học chất lượng cao với nội dung được cập nhật liên tục từ các chuyên gia hàng đầu." : Model.MoTa)
+                </p>
+
+                <!-- Status Badges -->
+                @if (User.Identity.IsAuthenticated)
                 {
-                    <div class="card shadow-sm mb-4">
-                        <div class="card-body">
-                            <h5 class="card-title">Thông tin giảng viên</h5>
-                            <div class="d-flex align-items-center mb-3">
-                                <div>
-                                    <h6 class="mb-0">@Model.User.HoTen</h6>
-                                </div>
-                            </div>
-                            <a href="/User/TeacherProfile/@Model.UserID" class="btn btn-outline-primary btn-sm w-100">
-                                <i class="fas fa-user me-1"></i> Xem hồ sơ giảng viên
-                            </a>
-                        </div>
+                    <div class="status-badges">
+                        @if (isEnrolled)
+                        {
+                            <span class="status-badge badge-enrolled">
+                                <i class="fas fa-check-circle"></i>Đã đăng ký
+                            </span>
+                        }
+                        @if (pendingPayment)
+                        {
+                            <span class="status-badge badge-pending">
+                                <i class="fas fa-clock"></i>Chờ xác nhận thanh toán
+                            </span>
+                        }
+                        @if (isFollowed)
+                        {
+                            <span class="status-badge badge-followed">
+                                <i class="fas fa-heart"></i>Đang theo dõi
+                            </span>
+                        }
                     </div>
                 }
 
-                <!-- Khóa học liên quan -->
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">Có thể bạn quan tâm</h5>
-                        <div id="relatedCourses" class="mt-3">
-                            <div class="placeholder-glow">
-                                <span class="placeholder col-12 mb-2"></span>
-                                <span class="placeholder col-12 mb-2"></span>
-                                <span class="placeholder col-12 mb-2"></span>
+                <!-- Progress Section -->
+                @if (isEnrolled && progress > 0)
+                {
+                    <div class="progress-card">
+                        <div class="progress-header">
+                            <span class="fw-bold text-primary">Tiến độ học tập</span>
+                            <span class="progress-percentage">@progress.ToString("F1")%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" style="width: @progress%"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="col-lg-4">
+                <div class="course-image-hero">
+                    <div class="course-badge-hero">
+                        @if (Model.Gia == 0)
+                        {
+                            <i class="fas fa-gift me-2">Miễn phí</i>
+                        }
+                        else
+                        {
+                            <i class="fas fa-star me-2">Premium</i>
+                        }
+                    </div>
+                    <div class="text-center">
+                        <i class="fas fa-graduation-cap fa-4x text-primary mb-3"></i>
+                        <h5 class="text-muted">@Model.TenKhoaHoc</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course Meta Grid -->
+        <div class="course-meta-grid">
+            <div class="meta-item">
+                <div class="meta-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="meta-content">
+                    <h6>@(Model.Enrollments?.Count ?? 0)</h6>
+                    <p>Học viên</p>
+                </div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-icon">
+                    <i class="fas fa-play-circle"></i>
+                </div>
+                <div class="meta-content">
+                    <h6>@(Model.Lessons?.Count ?? 0)</h6>
+                    <p>Bài học</p>
+                </div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-icon">
+                    <i class="fas fa-question-circle"></i>
+                </div>
+                <div class="meta-content">
+                    <h6>@(Model.Quizzes?.Count ?? 0)</h6>
+                    <p>Bài kiểm tra</p>
+                </div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-icon">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <div class="meta-content">
+                    <h6>@(Model.Assignments?.Count ?? 0)</h6>
+                    <p>Bài tập</p>
+                </div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="meta-content">
+                    <h6>@Model.NgayTao.ToString("dd/MM/yyyy")</h6>
+                    <p>Ngày tạo</p>
+                </div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-icon">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <div class="meta-content">
+                    <h6>@Model.TrangThai</h6>
+                    <p>Trạng thái</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Teacher Card -->
+            <div class="teacher-card" data-aos="fade-up">
+                <h5 class="mb-3">Giảng viên</h5>
+                <div class="teacher-profile">
+                    <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(Model.User?.HoTen ?? "Teacher")&background=667eea&color=fff&bold=true&size=80"
+                         alt="@Model.User?.HoTen" class="teacher-avatar-large">
+                    <div class="teacher-info">
+                        <h3>@(Model.User?.HoTen ?? "Chưa có thông tin")</h3>
+                        <div class="teacher-role">Giảng viên</div>
+                        <div class="teacher-stats">
+                            <div class="teacher-stat">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                                <span>Chuyên gia</span>
+                            </div>
+                            <div class="teacher-stat">
+                                <i class="fas fa-star"></i>
+                                <span>5.0 đánh giá</span>
+                            </div>
+                            <div class="teacher-stat">
+                                <i class="fas fa-users"></i>
+                                <span>@(Model.Enrollments?.Count ?? 0) học viên</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Sections -->
+            <div class="content-sections" data-aos="fade-up">
+                <div class="section-nav">
+                    <button class="nav-btn active" onclick="showSection('lessons')">
+                        <i class="fas fa-play-circle me-2"></i>Bài học
+                    </button>
+                    <button class="nav-btn" onclick="showSection('quizzes')">
+                        <i class="fas fa-question-circle me-2"></i>Kiểm tra
+                    </button>
+                    <button class="nav-btn" onclick="showSection('assignments')">
+                        <i class="fas fa-tasks me-2"></i>Bài tập
+                    </button>
+                    <button class="nav-btn" onclick="showSection('description')">
+                        <i class="fas fa-info-circle me-2"></i>Mô tả
+                    </button>
+                </div>
+
+                <!-- Lessons Section -->
+                <div id="lessons" class="content-section active">
+                    @if (Model.Lessons != null && Model.Lessons.Any())
+                    {
+                        <ul class="lesson-list">
+                            @foreach (var lesson in Model.Lessons.OrderBy(l => l.LessonID).Select((value, index) => new { value, index }))
+                            {
+                                <li class="lesson-item">
+                                    <div class="lesson-number">@(lesson.index + 1)</div>
+                                    <div class="lesson-details">
+                                        <div class="lesson-title">@lesson.value.TenBaiHoc</div>
+                                        <div class="lesson-meta">
+                                            <span><i class="fas fa-clock me-1"></i>@lesson.value.ThoiLuong phút</span>
+                                            @if (!string.IsNullOrEmpty(lesson.value.VideoUrl))
+                                            {
+                                                <span><i class="fas fa-video me-1"></i>Video</span>
+                                            }
+                                        </div>
+                                    </div>
+                                    @if (isEnrolled || hasPaid)
+                                    {
+                                        <a href="#" class="lesson-action available" onclick="playLesson(@lesson.value.LessonID)">
+                                            <i class="fas fa-play me-1"></i>Học ngay
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="lesson-action locked">
+                                            <i class="fas fa-lock me-1"></i>Khóa
+                                        </span>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <i class="fas fa-play-circle"></i>
+                            <h5>Chưa có bài học nào</h5>
+                            <p>Khóa học này chưa có nội dung bài học</p>
+                        </div>
+                    }
+                </div>
+
+                <!-- Quizzes Section -->
+                <div id="quizzes" class="content-section">
+                    @if (Model.Quizzes != null && Model.Quizzes.Any())
+                    {
+                        <div class="quiz-grid">
+                            @foreach (var quiz in Model.Quizzes)
+                            {
+                                <div class="quiz-card">
+                                    <div class="quiz-header">
+                                        <h5 class="quiz-title">@quiz.Title</h5>
+                                        <i class="fas fa-question-circle fa-2x text-warning"></i>
+                                    </div>
+                                    <div class="quiz-info">
+                                        <p><strong>@quiz.Questions.Count</strong> câu hỏi</p>
+                                        <p>Thời gian: Không giới hạn</p>
+                                    </div>
+                                    @if (isEnrolled || hasPaid)
+                                    {
+                                        <button class="btn btn-warning w-100" onclick="startQuiz(@quiz.QuizID)">
+                                            <i class="fas fa-play me-2"></i>Làm bài kiểm tra
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-outline-secondary w-100" disabled>
+                                            <i class="fas fa-lock me-2"></i>Yêu cầu đăng ký
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <i class="fas fa-question-circle"></i>
+                            <h5>Chưa có bài kiểm tra nào</h5>
+                            <p>Khóa học này chưa có bài kiểm tra</p>
+                        </div>
+                    }
+                </div>
+
+                <!-- Assignments Section -->
+                <div id="assignments" class="content-section">
+                    @if (Model.Assignments != null && Model.Assignments.Any())
+                    {
+                        <div class="assignment-grid">
+                            @foreach (var assignment in Model.Assignments)
+                            {
+                                <div class="assignment-card">
+                                    <div class="assignment-header">
+                                        <h5 class="assignment-title">@assignment.TenBaiTap</h5>
+                                        <i class="fas fa-tasks fa-2x text-pink-600"></i>
+                                    </div>
+                                    <div class="assignment-info">
+                                        <p><strong>Hạn nộp:</strong> @assignment.HanNop.ToString("dd/MM/yyyy HH:mm")</p>
+                                        <p>@assignment.MoTa</p>
+                                    </div>
+                                    @if (isEnrolled || hasPaid)
+                                    {
+                                        <button class="btn btn-success w-100" onclick="viewAssignment(@assignment.AssignmentID)">
+                                            <i class="fas fa-eye me-2"></i>Xem bài tập
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-outline-secondary w-100" disabled>
+                                            <i class="fas fa-lock me-2"></i>Yêu cầu đăng ký
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <i class="fas fa-tasks"></i>
+                            <h5>Chưa có bài tập nào</h5>
+                            <p>Khóa học này chưa có bài tập</p>
+                        </div>
+                    }
+                </div>
+
+                <!-- Description Section -->
+                <div id="description" class="content-section">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h5 class="mb-3">Mô tả khóa học</h5>
+                            <p class="text-muted lh-lg">
+                                @(string.IsNullOrEmpty(Model.MoTa) ? "Khóa học chất lượng cao với nội dung được cập nhật liên tục từ các chuyên gia hàng đầu trong lĩnh vực. Bạn sẽ học được những kiến thức thực tế và có thể áp dụng ngay vào công việc." : Model.MoTa)
+                            </p>
+
+                            <h6 class="mt-4 mb-3">Bạn sẽ học được gì?</h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Nắm vững kiến thức cơ bản và nâng cao</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Thực hành với các dự án thực tế</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Phát triển kỹ năng chuyên môn</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Chuẩn bị cho cơ hội nghề nghiệp</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="mb-3">Thông tin chi tiết</h6>
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item d-flex justify-content-between">
+                                    <span><i class="fas fa-calendar-alt me-2 text-primary"></i>Ngày tạo</span>
+                                    <strong>@Model.NgayTao.ToString("dd/MM/yyyy")</strong>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between">
+                                    <span><i class="fas fa-flag me-2 text-success"></i>Trạng thái</span>
+                                    <strong>@Model.TrangThai</strong>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between">
+                                    <span><i class="fas fa-play-circle me-2 text-info"></i>Bài học</span>
+                                    <strong>@(Model.Lessons?.Count ?? 0)</strong>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between">
+                                    <span><i class="fas fa-question-circle me-2 text-warning"></i>Kiểm tra</span>
+                                    <strong>@(Model.Quizzes?.Count ?? 0)</strong>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between">
+                                    <span><i class="fas fa-tasks me-2 text-danger"></i>Bài tập</span>
+                                    <strong>@(Model.Assignments?.Count ?? 0)</strong>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    }
-</div>
 
-<!-- Modal chia sẻ khóa học -->
-<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="shareModalLabel">Chia sẻ khóa học</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label for="courseUrl" class="form-label">Đường dẫn khóa học</label>
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="courseUrl" readonly>
-                        <button class="btn btn-outline-secondary" type="button" id="copyLinkBtn">
-                            <i class="fas fa-copy"></i>
-                        </button>
-                    </div>
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Enrollment Section -->
+            <div class="enrollment-section" data-aos="fade-up">
+                <!-- Price Display -->
+                <div class="price-display">
+                    @if (Model.Gia > 0)
+                    {
+                        <div class="price-main">@Model.Gia.ToString("N0")₫</div>
+                        <div class="price-subtitle">Giá khóa học</div>
+                    }
+                    else
+                    {
+                        <div class="price-main">Miễn phí</div>
+                        <div class="price-subtitle">Học hoàn toàn miễn phí</div>
+                    }
                 </div>
-                <div class="d-flex justify-content-center gap-3 mt-4">
-                    <a href="#" id="shareFacebook" class="btn btn-primary btn-lg" target="_blank">
-                        <i class="fab fa-facebook-f"></i>
-                    </a>
-                    <a href="#" id="shareTwitter" class="btn btn-info btn-lg text-white" target="_blank">
-                        <i class="fab fa-twitter"></i>
-                    </a>
-                    <a href="#" id="shareLinkedIn" class="btn btn-primary btn-lg" target="_blank">
-                        <i class="fab fa-linkedin-in"></i>
-                    </a>
-                    <a href="#" id="shareWhatsapp" class="btn btn-success btn-lg" target="_blank">
-                        <i class="fab fa-whatsapp"></i>
-                    </a>
+
+                <!-- Enrollment Actions -->
+                <div class="enrollment-actions">
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        @if (!isEnrolled)
+                        {
+                            <form method="post" action="@Url.Action("Enroll", "Course")">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="courseId" value="@Model.CourseID" />
+                                <button type="submit" class="btn-enroll">
+                                    <i class="fas fa-graduation-cap"></i>
+                                    @if (Model.Gia > 0)
+                                    {
+                                        <span>Đăng ký học</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Học miễn phí</span>
+                                    }
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <a href="@Url.Action("Progress", new { courseId = Model.CourseID })" class="btn-continue">
+                                <i class="fas fa-play"></i>
+                                <span>Tiếp tục học</span>
+                            </a>
+                        }
+
+                        <div class="action-buttons">
+                            <button class="btn-action @(isFavorite ? "active" : "")" onclick="toggleFavorite(@Model.CourseID)">
+                                <i class="@(isFavorite ? "fas" : "far") fa-heart"></i>
+                            </button>
+                            <button class="btn-action @(isFollowed ? "active" : "")" onclick="toggleFollow(@Model.CourseID)">
+                                <i class="fas fa-bell"></i>
+                            </button>
+                            <a href="@Url.Action("PreviewVideo", new { courseId = Model.CourseID })" class="btn-action">
+                                <i class="fas fa-play"></i>
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <a href="/Identity/Account/Login" class="btn-enroll">
+                            <i class="fas fa-sign-in-alt"></i>
+                            <span>Đăng nhập để học</span>
+                        </a>
+                    }
+                </div>
+
+                <!-- Course Features -->
+                <div class="mt-4">
+                    <h6 class="mb-3">Tính năng khóa học</h6>
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item border-0 px-0">
+                            <i class="fas fa-infinity text-primary me-2"></i>Truy cập trọn đời
+                        </div>
+                        <div class="list-group-item border-0 px-0">
+                            <i class="fas fa-mobile-alt text-success me-2"></i>Học trên mọi thiết bị
+                        </div>
+                        <div class="list-group-item border-0 px-0">
+                            <i class="fas fa-certificate text-warning me-2"></i>Chứng chỉ hoàn thành
+                        </div>
+                        <div class="list-group-item border-0 px-0">
+                            <i class="fas fa-comments text-info me-2"></i>Hỗ trợ trực tuyến
+                        </div>
+                        <div class="list-group-item border-0 px-0">
+                            <i class="fas fa-download text-secondary me-2"></i>Tài liệu tải về
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -234,117 +490,141 @@
 </div>
 
 @section Scripts {
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
-        $(document).ready(function() {
-            // Xử lý nút chia sẻ
-            $(".share-course").on("click", function(e) {
+        // Initialize AOS
+        AOS.init({
+            duration: 1000,
+            easing: 'ease-out-quart',
+            once: true
+        });
+
+        // Section Navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Remove active class from all nav buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+
+        function toggleFavorite(courseId) {
+        @if (User.Identity.IsAuthenticated)
+        {
+            <text>
+                    const action = @Html.Raw(isFavorite.ToString().ToLower()) ? 'RemoveFromFavorite' : 'AddToFavorite';
+
+                    $.post('@Url.Action("")' + action, {
+                        courseId: courseId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    })
+                    .done(function(response) {
+                        if (response.success) {
+                            toastr.success(response.message);
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    })
+                    .fail(function() {
+                        toastr.error('Có lỗi xảy ra khi thực hiện thao tác!');
+                    });
+            </text>
+        }
+        else
+        {
+            <text>
+                    window.location.href = '/Identity/Account/Login';
+            </text>
+        }
+        }
+
+        function toggleFollow(courseId) {
+        @if (User.Identity.IsAuthenticated)
+        {
+            <text>
+                    const action = @Html.Raw(isFollowed.ToString().ToLower()) ? 'UnfollowCourse' : 'FollowCourse';
+
+                    $.post('@Url.Action("")' + action, {
+                        courseId: courseId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    })
+                    .done(function(response) {
+                        if (response.success) {
+                            toastr.success(response.message);
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    })
+                    .fail(function() {
+                        toastr.error('Có lỗi xảy ra khi thực hiện thao tác!');
+                    });
+            </text>
+        }
+        else
+        {
+            <text>
+                    window.location.href = '/Identity/Account/Login';
+            </text>
+        }
+        }
+
+        function playLesson(lessonId) {
+            toastr.info('Đang mở bài học...');
+            // Implement lesson player logic here
+            console.log('Playing lesson:', lessonId);
+        }
+
+        function startQuiz(quizId) {
+            toastr.info('Đang mở bài kiểm tra...');
+            // Implement quiz logic here
+            console.log('Starting quiz:', quizId);
+        }
+
+        function viewAssignment(assignmentId) {
+            toastr.info('Đang mở bài tập...');
+            // Implement assignment viewer logic here
+            console.log('Viewing assignment:', assignmentId);
+        }
+
+        // Configure toastr
+        if (typeof toastr !== 'undefined') {
+            toastr.options = {
+                "closeButton": true,
+                "progressBar": true,
+                "positionClass": "toast-top-right",
+                "timeOut": 3000
+            };
+        }
+
+        // Smooth scroll for internal links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
                 e.preventDefault();
-                var url = $(this).data("url");
-                $("#courseUrl").val(url);
-                $("#shareFacebook").attr("href", "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url));
-                $("#shareTwitter").attr("href", "https://twitter.com/intent/tweet?url=" + encodeURIComponent(url) + "&text=" + encodeURIComponent("@Model.TenKhoaHoc"));
-                $("#shareLinkedIn").attr("href", "https://www.linkedin.com/sharing/share-offsite/?url=" + encodeURIComponent(url));
-                $("#shareWhatsapp").attr("href", "https://wa.me/?text=" + encodeURIComponent("@Model.TenKhoaHoc " + url));
-
-                var shareModal = new bootstrap.Modal(document.getElementById('shareModal'));
-                shareModal.show();
-            });
-
-            // Xử lý sao chép đường dẫn
-            $("#copyLinkBtn").on("click", function() {
-                var copyText = document.getElementById("courseUrl");
-                copyText.select();
-                document.execCommand("copy");
-                toastr.success("Đã sao chép đường dẫn vào clipboard!");
-            });
-
-            // Tải khóa học liên quan
-            $.ajax({
-                url: '@Url.Action("SearchByCategory", "Course", new { categoryId = Model.CourseCategories?.FirstOrDefault()?.CategoryID })',
-                type: 'GET',
-                dataType: 'json',
-                success: function(data) {
-                    var relatedCoursesHtml = '';
-                    var courses = data.filter(function(course) {
-                        return course.CourseID !== @Model.CourseID;
-                    }).slice(0, 3);
-
-                    if (courses.length > 0) {
-                        courses.forEach(function(course) {
-                            relatedCoursesHtml += `
-                                <div class="d-flex mb-3 course-item">
-                                    <img src="${course.HinhAnh || '/images/default-course.jpg'}" class="rounded me-2" width="50" height="50" alt="${course.TenKhoaHoc}" style="object-fit: cover;">
-                                    <div>
-                                        <a href="/Course/Details/${course.CourseID}" class="text-decoration-none">
-                                            <h6 class="mb-0">${course.TenKhoaHoc}</h6>
-                                        </a>
-                                        <small class="text-muted">${course.CapDo || 'Cơ bản'}</small>
-                                    </div>
-                                </div>
-                            `;
-                        });
-                    } else {
-                        relatedCoursesHtml = '<div class="alert alert-info">Không có khóa học liên quan.</div>';
-                    }
-
-                    $("#relatedCourses").html(relatedCoursesHtml);
-                },
-                error: function() {
-                    $("#relatedCourses").html('<div class="alert alert-warning">Không thể tải khóa học liên quan.</div>');
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
                 }
             });
-
-            // Hiệu ứng khi cuộn trang
-            $(window).scroll(function() {
-                var windowHeight = $(window).height();
-                var windowTop = $(window).scrollTop();
-
-                $(".card").each(function() {
-                    var elementTop = $(this).offset().top;
-                    if (elementTop < windowTop + windowHeight - 100) {
-                        $(this).addClass("animate__animated animate__fadeInUp");
-                    }
-                });
-            });
-
-            // Tạo tour giới thiệu với Intro.js
-            function startTour() {
-                var intro = introJs();
-                intro.setOptions({
-                    steps: [
-                        {
-                            element: document.querySelector('.breadcrumb'),
-                            intro: 'Đây là đường dẫn điều hướng, giúp bạn quay lại trang trước đó.',
-                            position: 'bottom'
-                        },
-                        {
-                            element: document.querySelector('.btn-primary'),
-                            intro: 'Nhấn vào đây để đăng ký khóa học.',
-                            position: 'right'
-                        },
-                        {
-                            element: document.querySelector('#description-tab'),
-                            intro: 'Xem thông tin chi tiết về khóa học tại đây.',
-                            position: 'bottom'
-                        },
-                        {
-                            element: document.querySelector('#lessons-tab'),
-                            intro: 'Xem danh sách các bài học trong khóa học.',
-                            position: 'bottom'
-                        }
-                    ],
-                    nextLabel: 'Tiếp',
-                    prevLabel: 'Quay lại',
-                    skipLabel: 'Bỏ qua',
-                    doneLabel: 'Hoàn thành'
-                });
-                intro.start();
-            }
-
-            // Hiển thị nút tour
-            $('<button class="btn btn-sm btn-info position-fixed" style="bottom: 20px; left: 20px; z-index: 1000;"><i class="fas fa-question-circle me-1"></i> Hướng dẫn</button>')
-                .appendTo('body')
-                .on('click', startTour);
         });
     </script>
+
+    @if (User.Identity.IsAuthenticated)
+    {
+        @Html.AntiForgeryToken()
+    }
 }

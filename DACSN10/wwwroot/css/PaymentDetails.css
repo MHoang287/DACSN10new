@@ -1,0 +1,250 @@
+﻿
+.details-container {
+    background: #ffffff;
+    min-height: 100vh;
+    padding: 40px 0;
+}
+
+.details-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
+    overflow: hidden;
+}
+
+.details-header {
+    background: #ffffff;
+    color: #2d3748;
+    padding: 30px;
+    text-align: center;
+    border-bottom: 2px solid #f8f9fa;
+}
+
+    .details-header h2 {
+        color: #2d3748;
+        font-weight: 700;
+    }
+
+    .details-header p {
+        color: #6c757d;
+    }
+
+.invoice-section {
+    background: #f8f9fc;
+    border-radius: 15px;
+    padding: 25px;
+    margin: 20px 0;
+    border: 1px solid #e9ecef;
+}
+
+    .invoice-section h5 {
+        color: #2d3748;
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 10px;
+    }
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+    .info-row:last-child {
+        border-bottom: none;
+    }
+
+.info-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.info-value {
+    color: #2d3748;
+}
+
+.amount-highlight {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #28a745;
+}
+
+/* Button Styles */
+.btn-outline-secondary {
+    background: white;
+    border: 2px solid #6c757d;
+    color: #6c757d;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+    .btn-outline-secondary:hover {
+        background: #6c757d;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
+    }
+
+.btn-primary {
+    background: white;
+    border: 2px solid #007bff;
+    color: #007bff;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+    .btn-primary:hover {
+        background: #007bff;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+    }
+
+.btn-warning {
+    background: white;
+    border: 2px solid #ffc107;
+    color: #ffc107;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+    .btn-warning:hover {
+        background: #ffc107;
+        color: #212529;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(255, 193, 7, 0.3);
+    }
+
+.btn-outline-danger {
+    background: white;
+    border: 2px solid #dc3545;
+    color: #dc3545;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+    .btn-outline-danger:hover {
+        background: #dc3545;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+    }
+
+.btn-info {
+    background: white;
+    border: 2px solid #17a2b8;
+    color: #17a2b8;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+    .btn-info:hover {
+        background: #17a2b8;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(23, 162, 184, 0.3);
+    }
+
+/* Status Badges */
+.badge {
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.bg-success {
+    background: white !important;
+    color: #28a745 !important;
+    border: 2px solid #28a745 !important;
+}
+
+.bg-warning {
+    background: white !important;
+    color: #ffc107 !important;
+    border: 2px solid #ffc107 !important;
+}
+
+.bg-danger {
+    background: white !important;
+    color: #dc3545 !important;
+    border: 2px solid #dc3545 !important;
+}
+
+/* Alert Styles */
+.alert {
+    border-radius: 15px;
+    border: 2px solid;
+    background: white;
+}
+
+.alert-warning {
+    border-color: #ffc107;
+    color: #856404;
+}
+
+.alert-success {
+    border-color: #28a745;
+    color: #155724;
+}
+
+.alert-danger {
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+/* Course Icon */
+.bg-primary {
+    background: white !important;
+    color: #007bff !important;
+    border: 2px solid #007bff !important;
+}
+
+/* Icons */
+.fas, .bi {
+    color: #6c757d;
+}
+
+.text-primary .fas,
+.text-primary .bi {
+    color: #007bff !important;
+}
+
+/* Container Enhancement */
+.container {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    padding: 40px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .details-container {
+        padding: 20px 0;
+    }
+
+    .container {
+        margin: 10px;
+        padding: 20px;
+        border-radius: 15px;
+    }
+
+    .details-header {
+        padding: 20px;
+    }
+
+    .invoice-section {
+        padding: 20px;
+        margin: 15px 0;
+    }
+}

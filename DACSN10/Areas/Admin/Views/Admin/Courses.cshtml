@@ -1,0 +1,406 @@
+﻿@model List<DACSN10.Models.Course>
+@{
+    ViewData["Title"] = "Quản lý khóa học";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section Styles {
+    <link href="~/css/admin-courses.css" rel="stylesheet" />
+}
+
+<div class="page-header" data-aos="fade-down">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="page-title">
+                <i class="fas fa-book me-3"></i>Quản lý khóa học
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Admin")">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Khóa học</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <a href="@Url.Action("CreateCourse", "Admin")" class="btn btn-gradient-primary">
+                <i class="fas fa-plus-circle me-2"></i>Tạo khóa học mới
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="course-filters" data-aos="fade-up">
+    <form method="get" action="@Url.Action("Courses", "Admin")">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label class="form-label">Tìm kiếm</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" name="search" class="form-control" placeholder="Tên khóa học, giảng viên..."
+                               value="@ViewBag.Search">
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label class="form-label">Trạng thái</label>
+                    <select name="status" class="form-select">
+                        <option value="">Tất cả</option>
+                        <option value="Active" @(ViewBag.Status == "Active" ? "selected" : "")>Đang hoạt động</option>
+                        <option value="Pending" @(ViewBag.Status == "Pending" ? "selected" : "")>Chờ duyệt</option>
+                        <option value="Inactive" @(ViewBag.Status == "Inactive" ? "selected" : "")>Tạm dừng</option>
+                        <option value="Rejected" @(ViewBag.Status == "Rejected" ? "selected" : "")>Từ chối</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label class="form-label">Sắp xếp</label>
+                    <select name="sort" class="form-select">
+                        <option value="newest">Mới nhất</option>
+                        <option value="oldest">Cũ nhất</option>
+                        <option value="name">Tên A-Z</option>
+                        <option value="price">Giá thấp đến cao</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <button type="submit" class="btn btn-gradient-primary w-100">
+                    <i class="fas fa-filter me-2"></i>Lọc
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Course List -->
+@if (Model != null && Model.Any())
+{
+    <div class="row" id="courseList">
+        @foreach (var course in Model)
+        {
+            <div class="col-lg-4 col-md-6" data-aos="fade-up">
+                <div class="course-card-admin">
+                    <div class="course-image-admin">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span class="course-status-badge status-@course.TrangThai.ToLower()">
+                            @switch (course.TrangThai)
+                            {
+                                case "Active":
+                                    <i class="fas fa-check-circle me-1">Đang hoạt động</i>
+                            break;
+                                case "Pending":
+                                    <i class="fas fa-clock me-1">Chờ duyệt</i>
+                            break;
+                                case "Inactive":
+                                    <i class="fas fa-pause-circle me-1">Tạm dừng</i>
+                            break;
+                                case "Rejected":
+                                    <i class="fas fa-times-circle me-1">Từ chối</i>
+                            break;
+                            }
+                        </span>
+                        <div class="form-check position-absolute top-0 start-0 m-3">
+                            <input class="form-check-input course-checkbox" type="checkbox"
+                                   value="@course.CourseID" id="course-@course.CourseID">
+                        </div>
+                    </div>
+
+                    <div class="course-content-admin">
+                        <h5 class="mb-2">@course.TenKhoaHoc</h5>
+                        <p class="text-muted mb-2">
+                            <i class="fas fa-user me-2"></i>@(course.User?.HoTen ?? "Chưa có giảng viên")
+                        </p>
+                        <p class="text-muted small mb-3">
+                            @(course.MoTa?.Length > 100 ? course.MoTa.Substring(0, 100) + "..." : course.MoTa)
+                        </p>
+
+                        <div class="course-stats">
+                            <div class="stat-item">
+                                <div class="stat-value">@course.Gia.ToString("N0")₫</div>
+                                <div class="stat-label">Giá</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">@(course.Enrollments?.Count ?? 0)</div>
+                                <div class="stat-label">Học viên</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">@(course.Lessons?.Count ?? 0)</div>
+                                <div class="stat-label">Bài học</div>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <a href="@Url.Action("CourseDetails", "Admin", new { id = course.CourseID })"
+                               class="btn-action btn-view">
+                                <i class="fas fa-eye"></i>Chi tiết
+                            </a>
+                            <a href="@Url.Action("EditCourse", "Admin", new { id = course.CourseID })"
+                               class="btn-action btn-edit">
+                                <i class="fas fa-edit"></i>Sửa
+                            </a>
+                            @if (course.TrangThai == "Pending")
+                            {
+                                <button onclick="approveCourse(@course.CourseID)" class="btn-action btn-approve">
+                                    <i class="fas fa-check"></i>Duyệt
+                                </button>
+                            }
+                            <button onclick="confirmDelete('@Url.Action("DeleteCourse", "Admin", new { id = course.CourseID })')"
+                                    class="btn-action btn-delete">
+                                <i class="fas fa-trash"></i>Xóa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Pagination -->
+    @if (ViewBag.TotalPages > 1)
+    {
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                {
+                    <li class="page-item @(i == ViewBag.Page ? "active" : "")">
+                        <a class="page-link" href="?page=@i&status=@ViewBag.Status&search=@ViewBag.Search">@i</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+}
+else
+{
+    <div class="empty-state" data-aos="fade-up">
+        <i class="fas fa-book-open empty-icon"></i>
+        <h3 class="text-muted">Chưa có khóa học nào</h3>
+        <p class="text-muted">Bắt đầu bằng cách tạo khóa học đầu tiên</p>
+        <a href="@Url.Action("CreateCourse", "Admin")" class="btn btn-gradient-primary mt-3">
+            <i class="fas fa-plus-circle me-2"></i>Tạo khóa học mới
+        </a>
+    </div>
+}
+
+<!-- Bulk Actions -->
+<div class="bulk-actions" id="bulkActions">
+    <span class="text-muted me-3">
+        <span id="selectedCount">0</span> khóa học được chọn
+    </span>
+    <button class="btn btn-sm btn-success" onclick="bulkApprove()">
+        <i class="fas fa-check me-1"></i>Duyệt hàng loạt
+    </button>
+    <button class="btn btn-sm btn-danger" onclick="bulkDelete()">
+        <i class="fas fa-trash me-1"></i>Xóa hàng loạt
+    </button>
+    <button class="btn btn-sm btn-secondary" onclick="cancelSelection()">
+        <i class="fas fa-times me-1"></i>Hủy
+    </button>
+</div>
+
+@section Scripts {
+    <script>
+        let selectedCourses = [];
+
+        $(document).ready(function() {
+            // Initialize tooltips
+            $('[data-bs-toggle="tooltip"]').tooltip();
+
+            // Handle checkbox changes
+            $('.course-checkbox').change(function() {
+                const courseId = parseInt($(this).val());
+
+                if ($(this).is(':checked')) {
+                    if (!selectedCourses.includes(courseId)) {
+                        selectedCourses.push(courseId);
+                    }
+                } else {
+                    selectedCourses = selectedCourses.filter(id => id !== courseId);
+                }
+
+                updateBulkActions();
+            });
+
+            // Select all functionality
+            $('#selectAll').change(function() {
+                const isChecked = $(this).is(':checked');
+                $('.course-checkbox').prop('checked', isChecked);
+
+                if (isChecked) {
+                    selectedCourses = $('.course-checkbox').map(function() {
+                        return parseInt($(this).val());
+                    }).get();
+                } else {
+                    selectedCourses = [];
+                }
+
+                updateBulkActions();
+            });
+        });
+
+        function updateBulkActions() {
+            const count = selectedCourses.length;
+            $('#selectedCount').text(count);
+
+            if (count > 0) {
+                $('#bulkActions').addClass('show');
+            } else {
+                $('#bulkActions').removeClass('show');
+            }
+        }
+
+        function cancelSelection() {
+            selectedCourses = [];
+            $('.course-checkbox').prop('checked', false);
+            updateBulkActions();
+        }
+
+        function approveCourse(courseId) {
+            Swal.fire({
+                title: 'Xác nhận duyệt',
+                text: 'Bạn có chắc chắn muốn duyệt khóa học này?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Duyệt',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post('@Url.Action("ApproveCourse", "Admin")', {
+                        id: courseId,
+                        __RequestVerificationToken: $('[name="__RequestVerificationToken"]').val()
+                    })
+                    .done(function(response) {
+                        if (response.success) {
+                            toastr.success(response.message);
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    })
+                    .fail(function() {
+                        toastr.error('Có lỗi xảy ra!');
+                    });
+                }
+            });
+        }
+
+        function bulkApprove() {
+            if (selectedCourses.length === 0) {
+                toastr.warning('Vui lòng chọn ít nhất một khóa học!');
+                return;
+            }
+
+            Swal.fire({
+                title: 'Xác nhận duyệt hàng loạt',
+                text: `Bạn có chắc chắn muốn duyệt ${selectedCourses.length} khóa học?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Duyệt tất cả',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post('@Url.Action("BulkApproveCourses", "Admin")', {
+                        courseIds: selectedCourses,
+                        __RequestVerificationToken: $('[name="__RequestVerificationToken"]').val()
+                    })
+                    .done(function(response) {
+                        if (response.success) {
+                            toastr.success(response.message);
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    })
+                    .fail(function() {
+                        toastr.error('Có lỗi xảy ra!');
+                    });
+                }
+            });
+        }
+
+        function bulkDelete() {
+            if (selectedCourses.length === 0) {
+                toastr.warning('Vui lòng chọn ít nhất một khóa học!');
+                return;
+            }
+
+            Swal.fire({
+                title: 'Xác nhận xóa hàng loạt',
+                text: `Bạn có chắc chắn muốn xóa ${selectedCourses.length} khóa học? Hành động này không thể hoàn tác!`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Xóa tất cả',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post('@Url.Action("BulkDeleteCourses", "Admin")', {
+                        courseIds: selectedCourses,
+                        __RequestVerificationToken: $('[name="__RequestVerificationToken"]').val()
+                    })
+                    .done(function(response) {
+                        if (response.success) {
+                            toastr.success(response.message);
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    })
+                    .fail(function() {
+                        toastr.error('Có lỗi xảy ra!');
+                    });
+                }
+            });
+        }
+
+        // Advanced search
+        $('#advancedSearchToggle').click(function() {
+            $('#advancedSearchForm').slideToggle();
+            $(this).find('i').toggleClass('fa-chevron-down fa-chevron-up');
+        });
+
+        // Export functionality
+        function exportCourses(format) {
+            const params = new URLSearchParams({
+                status: '@ViewBag.Status',
+                search: '@ViewBag.Search',
+                format: format
+            });
+
+            window.location.href = '@Url.Action("ExportCourses", "Admin")?' + params.toString();
+        }
+
+        // Live search
+        let searchTimeout;
+        $('#searchInput').on('input', function() {
+            clearTimeout(searchTimeout);
+            const query = $(this).val();
+
+            searchTimeout = setTimeout(() => {
+                if (query.length >= 2 || query.length === 0) {
+                    $('form').submit();
+                }
+            }, 500);
+        });
+
+        // Filter tags
+        function removeFilter(type) {
+            if (type === 'status') {
+                $('select[name="status"]').val('').closest('form').submit();
+            } else if (type === 'search') {
+                $('input[name="search"]').val('').closest('form').submit();
+            }
+        }
+    </script>
+}
+
+@Html.AntiForgeryToken()

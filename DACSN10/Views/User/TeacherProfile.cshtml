@@ -1,337 +1,719 @@
 ﻿@model DACSN10.Models.TeacherSearchViewModel
 @{
-    ViewData["Title"] = "Hồ sơ giảng viên - " + Model.Teacher.HoTen;
-
-    // Lấy trạng thái đang follow hay không
-    bool isFollowed = Model.IsFollowed;
+    ViewData["Title"] = $"Hồ sơ giảng viên - {Model.Teacher.HoTen}";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<head>
-    <link rel="stylesheet" href="~/css/teacheravt.css" />
-</head>
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css" />
+    <style>
+        .profile-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4rem 0;
+            position: relative;
+            overflow: hidden;
+        }
 
-<div class="container teacher-profile-container">
-    <!-- Header Profile -->
-    <div class="card mb-4 teacher-profile-header">
-        <div class="card-body">
-            <div class="row align-items-center">
-                <div class="col-md-2 text-center mb-3 mb-md-0">
-                    <div class="teacher-avatar">
-                        <img src="/api/placeholder/200/200" class="rounded-circle img-fluid" alt="@Model.Teacher.HoTen" />
-                    </div>
-                </div>
-                <div class="col-md-7">
-                    <h2 class="mb-1">@Model.Teacher.HoTen</h2>
-                    <p class="text-muted mb-2">
-                        <i class="fas fa-calendar-alt me-1"></i> Tham gia từ @Model.Teacher.NgayDangKy.ToString("dd/MM/yyyy")
+            .profile-hero::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1.5" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="80" r="1" fill="rgba(255,255,255,0.1)"/></svg>');
+            }
+
+        .teacher-avatar-large {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 6px solid rgba(255, 255, 255, 0.3);
+            margin-bottom: 2rem;
+        }
+
+        .teacher-name {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .teacher-title {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+        }
+
+        .follow-btn-large {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 20px;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+            .follow-btn-large:hover {
+                background: rgba(255, 255, 255, 0.3);
+                border-color: rgba(255, 255, 255, 0.5);
+                color: white;
+                transform: translateY(-2px);
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            }
+
+            .follow-btn-large.following {
+                background: rgba(239, 68, 68, 0.2);
+                border-color: rgba(239, 68, 68, 0.3);
+            }
+
+        .stats-section {
+            background: white;
+            margin-top: -3rem;
+            border-radius: 25px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+            padding: 3rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .stat-card-large {
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid #e2e8f0;
+            height: 100%;
+        }
+
+            .stat-card-large:hover {
+                background: white;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+                transform: translateY(-5px);
+            }
+
+        .stat-icon-large {
+            width: 70px;
+            height: 70px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 1.8rem;
+            color: white;
+        }
+
+        .stat-number-large {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label-large {
+            color: #64748b;
+            font-weight: 500;
+            font-size: 1rem;
+        }
+
+        .course-section {
+            padding: 4rem 0;
+            background: #f8fafc;
+        }
+
+        .course-card-featured {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            margin-bottom: 2rem;
+        }
+
+            .course-card-featured:hover {
+                transform: translateY(-10px);
+                box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            }
+
+        .course-image-featured {
+            height: 200px;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .course-image-featured::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1.5" fill="rgba(255,255,255,0.1)"/></svg>');
+            }
+
+        .course-content-featured {
+            padding: 2rem;
+        }
+
+        .course-title-featured {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 1rem;
+            line-height: 1.3;
+        }
+
+        .course-description {
+            color: #64748b;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .course-stats-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+
+        .course-price-large {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #059669;
+        }
+
+        .course-students-large {
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title-custom {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 3rem;
+            text-align: center;
+            position: relative;
+        }
+
+            .section-title-custom::after {
+                content: '';
+                position: absolute;
+                bottom: -1rem;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 60px;
+                height: 4px;
+                background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+                border-radius: 2px;
+            }
+
+        .contact-section {
+            background: white;
+            padding: 4rem 0;
+        }
+
+        .contact-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .contact-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
+            font-size: 2rem;
+            color: white;
+        }
+
+        .contact-email {
+            font-size: 1.2rem;
+            color: #3b82f6;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .rating-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .star-rating {
+            color: #fbbf24;
+            font-size: 1.2rem;
+        }
+
+        .rating-text {
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .achievements-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4rem 0;
+            margin: 3rem 0;
+            border-radius: 25px;
+        }
+
+        .achievement-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .achievement-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.9;
+        }
+
+        .swiper-container {
+            padding-bottom: 3rem;
+        }
+
+        .swiper-pagination-bullet {
+            background: #3b82f6;
+            opacity: 0.3;
+        }
+
+        .swiper-pagination-bullet-active {
+            opacity: 1;
+        }
+    </style>
+}
+
+<!-- Profile Hero Section -->
+<section class="profile-hero">
+    <div class="container-fluid px-4 px-md-5">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="text-center text-lg-start" data-aos="fade-right">
+                    <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(Model.Teacher.HoTen)&background=random&color=fff&bold=true&size=150"
+                         alt="@Model.Teacher.HoTen" class="teacher-avatar-large">
+
+                    <h1 class="teacher-name">@Model.Teacher.HoTen</h1>
+                    <p class="teacher-title">
+                        <i class="fas fa-chalkboard-teacher me-2"></i>
+                        Giảng viên chuyên nghiệp
                     </p>
-                    <div class="teacher-stats d-flex flex-wrap">
-                        <div class="me-4 mb-2">
-                            <span class="badge bg-primary p-2">
-                                <i class="fas fa-book me-1"></i> @Model.Courses.Count khóa học
-                            </span>
+
+                    <div class="rating-display">
+                        <div class="star-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
                         </div>
-                        <div class="me-4 mb-2">
-                            <span class="badge bg-info p-2">
-                                <i class="fas fa-users me-1"></i> @Model.Courses.Sum(c => c.Enrollments?.Count ?? 0) học viên
-                            </span>
-                        </div>
-                        <div class="mb-2">
-                            <span class="badge bg-success p-2">
-                                <i class="fas fa-star me-1"></i> @(Model.Teacher.Followers?.Count ?? 0) người theo dõi
-                            </span>
-                        </div>
+                        <span class="rating-text">@ViewBag.AverageRating/5.0 (@ViewBag.TotalStudents đánh giá)</span>
                     </div>
                 </div>
-                <div class="col-md-3 mt-3 mt-md-0 text-md-end">
+            </div>
+            <div class="col-lg-4">
+                <div class="text-center text-lg-end" data-aos="fade-left">
                     @if (User.Identity.IsAuthenticated)
                     {
-                        @if (isFollowed)
-                        {
-                            <button id="unfollowBtn"
-                                    class="btn btn-outline-danger"
-                                    data-teacher-id="@Model.Teacher.Id"
-                                    data-teacher-name="@Model.Teacher.HoTen">
-                                <i class="fas fa-user-times me-1"></i> Bỏ theo dõi
-                            </button>
-                        }
-                        else
-                        {
-                            <button id="followBtn"
-                                    class="btn btn-outline-success"
-                                    data-teacher-id="@Model.Teacher.Id"
-                                    data-teacher-name="@Model.Teacher.HoTen">
-                                <i class="fas fa-user-plus me-1"></i> Theo dõi
-                            </button>
-                        }
+                        <button class="follow-btn-large @(Model.IsFollowed ? "following" : "")"
+                                onclick="toggleFollowTeacher('@Model.Teacher.Id', this)">
+                            <i class="fas @(Model.IsFollowed ? "fa-user-minus" : "fa-user-plus")"></i>
+                            @(Model.IsFollowed ? "Bỏ theo dõi" : "Theo dõi giảng viên")
+                        </button>
                     }
                     else
                     {
-                        <a href="@Url.Action("Login", "Account", new { Area = "Identity", ReturnUrl = Url.Action("TeacherProfile", "User", new { id = Model.Teacher.Id }) })" class="btn btn-outline-primary">
-                            <i class="fas fa-sign-in-alt me-1"></i> Đăng nhập để theo dõi
+                        <a href="/Identity/Account/Login" class="follow-btn-large">
+                            <i class="fas fa-sign-in-alt"></i>
+                            Đăng nhập để theo dõi
                         </a>
                     }
                 </div>
             </div>
         </div>
     </div>
+</section>
 
-    <!-- Khóa học của giảng viên -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-white">
-                    <h4 class="mb-0">
-                        <i class="fas fa-graduation-cap me-2"></i>
-                        Khóa học của giảng viên
-                    </h4>
+<!-- Statistics Section -->
+<section class="container-fluid px-4 px-md-5">
+    <div class="stats-section" data-aos="fade-up">
+        <div class="row">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-card-large">
+                    <div class="stat-icon-large" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+                    <div class="stat-number-large">@ViewBag.TotalCourses</div>
+                    <div class="stat-label-large">Khóa học</div>
                 </div>
-                <div class="card-body">
-                    @if (!Model.Courses.Any())
-                    {
-                        <div class="text-center py-5">
-                            <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
-                            <h5>Hiện chưa có khóa học nào</h5>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="row">
-                            @foreach (var course in Model.Courses)
-                            {
-                                <div class="col-md-6 col-lg-4 mb-4">
-                                    <div class="card course-card h-100">
-                                        <img src="/api/placeholder/350/200" class="card-img-top" alt="@course.TenKhoaHoc">
-                                        <div class="card-body">
-                                            <h5 class="card-title">@course.TenKhoaHoc</h5>
-                                            <p class="card-text text-muted">
-                                                @(course.MoTa?.Length > 100 ? course.MoTa.Substring(0, 100) + "..." : course.MoTa)
-                                            </p>
-                                            <div class="d-flex justify-content-between align-items-center mt-3">
-                                                <span class="text-primary fw-bold">
-                                                    @if (course.Gia > 0)
-                                                    {
-                                                        <span>@String.Format("{0:N0}", course.Gia) VNĐ</span>
-                                                    }
-                                                    else
-                                                    {
-                                                        <span class="text-success">Miễn phí</span>
-                                                    }
-                                                </span>
-                                                <span class="badge bg-info">
-                                                    <i class="fas fa-users me-1"></i> @(course.Enrollments?.Count ?? 0) học viên
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div class="card-footer bg-white border-top-0">
-                                            <a href="@Url.Action("Details", "Course", new { id = course.CourseID })" class="btn btn-primary w-100">
-                                                <i class="fas fa-info-circle me-1"></i> Xem chi tiết
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    }
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-card-large">
+                    <div class="stat-icon-large" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-number-large">@ViewBag.TotalStudents</div>
+                    <div class="stat-label-large">Học viên</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-card-large">
+                    <div class="stat-icon-large" style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="stat-number-large">@ViewBag.AverageRating</div>
+                    <div class="stat-label-large">Đánh giá TB</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-card-large">
+                    <div class="stat-icon-large" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="stat-number-large">@((DateTime.Now - Model.Teacher.NgayDangKy).Days / 30)</div>
+                    <div class="stat-label-large">Tháng kinh nghiệm</div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</section>
+
+<!-- Courses Section -->
+<section class="course-section">
+    <div class="container-fluid px-4 px-md-5">
+        <h2 class="section-title-custom" data-aos="fade-up">
+            <i class="fas fa-graduation-cap me-3"></i>
+            Khóa học của @Model.Teacher.HoTen
+        </h2>
+
+        @if (Model.Courses != null && Model.Courses.Any())
+        {
+            <div class="row">
+                @for (int i = 0; i < Model.Courses.Count; i++)
+                {
+                    var course = Model.Courses[i];
+                    <div class="col-lg-6 col-xl-4 mb-4">
+                        <div class="course-card-featured" data-aos="fade-up" data-aos-delay="@((i % 3) * 100)">
+                            <div class="course-image-featured">
+                                <div class="text-center">
+                                    <i class="fas fa-book fa-4x mb-3"></i>
+                                    <div style="font-size: 1.1rem; font-weight: 600;">Khóa học chuyên nghiệp</div>
+                                </div>
+                            </div>
+
+                            <div class="course-content-featured">
+                                <h3 class="course-title-featured">@course.TenKhoaHoc</h3>
+
+                                <p class="course-description">
+                                    @(string.IsNullOrEmpty(course.MoTa) ? "Khóa học chất lượng cao với nội dung được cập nhật liên tục." : course.MoTa.Length > 100 ? course.MoTa.Substring(0, 100) + "..." : course.MoTa)
+                                </p>
+
+                                <div class="course-stats-row">
+                                    <div class="course-students-large">
+                                        <i class="fas fa-users"></i>
+                                        <span>@course.Enrollments.Count học viên</span>
+                                    </div>
+                                    <div class="course-price-large">
+                                        @if (course.Gia > 0)
+                                        {
+                                            <span>@course.Gia.ToString("N0")₫</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-success">Miễn phí</span>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <a href="@Url.Action("Details", "Course", new { id = course.CourseID })"
+                                       class="btn btn-primary flex-fill rounded-pill">
+                                        <i class="fas fa-eye me-2"></i>
+                                        Xem chi tiết
+                                    </a>
+
+                                    @if (User.Identity.IsAuthenticated)
+                                    {
+                                        <button class="btn btn-outline-danger rounded-pill"
+                                                onclick="toggleFavorite(@course.CourseID)"
+                                                title="Thêm vào yêu thích">
+                                            <i class="far fa-heart"></i>
+                                        </button>
+                                    }
+                                </div>
+
+                                <div class="mt-3">
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        Tạo ngày @course.NgayTao.ToString("dd/MM/yyyy")
+                                    </small>
+                                    <span class="badge bg-success ms-2">@course.TrangThai</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5" data-aos="fade-up">
+                <div class="mb-4">
+                    <i class="fas fa-book-open fa-5x text-muted"></i>
+                </div>
+                <h3 class="text-muted mb-3">Chưa có khóa học nào</h3>
+                <p class="text-muted mb-4">Giảng viên này chưa tạo khóa học nào</p>
+            </div>
+        }
+    </div>
+</section>
+
+<!-- Achievements Section -->
+<section class="achievements-section" data-aos="fade-up">
+    <div class="container-fluid px-4 px-md-5">
+        <h2 class="section-title-custom text-white">
+            <i class="fas fa-trophy me-3"></i>
+            Thành tích nổi bật
+        </h2>
+
+        <div class="row">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="achievement-item" data-aos="zoom-in" data-aos-delay="100">
+                    <div class="achievement-icon">
+                        <i class="fas fa-medal"></i>
+                    </div>
+                    <h4>Giảng viên xuất sắc</h4>
+                    <p class="mb-0">Được học viên đánh giá cao</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="achievement-item" data-aos="zoom-in" data-aos-delay="200">
+                    <div class="achievement-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h4>Cộng đồng lớn</h4>
+                    <p class="mb-0">@ViewBag.TotalStudents+ học viên tin tưởng</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="achievement-item" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="achievement-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h4>Chất lượng cao</h4>
+                    <p class="mb-0">Nội dung được cập nhật liên tục</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="achievement-item" data-aos="zoom-in" data-aos-delay="400">
+                    <div class="achievement-icon">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <h4>Tận tâm</h4>
+                    <p class="mb-0">Hỗ trợ học viên 24/7</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section class="contact-section">
+    <div class="container-fluid px-4 px-md-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="contact-card" data-aos="fade-up">
+                    <div class="contact-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <h3 class="mb-3">Liên hệ với giảng viên</h3>
+                    <div class="contact-email">@Model.Teacher.Email</div>
+                    <p class="text-muted mb-4">
+                        Gửi email để được tư vấn về khóa học và lộ trình học tập phù hợp
+                    </p>
+
+                    <div class="d-flex gap-3 justify-content-center">
+                        <a href="mailto:@Model.Teacher.Email" class="btn btn-primary btn-lg rounded-pill">
+                            <i class="fas fa-paper-plane me-2"></i>
+                            Gửi email
+                        </a>
+                        <a href="@Url.Action("SearchTeacher")" class="btn btn-outline-primary btn-lg rounded-pill">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Quay lại
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
 @section Scripts {
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script>
     <script>
-        $(document).ready(function() {
-            // Follow giảng viên
-            $('#followBtn').click(function() {
-                var teacherId = $(this).data('teacher-id');
-                var teacherName = $(this).data('teacher-name');
-                var button = $(this);
+        // Initialize AOS
+        AOS.init({
+            duration: 1000,
+            easing: 'ease-out-quart',
+            once: true
+        });
 
-                $.ajax({
-                    url: '@Url.Action("FollowTeacher", "User")',
-                    type: 'POST',
-                    data: { teacherId: teacherId },
-                    success: function(response) {
-                        if (response.success) {
-                            // Cập nhật nút
-                            button.replaceWith('<button id="unfollowBtn" class="btn btn-outline-danger" data-teacher-id="' +
-                                teacherId + '" data-teacher-name="' + teacherName +
-                                '"><i class="fas fa-user-times me-1"></i> Bỏ theo dõi</button>');
+        function toggleFollowTeacher(teacherId, button) {
+            const isFollowing = $(button).hasClass('following');
+            const action = isFollowing ? 'UnfollowTeacher' : 'FollowTeacher';
 
-                            // Gắn sự kiện cho nút mới
-                            $('#unfollowBtn').click(function() {
-                                unfollowTeacher(teacherId, teacherName);
-                            });
+            // Disable button during request
+            $(button).prop('disabled', true);
 
-                            // Hiển thị thông báo
-                            Swal.fire({
-                                title: 'Theo dõi thành công!',
-                                text: 'Bạn đã theo dõi giảng viên ' + teacherName,
-                                icon: 'success',
-                                timer: 2000,
-                                showConfirmButton: false
-                            });
-                        } else {
-                            Swal.fire({
-                                title: 'Có lỗi xảy ra!',
-                                text: response.message,
-                                icon: 'error'
-                            });
-                        }
-                    },
-                    error: function() {
-                        Swal.fire({
-                            title: 'Có lỗi xảy ra!',
-                            text: 'Không thể kết nối đến máy chủ',
-                            icon: 'error'
-                        });
+            $.post('@Url.Action("' + action + '")', {
+                teacherId: teacherId,
+                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+            })
+            .done(function(response) {
+                if (response.success) {
+                    // Toggle button state
+                    if (isFollowing) {
+                        $(button).removeClass('following')
+                                 .html('<i class="fas fa-user-plus"></i>Theo dõi giảng viên');
+                    } else {
+                        $(button).addClass('following')
+                                 .html('<i class="fas fa-user-minus"></i>Bỏ theo dõi');
                     }
-                });
-            });
 
-            // Bỏ theo dõi giảng viên
-            $('#unfollowBtn').click(function() {
-                var teacherId = $(this).data('teacher-id');
-                var teacherName = $(this).data('teacher-name');
-
-                unfollowTeacher(teacherId, teacherName);
-            });
-
-            function unfollowTeacher(teacherId, teacherName) {
+                    // Show success message with animation
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Thành công!',
+                        text: response.message,
+                        showConfirmButton: false,
+                        timer: 2000,
+                        toast: true,
+                        position: 'top-end'
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi!',
+                        text: response.message
+                    });
+                }
+            })
+            .fail(function() {
                 Swal.fire({
-                    title: 'Bỏ theo dõi giảng viên?',
-                    text: 'Bạn có chắc chắn muốn bỏ theo dõi giảng viên ' + teacherName + '?',
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonText: 'Bỏ theo dõi',
-                    cancelButtonText: 'Hủy',
-                    confirmButtonColor: '#dc3545'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            url: '@Url.Action("UnfollowTeacher", "User")',
-                            type: 'POST',
-                            data: { teacherId: teacherId },
-                            success: function(response) {
-                                if (response.success) {
-                                    // Cập nhật nút
-                                    $('#unfollowBtn').replaceWith('<button id="followBtn" class="btn btn-outline-success" data-teacher-id="' +
-                                        teacherId + '" data-teacher-name="' + teacherName +
-                                        '"><i class="fas fa-user-plus me-1"></i> Theo dõi</button>');
-
-                                    // Gắn sự kiện cho nút mới
-                                    $('#followBtn').click(function() {
-                                        var teacherId = $(this).data('teacher-id');
-                                        var teacherName = $(this).data('teacher-name');
-
-                                        $.ajax({
-                                            url: '@Url.Action("FollowTeacher", "User")',
-                                            type: 'POST',
-                                            data: { teacherId: teacherId },
-                                            success: function(response) {
-                                                if (response.success) {
-                                                    // Cập nhật nút
-                                                    $('#followBtn').replaceWith('<button id="unfollowBtn" class="btn btn-outline-danger" data-teacher-id="' +
-                                                        teacherId + '" data-teacher-name="' + teacherName +
-                                                        '"><i class="fas fa-user-times me-1"></i> Bỏ theo dõi</button>');
-
-                                                    // Gắn sự kiện cho nút mới
-                                                    $('#unfollowBtn').click(function() {
-                                                        unfollowTeacher(teacherId, teacherName);
-                                                    });
-
-                                                    // Hiển thị thông báo
-                                                    Swal.fire({
-                                                        title: 'Theo dõi thành công!',
-                                                        text: 'Bạn đã theo dõi giảng viên ' + teacherName,
-                                                        icon: 'success',
-                                                        timer: 2000,
-                                                        showConfirmButton: false
-                                                    });
-                                                }
-                                            }
-                                        });
-                                    });
-
-                                    // Hiển thị thông báo
-                                    Swal.fire({
-                                        title: 'Bỏ theo dõi thành công!',
-                                        text: 'Bạn đã bỏ theo dõi giảng viên ' + teacherName,
-                                        icon: 'success',
-                                        timer: 2000,
-                                        showConfirmButton: false
-                                    });
-                                } else {
-                                    Swal.fire({
-                                        title: 'Có lỗi xảy ra!',
-                                        text: response.message,
-                                        icon: 'error'
-                                    });
-                                }
-                            },
-                            error: function() {
-                                Swal.fire({
-                                    title: 'Có lỗi xảy ra!',
-                                    text: 'Không thể kết nối đến máy chủ',
-                                    icon: 'error'
-                                });
-                            }
-                        });
-                    }
+                    icon: 'error',
+                    title: 'Lỗi!',
+                    text: 'Có lỗi xảy ra, vui lòng thử lại!'
                 });
+            })
+            .always(function() {
+                // Re-enable button
+                $(button).prop('disabled', false);
+            });
+        }
+
+        function toggleFavorite(courseId) {
+        @if (User.Identity.IsAuthenticated)
+        {
+            <text>
+                    $.post('@Url.Action("AddToFavorite", "Course")', {
+                        courseId: courseId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    })
+                    .done(function(response) {
+                        if (response.success) {
+                            toastr.success(response.message);
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    })
+                    .fail(function() {
+                        toastr.error('Có lỗi xảy ra!');
+                    });
+            </text>
+        }
+        else
+        {
+            <text>
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Cần đăng nhập',
+                        text: 'Vui lòng đăng nhập để thêm khóa học vào yêu thích',
+                        showCancelButton: true,
+                        confirmButtonText: 'Đăng nhập',
+                        cancelButtonText: 'Hủy'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = '/Identity/Account/Login';
+                        }
+                    });
+            </text>
+        }
+        }
+
+        // Smooth scroll for internal links
+        $('a[href^="#"]').on('click', function(event) {
+            var target = $(this.getAttribute('href'));
+            if (target.length) {
+                event.preventDefault();
+                $('html, body').stop().animate({
+                    scrollTop: target.offset().top - 100
+                }, 1000);
             }
+        });
+
+        // Configure toastr
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": 3000
+        };
+
+        // Add parallax effect to hero section
+        $(window).scroll(function() {
+            const scrolled = $(this).scrollTop();
+            const parallax = $('.profile-hero');
+            const speed = scrolled * 0.3;
+            parallax.css('transform', 'translate3d(0, ' + speed + 'px, 0)');
         });
     </script>
 
-    <style>
-        .teacher-profile-container {
-            max-width: 1100px;
-        }
-
-        .teacher-profile-header {
-            border-radius: 1rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            border: none;
-        }
-
-        .teacher-avatar img {
-            width: 150px;
-            height: 150px;
-            object-fit: cover;
-            border: 4px solid #f8f9fa;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .course-card {
-            border-radius: 1rem;
-            overflow: hidden;
-            transition: transform 0.2s, box-shadow 0.2s;
-            border: 1px solid rgba(0,0,0,0.1);
-        }
-
-            .course-card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-            }
-
-            .course-card .card-img-top {
-                height: 180px;
-                object-fit: cover;
-            }
-
-            .course-card .card-title {
-                font-size: 1.1rem;
-                font-weight: 600;
-                line-height: 1.4;
-                height: 2.8rem;
-                overflow: hidden;
-            }
-
-        .card-text {
-            height: 4.8rem;
-            overflow: hidden;
-        }
-
-    </style>
+    @if (User.Identity.IsAuthenticated)
+    {
+        @Html.AntiForgeryToken()
+    }
 }

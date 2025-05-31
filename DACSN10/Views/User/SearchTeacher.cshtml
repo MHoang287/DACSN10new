@@ -1,400 +1,615 @@
 ﻿@model List<DACSN10.Models.TeacherSearchViewModel>
 @{
-    ViewData["Title"] = "Tìm kiếm giảng viên";
+    ViewData["Title"] = "Tìm kiếm giảng viên - OnlineLearning";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<head>
-    <link rel="stylesheet" href="~/css/teacher.css" />
-</head>
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
+    <style>
+        .search-section {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 3rem 0;
+            position: relative;
+            overflow: hidden;
+        }
 
-<div class="teacher-search-container">
-    <div class="teacher-search-header mb-4">
-        <h2 class="text-center mb-4"><i class="fas fa-chalkboard-teacher me-2"></i>Tìm kiếm giảng viên</h2>
-
-        <div class="search-box mx-auto">
-            <form method="get" action="@Url.Action("SearchTeacher", "User")" class="d-flex">
-                <div class="input-group">
-                    <input type="text" class="form-control" name="keyword" placeholder="Nhập tên giảng viên..." value="@ViewBag.Keyword">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-search me-1"></i> Tìm kiếm
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    @if (!Model.Any())
-    {
-        <div class="text-center py-5">
-            <i class="fas fa-search fa-3x text-muted mb-3"></i>
-            <h4>Không tìm thấy giảng viên</h4>
-            <p class="text-muted">Vui lòng thử lại với từ khóa khác</p>
-        </div>
-    }
-    else
-    {
-        <div class="row">
-            @foreach (var item in Model)
-            {
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card teacher-card h-100">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <div class="teacher-avatar">
-                                    <img src="/api/placeholder/100/100" class="rounded-circle" alt="@item.Teacher.HoTen" />
-                                </div>
-                                <div class="teacher-stats">
-                                    <span class="badge bg-info mb-1">
-                                        <i class="fas fa-book me-1"></i> @item.Courses.Count khóa học
-                                    </span>
-                                    <span class="badge bg-secondary">
-                                        <i class="fas fa-users me-1"></i> @item.Courses.Sum(c => c.Enrollments?.Count ?? 0) học viên
-                                    </span>
-                                </div>
-                            </div>
-
-                            <h5 class="card-title">@item.Teacher.HoTen</h5>
-                            <p class="card-text text-muted small">
-                                <i class="fas fa-calendar-alt me-1"></i> Tham gia từ @item.Teacher.NgayDangKy.ToString("dd/MM/yyyy")
-                            </p>
-
-                            <div class="teacher-courses mt-3">
-                                <h6 class="mb-2"><i class="fas fa-book-open me-1"></i> Khóa học tiêu biểu</h6>
-                                <ul class="list-group list-group-flush small">
-                                    @foreach (var course in item.Courses.Take(3))
-                                    {
-                                        <li class="list-group-item px-0 py-1">
-                                            <a href="@Url.Action("Details", "Course", new { id = course.CourseID })" class="text-decoration-none">
-                                                @course.TenKhoaHoc
-                                            </a>
-                                        </li>
-                                    }
-                                </ul>
-                                @if (item.Courses.Count > 3)
-                                {
-                                    <div class="text-end mt-1">
-                                        <small class="text-muted">+@(item.Courses.Count - 3) khóa học khác</small>
-                                    </div>
-                                }
-                            </div>
-                        </div>
-                        <div class="card-footer bg-white border-top-0">
-                            <div class="d-flex justify-content-between">
-                                <a href="@Url.Action("TeacherProfile", "User", new { id = item.Teacher.Id })" class="btn btn-outline-primary btn-sm">
-                                    <i class="fas fa-eye me-1"></i> Xem hồ sơ
-                                </a>
-
-                                @if (User.Identity.IsAuthenticated)
-                                {
-                                    @if (item.IsFollowed)
-                                    {
-                                        <button type="button"
-                                                class="btn btn-outline-danger btn-sm unfollow-btn"
-                                                data-teacher-id="@item.Teacher.Id"
-                                                data-teacher-name="@item.Teacher.HoTen">
-                                            <i class="fas fa-user-times me-1"></i> Bỏ theo dõi
-                                        </button>
-                                    }
-                                    else
-                                    {
-                                        <button type="button"
-                                                class="btn btn-outline-success btn-sm follow-btn"
-                                                data-teacher-id="@item.Teacher.Id"
-                                                data-teacher-name="@item.Teacher.HoTen">
-                                            <i class="fas fa-user-plus me-1"></i> Theo dõi
-                                        </button>
-                                    }
-                                }
-                                else
-                                {
-                                    <a href="@Url.Action("Login", "Account", new { Area = "Identity", ReturnUrl = "/User/SearchTeacher?keyword=" + ViewBag.Keyword })" class="btn btn-outline-secondary btn-sm">
-                                        <i class="fas fa-sign-in-alt me-1"></i> Đăng nhập để theo dõi
-                                    </a>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            .search-section::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="1" fill="rgba(59,130,246,0.1)"/><circle cx="80" cy="40" r="0.5" fill="rgba(59,130,246,0.1)"/></svg>');
             }
-        </div>
-    }
-</div>
 
-@section Scripts {
-    <script>
-        $(document).ready(function() {
-            // Follow giảng viên
-            $('.follow-btn').click(function() {
-                var teacherId = $(this).data('teacher-id');
-                var teacherName = $(this).data('teacher-name');
-                var button = $(this);
+        .search-box {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
 
-                $.ajax({
-                    url: '@Url.Action("FollowTeacher", "User")',
-                    type: 'POST',
-                    data: { teacherId: teacherId },
-                    success: function(response) {
-                        if (response.success) {
-                            // Cập nhật nút
-                            button.removeClass('btn-outline-success follow-btn')
-                                  .addClass('btn-outline-danger unfollow-btn')
-                                  .html('<i class="fas fa-user-times me-1"></i> Bỏ theo dõi');
+        .search-input {
+            width: 100%;
+            padding: 1.25rem 4rem 1.25rem 2rem;
+            border: 3px solid #e2e8f0;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
 
-                            // Hiển thị thông báo
-                            Swal.fire({
-                                title: 'Theo dõi thành công!',
-                                text: 'Bạn đã theo dõi giảng viên ' + teacherName,
-                                icon: 'success',
-                                timer: 2000,
-                                showConfirmButton: false
-                            });
-
-                            // Cập nhật sự kiện click cho nút mới
-                            button.off('click').on('click', function() {
-                                unfollowTeacher(teacherId, teacherName, button);
-                            });
-                        } else {
-                            Swal.fire({
-                                title: 'Có lỗi xảy ra!',
-                                text: response.message,
-                                icon: 'error'
-                            });
-                        }
-                    },
-                    error: function() {
-                        Swal.fire({
-                            title: 'Có lỗi xảy ra!',
-                            text: 'Không thể kết nối đến máy chủ',
-                            icon: 'error'
-                        });
-                    }
-                });
-            });
-
-            // Bỏ theo dõi giảng viên
-            $('.unfollow-btn').click(function() {
-                var teacherId = $(this).data('teacher-id');
-                var teacherName = $(this).data('teacher-name');
-                var button = $(this);
-
-                unfollowTeacher(teacherId, teacherName, button);
-            });
-
-            function unfollowTeacher(teacherId, teacherName, button) {
-                Swal.fire({
-                    title: 'Bỏ theo dõi giảng viên?',
-                    text: 'Bạn có chắc chắn muốn bỏ theo dõi giảng viên ' + teacherName + '?',
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonText: 'Bỏ theo dõi',
-                    cancelButtonText: 'Hủy',
-                    confirmButtonColor: '#dc3545'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            url: '@Url.Action("UnfollowTeacher", "User")',
-                            type: 'POST',
-                            data: { teacherId: teacherId },
-                            success: function(response) {
-                                if (response.success) {
-                                    // Cập nhật nút
-                                    button.removeClass('btn-outline-danger unfollow-btn')
-                                          .addClass('btn-outline-success follow-btn')
-                                          .html('<i class="fas fa-user-plus me-1"></i> Theo dõi');
-
-                                    // Hiển thị thông báo
-                                    Swal.fire({
-                                        title: 'Bỏ theo dõi thành công!',
-                                        text: 'Bạn đã bỏ theo dõi giảng viên ' + teacherName,
-                                        icon: 'success',
-                                        timer: 2000,
-                                        showConfirmButton: false
-                                    });
-
-                                    // Cập nhật sự kiện click cho nút mới
-                                    button.off('click').on('click', function() {
-                                        var teacherId = $(this).data('teacher-id');
-                                        var teacherName = $(this).data('teacher-name');
-                                        var button = $(this);
-
-                                        $.ajax({
-                                            url: '@Url.Action("FollowTeacher", "User")',
-                                            type: 'POST',
-                                            data: { teacherId: teacherId },
-                                            success: function(response) {
-                                                if (response.success) {
-                                                    // Cập nhật nút
-                                                    button.removeClass('btn-outline-success follow-btn')
-                                                          .addClass('btn-outline-danger unfollow-btn')
-                                                          .html('<i class="fas fa-user-times me-1"></i> Bỏ theo dõi');
-
-                                                    // Hiển thị thông báo
-                                                    Swal.fire({
-                                                        title: 'Theo dõi thành công!',
-                                                        text: 'Bạn đã theo dõi giảng viên ' + teacherName,
-                                                        icon: 'success',
-                                                        timer: 2000,
-                                                        showConfirmButton: false
-                                                    });
-
-                                                    // Cập nhật sự kiện click cho nút mới
-                                                    button.off('click').on('click', function() {
-                                                        unfollowTeacher(teacherId, teacherName, button);
-                                                    });
-                                                }
-                                            }
-                                        });
-                                    });
-                                } else {
-                                    Swal.fire({
-                                        title: 'Có lỗi xảy ra!',
-                                        text: response.message,
-                                        icon: 'error'
-                                    });
-                                }
-                            },
-                            error: function() {
-                                Swal.fire({
-                                    title: 'Có lỗi xảy ra!',
-                                    text: 'Không thể kết nối đến máy chủ',
-                                    icon: 'error'
-                                });
-                            }
-                        });
-                    }
-                });
+            .search-input:focus {
+                outline: none;
+                border-color: #3b82f6;
+                background: white;
+                box-shadow: 0 15px 40px rgba(59, 130, 246, 0.2);
+                transform: translateY(-2px);
             }
-        });
-    </script>
-}
 
-<style>
-    /* CSS cho trang tìm kiếm giảng viên */
-    .teacher-search-container {
-        max-width: 1100px;
-        margin: 0 auto;
-    }
+        .search-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border: none;
+            border-radius: 20px;
+            padding: 0.85rem 1.5rem;
+            color: white;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+        }
 
-    .teacher-search-header {
-        text-align: center;
-        margin-bottom: 2rem;
-        padding: 1.5rem;
-        background-color: #f8f9fa;
-        border-radius: 1rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
+            .search-btn:hover {
+                transform: translateY(-50%) scale(1.05);
+                box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+            }
 
-        .teacher-search-header h2 {
-            color: #1b263b;
+        .teacher-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            margin-bottom: 2rem;
+        }
+
+            .teacher-card:hover {
+                transform: translateY(-10px);
+                box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            }
+
+        .teacher-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .teacher-header::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1.5" fill="rgba(255,255,255,0.1)"/></svg>');
+            }
+
+        .teacher-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            margin-bottom: 1rem;
+        }
+
+        .teacher-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .teacher-email {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .follow-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 15px;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s ease;
             font-weight: 600;
         }
 
-    .search-box {
-        max-width: 600px;
-        margin: 0 auto;
-    }
+            .follow-btn:hover {
+                background: rgba(255, 255, 255, 0.3);
+                border-color: rgba(255, 255, 255, 0.5);
+                color: white;
+            }
 
-        .search-box .form-control {
-            border-radius: 0.5rem 0 0 0.5rem;
-            border: 1px solid #ced4da;
-            padding: 0.75rem 1rem;
-            box-shadow: none;
+            .follow-btn.following {
+                background: rgba(239, 68, 68, 0.2);
+                border-color: rgba(239, 68, 68, 0.3);
+            }
+
+        .teacher-content {
+            padding: 2rem;
         }
 
-        .search-box .btn {
-            border-radius: 0 0.5rem 0.5rem 0;
-            padding: 0.75rem 1.5rem;
+        .teacher-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 12px;
         }
 
-    .teacher-card {
-        border-radius: 1rem;
-        overflow: hidden;
-        transition: transform 0.2s, box-shadow 0.2s;
-        border: 1px solid rgba(0,0,0,0.1);
-        height: 100%;
-    }
-
-        .teacher-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        .stat-item {
+            text-align: center;
         }
 
-    .teacher-avatar img {
-        width: 80px;
-        height: 80px;
-        object-fit: cover;
-        border: 3px solid #f8f9fa;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-
-    .teacher-card .card-title {
-        font-size: 1.2rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        color: #1b263b;
-    }
-
-    .teacher-stats {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-    }
-
-        .teacher-stats .badge {
-            font-size: 0.8rem;
-            padding: 0.5rem 0.75rem;
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #3b82f6;
             margin-bottom: 0.25rem;
         }
 
-    .teacher-courses {
-        margin-top: 1rem;
-    }
+        .stat-label {
+            color: #64748b;
+            font-size: 0.85rem;
+        }
 
-        .teacher-courses h6 {
-            font-size: 0.9rem;
+        .courses-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .course-mini-card {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            border: 1px solid #e2e8f0;
+        }
+
+            .course-mini-card:hover {
+                background: white;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+                transform: translateY(-2px);
+            }
+
+        .course-title {
             font-weight: 600;
-            color: #495057;
-            margin-bottom: 0.75rem;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
         }
 
-        .teacher-courses .list-group-item {
-            padding: 0.5rem 0;
-            border: none;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
+        .course-price {
+            color: #059669;
+            font-weight: 600;
+            font-size: 0.9rem;
         }
 
-            .teacher-courses .list-group-item:last-child {
-                border-bottom: none;
+        .course-students {
+            color: #64748b;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        .pagination-custom {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        .page-btn {
+            background: white;
+            border: 2px solid #e2e8f0;
+            color: #64748b;
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+            .page-btn:hover, .page-btn.active {
+                border-color: #3b82f6;
+                color: #3b82f6;
+                background: rgba(59, 130, 246, 0.05);
             }
 
-            .teacher-courses .list-group-item a {
-                color: #0d6efd;
-                transition: color 0.2s;
+        .no-results {
+            text-align: center;
+            padding: 4rem 0;
+        }
+
+        .no-results-icon {
+            font-size: 4rem;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .search-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+            margin-top: 0.5rem;
+        }
+
+        .suggestion-item {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #f1f5f9;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+            .suggestion-item:hover {
+                background: #f8fafc;
+                transform: translateX(5px);
             }
 
-                .teacher-courses .list-group-item a:hover {
-                    color: #0a58ca;
-                    text-decoration: underline !important;
+        .suggestion-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #e2e8f0;
+        }
+    </style>
+}
+
+<!-- Search Section -->
+<section class="search-section">
+    <div class="container-fluid px-4 px-md-5">
+        <div class="text-center mb-4">
+            <h1 class="section-title" data-aos="fade-up">
+                <i class="fas fa-chalkboard-teacher me-3"></i>
+                Tìm kiếm giảng viên
+            </h1>
+            <p class="text-muted" data-aos="fade-up" data-aos-delay="100">
+                Khám phá và kết nối với các chuyên gia hàng đầu
+            </p>
+        </div>
+
+        <div class="search-box" data-aos="fade-up" data-aos-delay="200">
+            <form method="get" action="@Url.Action("SearchTeacher")">
+                <input type="text" name="keyword" value="@ViewBag.Keyword"
+                       class="search-input" id="teacherSearch"
+                       placeholder="Tìm kiếm theo tên giảng viên hoặc email..."
+                       autocomplete="off">
+                <button type="submit" class="search-btn">
+                    <i class="fas fa-search"></i>
+                </button>
+
+                <!-- Search Suggestions -->
+                <div class="search-suggestions" id="teacherSuggestions"></div>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- Teachers Results -->
+<section class="py-5">
+    <div class="container-fluid px-4 px-md-5">
+        @if (!string.IsNullOrEmpty(ViewBag.Keyword))
+        {
+            <div class="mb-4" data-aos="fade-up">
+                <p class="text-muted">
+                    Tìm thấy <strong>@ViewBag.TotalTeachers</strong> giảng viên cho từ khóa "<strong>@ViewBag.Keyword</strong>"
+                </p>
+            </div>
+        }
+
+        @if (Model != null && Model.Any())
+        {
+            <div class="row">
+                @for (int i = 0; i < Model.Count; i++)
+                {
+                    var teacher = Model[i];
+                    <div class="col-lg-6 col-xl-4 mb-4">
+                        <div class="teacher-card" data-aos="fade-up" data-aos-delay="@((i % 3) * 100)">
+                            <div class="teacher-header">
+                                @if (User.Identity.IsAuthenticated)
+                                {
+                                    <button class="follow-btn @(teacher.IsFollowed ? "following" : "")"
+                                            onclick="toggleFollowTeacher('@teacher.Teacher.Id', this)">
+                                        <i class="fas @(teacher.IsFollowed ? "fa-user-minus" : "fa-user-plus") me-1"></i>
+                                        @(teacher.IsFollowed ? "Bỏ theo dõi" : "Theo dõi")
+                                    </button>
+                                }
+
+                                <div class="text-center">
+                                    <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(teacher.Teacher.HoTen)&background=random&color=fff&bold=true&size=80"
+                                         alt="@teacher.Teacher.HoTen" class="teacher-avatar">
+                                    <div class="teacher-name">@teacher.Teacher.HoTen</div>
+                                    <div class="teacher-email">@teacher.Teacher.Email</div>
+                                </div>
+                            </div>
+
+                            <div class="teacher-content">
+                                <div class="teacher-stats">
+                                    <div class="stat-item">
+                                        <div class="stat-number">@teacher.Courses.Count</div>
+                                        <div class="stat-label">Khóa học</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-number">@teacher.Courses.SelectMany(c => c.Enrollments).Count()</div>
+                                        <div class="stat-label">Học viên</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-number">4.8</div>
+                                        <div class="stat-label">Đánh giá</div>
+                                    </div>
+                                </div>
+
+                                @if (teacher.Courses.Any())
+                                {
+                                    <div>
+                                        <h6 class="mb-3">
+                                            <i class="fas fa-book me-2"></i>
+                                            Khóa học nổi bật
+                                        </h6>
+                                        <div class="courses-grid">
+                                            @foreach (var course in teacher.Courses.Take(4))
+                                            {
+                                                <div class="course-mini-card">
+                                                    <div class="course-title">@course.TenKhoaHoc</div>
+                                                    <div class="course-price">
+                                                        @(course.Gia > 0 ? course.Gia.ToString("N0") + "₫" : "Miễn phí")
+                                                    </div>
+                                                    <div class="course-students">
+                                                        <i class="fas fa-users me-1"></i>
+                                                        @course.Enrollments.Count học viên
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="text-center py-3">
+                                        <i class="fas fa-book-open fa-2x text-muted mb-2"></i>
+                                        <p class="text-muted mb-0">Chưa có khóa học nào</p>
+                                    </div>
+                                }
+
+                                <div class="mt-3 text-center">
+                                    <a href="@Url.Action("TeacherProfile", new { id = teacher.Teacher.Id })"
+                                       class="btn btn-primary rounded-pill px-4">
+                                        <i class="fas fa-eye me-2"></i>
+                                        Xem hồ sơ chi tiết
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 }
+            </div>
 
-    .card-footer {
-        background-color: transparent;
-        border-top: 1px solid rgba(0,0,0,0.05);
-        padding-top: 1rem;
-    }
+            <!-- Pagination -->
+            @if (ViewBag.TotalPages > 1)
+            {
+                <div class="pagination-custom" data-aos="fade-up">
+                    @if (ViewBag.Page > 1)
+                    {
+                        <a href="@Url.Action("SearchTeacher", new { keyword = ViewBag.Keyword, page = ViewBag.Page - 1 })"
+                           class="page-btn">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    }
 
-    .follow-btn, .unfollow-btn {
-        transition: all 0.2s;
-    }
+                    @for (int i = Math.Max(1, ViewBag.Page - 2); i <= Math.Min(ViewBag.TotalPages, ViewBag.Page + 2); i++)
+                    {
+                        <a href="@Url.Action("SearchTeacher", new { keyword = ViewBag.Keyword, page = i })"
+                           class="page-btn @(i == ViewBag.Page ? "active" : "")">
+                            @i
+                        </a>
+                    }
 
-        .follow-btn:hover {
-            background-color: #198754;
-            color: white;
+                    @if (ViewBag.Page < ViewBag.TotalPages)
+                    {
+                        <a href="@Url.Action("SearchTeacher", new { keyword = ViewBag.Keyword, page = ViewBag.Page + 1 })"
+                           class="page-btn">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    }
+                </div>
+            }
+        }
+        else
+        {
+            <div class="no-results" data-aos="fade-up">
+                <div class="no-results-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <h3 class="text-muted mb-3">Không tìm thấy giảng viên nào</h3>
+                <p class="text-muted mb-4">
+                    @if (!string.IsNullOrEmpty(ViewBag.Keyword))
+                    {
+                        <text>Không có kết quả cho từ khóa "<strong>@ViewBag.Keyword</strong>"</text>
+                    }
+                    else
+                    {
+                        <text>Hãy thử nhập từ khóa để tìm kiếm giảng viên</text>
+                    }
+                </p>
+                <a href="@Url.Action("SearchTeacher")" class="btn btn-primary rounded-pill px-4">
+                    <i class="fas fa-redo me-2"></i>
+                    Tìm kiếm lại
+                </a>
+            </div>
+        }
+    </div>
+</section>
+
+@section Scripts {
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        // Initialize AOS
+        AOS.init({
+            duration: 1000,
+            easing: 'ease-out-quart',
+            once: true
+        });
+
+        let searchTimeout;
+
+        $(document).ready(function() {
+            // Teacher search suggestions
+            $('#teacherSearch').on('input', function() {
+                const term = $(this).val().trim();
+
+                clearTimeout(searchTimeout);
+
+                if (term.length >= 2) {
+                    searchTimeout = setTimeout(() => {
+                        loadTeacherSuggestions(term);
+                    }, 300);
+                } else {
+                    hideSuggestions();
+                }
+            });
+
+            // Hide suggestions when clicking outside
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('.search-box').length) {
+                    hideSuggestions();
+                }
+            });
+
+            // Search on Enter
+            $('#teacherSearch').keypress(function(e) {
+                if (e.which === 13) {
+                    $(this).closest('form')[0].submit();
+                }
+            });
+        });
+
+        function loadTeacherSuggestions(term) {
+            $.get('@Url.Action("SuggestTeachers")', { term: term })
+                .done(function(data) {
+                    if (data && data.length > 0) {
+                        showTeacherSuggestions(data);
+                    } else {
+                        hideSuggestions();
+                    }
+                })
+                .fail(function() {
+                    hideSuggestions();
+                });
         }
 
-        .unfollow-btn:hover {
-            background-color: #dc3545;
-            color: white;
+        function showTeacherSuggestions(teachers) {
+            const container = $('#teacherSuggestions');
+            let html = '';
+
+            teachers.forEach(teacher => {
+                html += `
+                    <div class="suggestion-item" onclick="selectTeacher('${teacher.name}')">
+                        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(teacher.name)}&background=random&color=fff&bold=true&size=40"
+                             alt="${teacher.name}" class="suggestion-avatar">
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold">${teacher.name}</div>
+                            <div class="text-muted small">${teacher.email}</div>
+                            <div class="text-muted small">${teacher.courseCount} khóa học</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.html(html).show();
         }
+
+        function hideSuggestions() {
+            $('#teacherSuggestions').hide();
+        }
+
+        function selectTeacher(name) {
+            $('#teacherSearch').val(name);
+            hideSuggestions();
+            $('#teacherSearch').closest('form')[0].submit();
+        }
+
+        function toggleFollowTeacher(teacherId, button) {
+            const isFollowing = $(button).hasClass('following');
+            const action = isFollowing ? 'UnfollowTeacher' : 'FollowTeacher';
+
+            $.post('@Url.Action("' + action + '")', {
+                teacherId: teacherId,
+                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+            })
+            .done(function(response) {
+                if (response.success) {
+                    // Toggle button state
+                    if (isFollowing) {
+                        $(button).removeClass('following')
+                                 .html('<i class="fas fa-user-plus me-1"></i>Theo dõi');
+                    } else {
+                        $(button).addClass('following')
+                                 .html('<i class="fas fa-user-minus me-1"></i>Bỏ theo dõi');
+                    }
+                    toastr.success(response.message);
+                } else {
+                    toastr.error(response.message);
+                }
+            })
+            .fail(function() {
+                toastr.error('Có lỗi xảy ra!');
+            });
+        }
+
+        // Configure toastr
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": 3000
+        };
+    </script>
+
+    @if (User.Identity.IsAuthenticated)
+    {
+        @Html.AntiForgeryToken()
     }
-</style>
+}

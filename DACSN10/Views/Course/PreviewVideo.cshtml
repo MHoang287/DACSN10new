@@ -1,346 +1,297 @@
 ﻿@model DACSN10.Models.Lesson
 @{
-    ViewData["Title"] = "Xem thử khóa học";
+    ViewData["Title"] = $"Xem trước - {Model.Course.TenKhoaHoc} - OnlineLearning";
 }
 
-<div class="container animate__animated animate__fadeIn">
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">Trang chủ</a></li>
-                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Course")">Khóa học</a></li>
-                    <li class="breadcrumb-item"><a href="@Url.Action("Details", "Course", new { id = Model.CourseID })">Chi tiết khóa học</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Xem thử</li>
-                </ol>
-            </nav>
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
+    <link href="~/css/PreviewVideo.css" rel="stylesheet" />
+}
+
+<!-- Preview Header -->
+<section class="preview-header">
+    <div class="container-fluid px-4 px-md-5">
+        <div class="preview-content" data-aos="fade-up">
+            <div class="preview-badge">
+                <i class="fas fa-eye me-2"></i>Xem trước miễn phí
+            </div>
+
+            <h1 class="h3 fw-bold mb-2">@Model.TenBaiHoc</h1>
+            <p class="mb-0 opacity-90">
+                Khóa học: @Model.Course.TenKhoaHoc
+            </p>
         </div>
-        <div class="col-md-4 text-end">
-            <a href="@Url.Action("Details", "Course", new { id = Model.CourseID })" class="btn btn-outline-primary">
-                <i class="fas fa-arrow-left me-1"></i> Quay lại chi tiết khóa học
-            </a>
+    </div>
+</section>
+
+<div class="container-fluid px-4 px-md-5">
+    <!-- Video Container -->
+    <div class="video-container" data-aos="fade-up">
+        <div class="video-player" onclick="playPreview()">
+            <div class="play-button">
+                <i class="fas fa-play"></i>
+            </div>
+
+            <div class="video-placeholder">
+                <h4 class="mb-2">Bài học xem trước</h4>
+                <p class="mb-0">Click để xem video giới thiệu</p>
+            </div>
+        </div>
+
+        <div class="video-info">
+            <div class="video-details">
+                <h3>@Model.TenBaiHoc</h3>
+
+                <div class="video-meta">
+                    <div class="meta-item">
+                        <i class="fas fa-clock"></i>
+                        <span>@Model.ThoiLuong phút</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-eye"></i>
+                        <span>Xem trước miễn phí</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-video"></i>
+                        <span>Chất lượng HD</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-closed-captioning"></i>
+                        <span>Phụ đề tiếng Việt</span>
+                    </div>
+                </div>
+
+                <div class="video-description">
+                    <p>@(string.IsNullOrEmpty(Model.NoiDung) ? "Đây là bài học mở đầu của khóa học, giúp bạn hiểu tổng quan về nội dung và phương pháp học tập. Bạn sẽ được làm quen với giảng viên và cách thức tổ chức bài học trong suốt khóa học." : Model.NoiDung)</p>
+                </div>
+
+                <!-- Warning Banner -->
+                <div class="warning-banner">
+                    <div class="warning-icon">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <h5 class="fw-bold text-warning mb-2">Chỉ là bài học xem trước</h5>
+                    <p class="mb-0">Để truy cập đầy đủ nội dung khóa học và các tính năng khác, vui lòng đăng ký khóa học.</p>
+                </div>
+
+                <div class="preview-actions">
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <a href="@Url.Action("Details", new { id = Model.CourseID })" class="btn-enroll-preview">
+                            <i class="fas fa-graduation-cap"></i>
+                            Đăng ký khóa học
+                        </a>
+                    }
+                    else
+                    {
+                        <a href="/Identity/Account/Login" class="btn-enroll-preview">
+                            <i class="fas fa-sign-in-alt"></i>
+                            Đăng nhập để học
+                        </a>
+                    }
+
+                    <a href="@Url.Action("Details", new { id = Model.CourseID })" class="btn-back-preview">
+                        <i class="fas fa-arrow-left"></i>
+                        Quay lại khóa học
+                    </a>
+                </div>
+            </div>
+
+            <!-- Course Preview Card -->
+            <div class="course-preview-card">
+                <h4 class="course-title-preview">@Model.Course.TenKhoaHoc</h4>
+
+                <div class="course-teacher-preview">
+                    <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(Model.Course.User?.HoTen ?? "Teacher")&background=667eea&color=fff&bold=true&size=40"
+                         alt="@Model.Course.User?.HoTen" class="teacher-avatar-preview">
+                    <div>
+                        <div class="fw-bold">@(Model.Course.User?.HoTen ?? "Chưa có thông tin")</div>
+                        <small class="text-muted">Giảng viên</small>
+                    </div>
+                </div>
+
+                <div class="course-stats-preview">
+                    <div class="stat-preview">
+                        <div class="stat-number-preview">@(Model.Course.Enrollments?.Count ?? 0)</div>
+                        <div class="stat-label-preview">Học viên</div>
+                    </div>
+                    <div class="stat-preview">
+                        <div class="stat-number-preview">@(Model.Course.Lessons?.Count ?? 0)</div>
+                        <div class="stat-label-preview">Bài học</div>
+                    </div>
+                    <div class="stat-preview">
+                        <div class="stat-number-preview">@(Model.Course.Quizzes?.Count ?? 0)</div>
+                        <div class="stat-label-preview">Kiểm tra</div>
+                    </div>
+                    <div class="stat-preview">
+                        <div class="stat-number-preview">4.8</div>
+                        <div class="stat-label-preview">Đánh giá</div>
+                    </div>
+                </div>
+
+                <div class="price-preview">
+                    @if (Model.Course.Gia > 0)
+                    {
+                        <div class="price-amount-preview">@Model.Course.Gia.ToString("N0")₫</div>
+                    }
+                    else
+                    {
+                        <div class="price-amount-preview">Miễn phí</div>
+                    }
+                </div>
+
+                <ul class="preview-features">
+                    <li>
+                        <i class="fas fa-infinity"></i>
+                        <span>Truy cập trọn đời</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-mobile-alt"></i>
+                        <span>Học trên mọi thiết bị</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-certificate"></i>
+                        <span>Chứng chỉ hoàn thành</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-comments"></i>
+                        <span>Hỗ trợ trực tuyến</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-download"></i>
+                        <span>Tài liệu tải về</span>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
 
-    @if (Model == null)
+    <!-- Related Lessons -->
+    @if (Model.Course.Lessons != null && Model.Course.Lessons.Count > 1)
     {
-        <div class="alert alert-warning text-center">
-            <i class="fas fa-exclamation-triangle me-2"></i> Không có bài học nào để xem trước.
-        </div>
-    }
-    else
-    {
-        <div class="row">
-            <div class="col-md-8">
-                <!-- Video player -->
-                <div class="card shadow-sm mb-4">
-                    <div class="card-body">
-                        <h3 class="card-title mb-3">
-                            <i class="fas fa-play-circle me-2 text-danger"></i> @Model.TenBaiHoc
-                        </h3>
-                        <div class="ratio ratio-16x9 mb-4">
-                            @if (!string.IsNullOrEmpty(Model.VideoUrl))
-                            {
-                                <iframe src="@Model.VideoUrl" allowfullscreen></iframe>
-                            }
-                            else
-                            {
-                                <div class="bg-light d-flex align-items-center justify-content-center">
-                                    <div class="text-center">
-                                        <i class="fas fa-video-slash fa-4x text-muted mb-3"></i>
-                                        <h5>Không có video cho bài học này</h5>
-                                    </div>
-                                </div>
-                            }
-                        </div>
+        <div class="related-lessons" data-aos="fade-up">
+            <h5 class="fw-bold mb-3">Các bài học trong khóa học</h5>
+            <p class="text-muted mb-4">Khám phá toàn bộ nội dung khóa học (@Model.Course.Lessons.Count bài học)</p>
 
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <form asp-action="Enroll" asp-controller="Course" method="post">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="courseId" value="@Model.CourseID" />
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-graduation-cap me-1"></i> Đăng ký khóa học
-                                    </button>
-                                </form>
-                            </div>
+            @foreach (var lesson in Model.Course.Lessons.OrderBy(l => l.LessonID).Take(5))
+            {
+                <div class="lesson-preview-item">
+                    <div class="lesson-number-preview">@(Model.Course.Lessons.OrderBy(l => l.LessonID).ToList().IndexOf(lesson) + 1)</div>
+                    <div class="lesson-content-preview">
+                        <div class="lesson-title-preview">@lesson.TenBaiHoc</div>
+                        <div class="lesson-duration-preview">
+                            <i class="fas fa-clock me-1"></i>@lesson.ThoiLuong phút
                         </div>
                     </div>
+                    @if (lesson.LessonID == Model.LessonID)
+                    {
+                        <span class="badge bg-success">Đang xem</span>
+                    }
+                    else
+                    {
+                        <i class="fas fa-lock lesson-lock"></i>
+                    }
                 </div>
+            }
 
-                <!-- Nội dung bài học -->
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-light">
-                        <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i> Tóm tắt bài học</h5>
-                    </div>
-                    <div class="card-body">
-                        @if (!string.IsNullOrEmpty(Model.NoiDung))
-                        {
-                            @Html.Raw(Model.NoiDung)
-                        }
-                        else
-                        {
-                            <div class="alert alert-info">
-                                <i class="fas fa-info-circle me-2"></i> Không có nội dung tóm tắt cho bài học này.
-                            </div>
-                        }
-                    </div>
+            @if (Model.Course.Lessons.Count > 5)
+            {
+                <div class="text-center mt-3">
+                    <a href="@Url.Action("Details", new { id = Model.CourseID })" class="btn btn-outline-primary">
+                        Xem tất cả @Model.Course.Lessons.Count bài học
+                    </a>
                 </div>
-
-                <!-- Giới hạn xem trước -->
-                <div class="card shadow-sm mb-4 border-warning">
-                    <div class="card-body">
-                        <div class="text-center py-3">
-                            <i class="fas fa-lock fa-3x text-warning mb-3"></i>
-                            <h4>Đây chỉ là phần xem thử</h4>
-                            <p class="text-muted">Đăng ký khóa học để xem đầy đủ tất cả các bài học và tài liệu</p>
-                            <button type="button" class="btn btn-warning mt-2" id="enrollNowBtn">
-                                <i class="fas fa-graduation-cap me-1"></i> Đăng ký ngay
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <!-- Thông tin khóa học -->
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Thông tin khóa học</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="courseInfo">
-                            <div class="placeholder-glow">
-                                <span class="placeholder col-12 mb-2"></span>
-                                <span class="placeholder col-8 mb-2"></span>
-                                <span class="placeholder col-10 mb-2"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Preview các bài học khác -->
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-light">
-                        <h5 class="mb-0"><i class="fas fa-list me-2"></i> Các bài học khác</h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="list-group list-group-flush" id="otherLessons">
-                            <div class="placeholder-glow p-3">
-                                <span class="placeholder col-12 mb-2" style="height: 24px;"></span>
-                                <span class="placeholder col-12 mb-2" style="height: 24px;"></span>
-                                <span class="placeholder col-12 mb-2" style="height: 24px;"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Đánh giá từ học viên -->
-                <div class="card shadow-sm">
-                    <div class="card-header bg-success text-white">
-                        <h5 class="mb-0"><i class="fas fa-star me-2"></i> Đánh giá khóa học</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="me-3">
-                                <span class="display-4 fw-bold">4.8</span>
-                            </div>
-                            <div>
-                                <div class="mb-1">
-                                    <i class="fas fa-star text-warning"></i>
-                                    <i class="fas fa-star text-warning"></i>
-                                    <i class="fas fa-star text-warning"></i>
-                                    <i class="fas fa-star text-warning"></i>
-                                    <i class="fas fa-star-half-alt text-warning"></i>
-                                </div>
-                                <div class="text-muted">Dựa trên 254 đánh giá</div>
-                            </div>
-                        </div>
-
-                        <div class="reviews">
-                            <div class="review-item mb-3 p-3 bg-light rounded">
-                                <div class="d-flex justify-content-between mb-1">
-                                    <div class="fw-bold">Nguyễn Văn A</div>
-                                    <div>
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                    </div>
-                                </div>
-                                <p class="mb-0">Khóa học rất bổ ích, nội dung chi tiết và dễ hiểu. Giảng viên nhiệt tình.</p>
-                            </div>
-
-                            <div class="review-item mb-3 p-3 bg-light rounded">
-                                <div class="d-flex justify-content-between mb-1">
-                                    <div class="fw-bold">Trần Thị B</div>
-                                    <div>
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="far fa-star text-warning"></i>
-                                    </div>
-                                </div>
-                                <p class="mb-0">Tôi đã học được rất nhiều kiến thức mới. Tuy nhiên, một số phần hơi khó hiểu.</p>
-                            </div>
-
-                            <a href="#" class="btn btn-outline-success btn-sm w-100">
-                                <i class="fas fa-comment-dots me-1"></i> Xem tất cả đánh giá
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            }
         </div>
     }
 </div>
 
-<!-- Modal đăng ký -->
-<div class="modal fade" id="enrollModal" tabindex="-1" aria-labelledby="enrollModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="enrollModalLabel">Đăng ký khóa học</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Bạn sẽ được truy cập vào tất cả các bài học và tài liệu sau khi đăng ký khóa học này.</p>
-
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i> Lợi ích khi đăng ký khóa học:
-                    <ul class="mb-0 mt-2">
-                        <li>Truy cập toàn bộ nội dung khóa học</li>
-                        <li>Tham gia thảo luận với giảng viên và học viên khác</li>
-                        <li>Nhận chứng chỉ sau khi hoàn thành</li>
-                        <li>Được cập nhật khi có nội dung mới</li>
-                    </ul>
-                </div>
-
-                @if (!User.Identity.IsAuthenticated)
-                {
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i> Bạn cần đăng nhập để đăng ký khóa học.
-                    </div>
-                }
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                @if (User.Identity.IsAuthenticated)
-                {
-                    <form asp-action="Enroll" asp-controller="Course" method="post">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="courseId" value="@Model?.CourseID" />
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-graduation-cap me-1"></i> Đăng ký ngay
-                        </button>
-                    </form>
-                }
-                else
-                {
-                    <a href="/Identity/Account/Login" class="btn btn-primary">
-                        <i class="fas fa-sign-in-alt me-1"></i> Đăng nhập
-                    </a>
-                }
+<!-- Fullscreen Video Overlay -->
+<div class="fullscreen-overlay" id="fullscreenOverlay">
+    <div class="fullscreen-player">
+        <button class="close-fullscreen" onclick="closeFullscreen()">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="d-flex align-items-center justify-content-center h-100 text-white">
+            <div class="text-center">
+                <i class="fas fa-play-circle fa-5x mb-3"></i>
+                <h4>Video Preview</h4>
+                <p>Đây sẽ là nơi phát video xem trước thực tế</p>
+                <button class="btn btn-primary btn-lg" onclick="closeFullscreen()">
+                    <i class="fas fa-times me-2"></i>Đóng
+                </button>
             </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
+        // Initialize AOS
+        AOS.init({
+            duration: 1000,
+            easing: 'ease-out-quart',
+            once: true
+        });
+
+        function playPreview() {
+            // Show fullscreen overlay
+            document.getElementById('fullscreenOverlay').style.display = 'flex';
+
+            // In a real implementation, you would:
+            // 1. Load the actual video URL from @Model.VideoUrl
+            // 2. Initialize a video player (like Video.js, Plyr, etc.)
+            // 3. Handle play/pause/seek functionality
+
+            console.log('Playing preview for lesson:', @Model.LessonID);
+
+            // Simulate video loading
+            setTimeout(() => {
+                toastr.info('Video xem trước đang được tải...');
+            }, 500);
+        }
+
+        function closeFullscreen() {
+            document.getElementById('fullscreenOverlay').style.display = 'none';
+        }
+
+        // Close fullscreen on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeFullscreen();
+            }
+        });
+
+        // Close fullscreen when clicking outside the player
+        document.getElementById('fullscreenOverlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeFullscreen();
+            }
+        });
+
+        // Configure toastr
+        if (typeof toastr !== 'undefined') {
+            toastr.options = {
+                "closeButton": true,
+                "progressBar": true,
+                "positionClass": "toast-top-right",
+                "timeOut": 3000
+            };
+        }
+
+        // Track preview viewing for analytics
         $(document).ready(function() {
-            // Lấy thông tin khóa học
-            $.ajax({
-                url: '/api/courses/@Model?.CourseID', // Đây là API giả định
-                type: 'GET',
-                success: function(course) {
-                    // Trong thực tế, bạn sẽ nhận được dữ liệu từ API
-                    // Ở đây chúng ta sẽ giả lập dữ liệu
-                    var courseData = {
-                        id: @(Model?.CourseID ?? 0),
-                        title: 'Khóa học @(Model?.TenBaiHoc ?? "mẫu")',
-                        instructor: 'Giảng viên mẫu',
-                        totalLessons: 12,
-                        totalDuration: 180,
-                        level: 'Trung bình'
-                    };
+            // Log preview view
+            console.log('Preview started for course:', @Model.CourseID, 'lesson:', @Model.LessonID);
 
-                    var courseHtml = `
-                        <h5>${courseData.title}</h5>
-                        <p class="text-muted small">
-                            <i class="fas fa-user me-1"></i> Giảng viên: ${courseData.instructor}
-                        </p>
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <span><i class="fas fa-list-ol me-2"></i> Tổng số bài học:</span>
-                                <span class="badge bg-primary rounded-pill">${courseData.totalLessons}</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <span><i class="fas fa-clock me-2"></i> Thời lượng:</span>
-                                <span>${courseData.totalDuration} phút</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <span><i class="fas fa-signal me-2"></i> Cấp độ:</span>
-                                <span>${courseData.level}</span>
-                            </li>
-                        </ul>
-                        <div class="mt-3">
-                            <a href="@Url.Action("Details", "Course", new { id = Model?.CourseID })" class="btn btn-outline-primary w-100">
-                                <i class="fas fa-info-circle me-1"></i> Xem chi tiết khóa học
-                            </a>
-                        </div>
-                    `;
-
-                    $('#courseInfo').html(courseHtml);
-                },
-                error: function() {
-                    $('#courseInfo').html('<div class="alert alert-warning">Không thể tải thông tin khóa học.</div>');
-                }
-            });
-
-            // Lấy danh sách bài học khác
-            $.ajax({
-                url: '/api/courses/@(Model?.CourseID ?? 0)/lessons', // Đây là API giả định
-                type: 'GET',
-                success: function(lessons) {
-                    // Trong thực tế, bạn sẽ nhận được dữ liệu từ API
-                    // Ở đây chúng ta sẽ giả lập dữ liệu
-                    var lessonsData = [
-                        { id: 1, title: 'Giới thiệu khóa học', duration: 10, locked: false },
-                        { id: 2, title: 'Bài 1: Kiến thức cơ bản', duration: 15, locked: true },
-                        { id: 3, title: 'Bài 2: Kiến thức nâng cao', duration: 20, locked: true },
-                        { id: 4, title: 'Bài 3: Thực hành', duration: 25, locked: true },
-                        { id: 5, title: 'Tổng kết', duration: 15, locked: true }
-                    ];
-
-                    var lessonsHtml = '';
-
-                    lessonsData.forEach(function(lesson) {
-                        lessonsHtml += `
-                            <div class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <i class="fas ${lesson.locked ? 'fa-lock text-muted' : 'fa-play-circle text-primary'}"></i>
-                                    <span class="ms-2 ${lesson.locked ? 'text-muted' : ''}">${lesson.title}</span>
-                                </div>
-                                <span class="badge bg-light text-dark rounded-pill">${lesson.duration} phút</span>
-                            </div>
-                        `;
-                    });
-
-                    $('#otherLessons').html(lessonsHtml);
-                },
-                error: function() {
-                    $('#otherLessons').html('<div class="alert alert-warning">Không thể tải danh sách bài học.</div>');
-                }
-            });
-
-            // Xử lý nút đăng ký ngay
-            $('#enrollNowBtn').click(function() {
-                var enrollModal = new bootstrap.Modal(document.getElementById('enrollModal'));
-                enrollModal.show();
-            });
+            // You could send analytics data here
+            // analytics.track('preview_viewed', {
+            //     course_id: @Model.CourseID,
+            //     lesson_id: @Model.LessonID,
+            //     course_name: '@Model.Course.TenKhoaHoc',
+            //     lesson_name: '@Model.TenBaiHoc'
+            // });
         });
     </script>
 }

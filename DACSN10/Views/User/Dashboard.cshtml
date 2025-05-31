@@ -1,0 +1,493 @@
+﻿@{
+    ViewData["Title"] = "Trang cá nhân - OnlineLearning";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css" />
+    <style>
+        .dashboard-section {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            padding: 2rem 0;
+        }
+
+        .dashboard-header {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .dashboard-header::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1.5" fill="rgba(255,255,255,0.1)"/></svg>');
+            }
+
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            height: 100%;
+        }
+
+            .stat-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+            }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .activity-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid #f1f5f9;
+            transition: all 0.3s ease;
+        }
+
+            .activity-item:hover {
+                background: #f8fafc;
+                margin: 0 -1rem;
+                padding: 1rem;
+                border-radius: 10px;
+            }
+
+            .activity-item:last-child {
+                border-bottom: none;
+            }
+
+        .activity-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            color: white;
+        }
+
+        .progress-bar-custom {
+            height: 8px;
+            border-radius: 10px;
+            background: #e2e8f0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .quick-action-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border: none;
+            color: white;
+            padding: 0.875rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+            .quick-action-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+                color: white;
+            }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 1rem;
+        }
+
+        .achievement-badge {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0.25rem;
+        }
+    </style>
+}
+
+<div class="dashboard-section">
+    <div class="container-fluid px-4 px-md-5">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header" data-aos="fade-up">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-3">
+                        <i class="fas fa-user-circle me-3"></i>
+                        Chào mừng trở lại, @User.Identity.Name!
+                    </h1>
+                    <p class="mb-0 opacity-90">Theo dõi tiến trình học tập và quản lý khóa học của bạn</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a href="@Url.Action("EditProfile")" class="quick-action-btn">
+                            <i class="fas fa-edit"></i> Chỉnh sửa hồ sơ
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4" data-aos="fade-up" data-aos-delay="100">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+                    <div class="stat-number">@ViewBag.EnrollmentCount</div>
+                    <div class="stat-label">Khóa học đã đăng ký</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <div class="stat-number">@ViewBag.FavoriteCount</div>
+                    <div class="stat-label">Khóa học yêu thích</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
+                    <div class="stat-number">@ViewBag.FollowingTeachersCount</div>
+                    <div class="stat-label">Giảng viên theo dõi</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-number">@ViewBag.AverageProgress%</div>
+                    <div class="stat-label">Tiến độ trung bình</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Recent Enrollments -->
+            <div class="col-lg-8 mb-4">
+                <div class="activity-card" data-aos="fade-up" data-aos-delay="200">
+                    <h3 class="section-title">
+                        <i class="fas fa-clock"></i>
+                        Khóa học gần đây
+                    </h3>
+
+                    @if (ViewBag.RecentEnrollments != null && ((List<DACSN10.Models.Enrollment>)ViewBag.RecentEnrollments).Any())
+                    {
+                        foreach (var enrollment in (List<DACSN10.Models.Enrollment>)ViewBag.RecentEnrollments)
+                        {
+                            <div class="activity-item">
+                                <div class="activity-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+                                    <i class="fas fa-book"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                            <h5 class="mb-1">@enrollment.Course.TenKhoaHoc</h5>
+                                            <p class="text-muted mb-1">Giảng viên: @enrollment.Course.User.HoTen</p>
+                                            <small class="text-muted">Đăng ký: @enrollment.EnrollDate.ToString("dd/MM/yyyy")</small>
+                                        </div>
+                                        <span class="badge bg-primary">@enrollment.TrangThai</span>
+                                    </div>
+                                    <div class="progress-bar-custom">
+                                        <div class="progress-fill" style="width: @enrollment.Progress%"></div>
+                                    </div>
+                                    <small class="text-muted">Tiến độ: @enrollment.Progress%</small>
+                                </div>
+                                <div class="ms-3">
+                                    <a href="@Url.Action("Details", "Course", new { id = enrollment.CourseID })"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Chưa có khóa học nào được đăng ký</p>
+                            <a href="@Url.Action("Index", "Course")" class="quick-action-btn">
+                                <i class="fas fa-search"></i> Khám phá khóa học
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Quiz Results & Progress Chart -->
+            <div class="col-lg-4 mb-4">
+                <div class="activity-card" data-aos="fade-up" data-aos-delay="300">
+                    <h3 class="section-title">
+                        <i class="fas fa-chart-pie"></i>
+                        Thống kê học tập
+                    </h3>
+
+                    <div class="chart-container">
+                        <canvas id="progressChart"></canvas>
+                    </div>
+
+                    <div class="mt-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Tổng chi tiêu:</span>
+                            <strong class="text-success">@ViewBag.TotalSpent.ToString("N0")₫</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Thanh toán chờ xử lý:</span>
+                            <strong class="text-warning">@ViewBag.PendingPayments</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Achievements -->
+                <div class="activity-card" data-aos="fade-up" data-aos-delay="400">
+                    <h3 class="section-title">
+                        <i class="fas fa-trophy"></i>
+                        Thành tích
+                    </h3>
+
+                    <div class="achievements-container">
+                        @if (ViewBag.EnrollmentCount > 0)
+                        {
+                            <div class="achievement-badge">
+                                <i class="fas fa-star"></i>
+                                Học viên tích cực
+                            </div>
+                        }
+                        @if (ViewBag.AverageProgress > 50)
+                        {
+                            <div class="achievement-badge">
+                                <i class="fas fa-medal"></i>
+                                Tiến bộ vượt trội
+                            </div>
+                        }
+                        @if (ViewBag.FollowingTeachersCount > 3)
+                        {
+                            <div class="achievement-badge">
+                                <i class="fas fa-users"></i>
+                                Kết nối rộng
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Quiz Results -->
+        @if (ViewBag.RecentQuizResults != null && ((List<DACSN10.Models.QuizResult>)ViewBag.RecentQuizResults).Any())
+        {
+            <div class="activity-card" data-aos="fade-up" data-aos-delay="500">
+                <h3 class="section-title">
+                    <i class="fas fa-quiz"></i>
+                    Kết quả kiểm tra gần đây
+                </h3>
+
+                <div class="row">
+                    @foreach (var result in (List<DACSN10.Models.QuizResult>)ViewBag.RecentQuizResults)
+                    {
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <h6 class="card-title">@result.Quiz.Title</h6>
+                                    <p class="card-text text-muted small">@result.Quiz.Course.TenKhoaHoc</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge @(result.Score >= 80 ? "bg-success" : result.Score >= 60 ? "bg-warning" : "bg-danger")">
+                                            @result.Score.ToString("F1") điểm
+                                        </span>
+                                        <small class="text-muted">@result.TakenAt.ToString("dd/MM")</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Quick Actions -->
+        <div class="activity-card" data-aos="fade-up" data-aos-delay="600">
+            <h3 class="section-title">
+                <i class="fas fa-bolt"></i>
+                Hành động nhanh
+            </h3>
+
+            <div class="row">
+                <div class="col-md-3 col-6 mb-3">
+                    <a href="@Url.Action("Index", "Course")" class="quick-action-btn w-100 justify-content-center">
+                        <i class="fas fa-search"></i>
+                        Tìm khóa học
+                    </a>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <a href="@Url.Action("MyFollowedTeachers")" class="quick-action-btn w-100 justify-content-center">
+                        <i class="fas fa-users"></i>
+                        GV theo dõi
+                    </a>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <a href="@Url.Action("MyActivity")" class="quick-action-btn w-100 justify-content-center">
+                        <i class="fas fa-history"></i>
+                        Lịch sử học tập
+                    </a>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <button onclick="loadUserStats()" class="quick-action-btn w-100 justify-content-center">
+                        <i class="fas fa-chart-bar"></i>
+                        Thống kê chi tiết
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Initialize AOS
+        AOS.init({
+            duration: 1000,
+            easing: 'ease-out-quart',
+            once: true
+        });
+
+        // Initialize Progress Chart
+        $(document).ready(function() {
+            initializeProgressChart();
+        });
+
+        function initializeProgressChart() {
+            const ctx = document.getElementById('progressChart').getContext('2d');
+
+            // Get stats from ViewBag or load via AJAX
+            loadUserStats().then(stats => {
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Hoàn thành', 'Đang học', 'Chưa bắt đầu'],
+                        datasets: [{
+                            data: [stats.completedCourses, stats.inProgress, stats.notStarted],
+                            backgroundColor: [
+                                '#10b981',
+                                '#3b82f6',
+                                '#e5e7eb'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    usePointStyle: true
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        function loadUserStats() {
+            return fetch('@Url.Action("GetUserStats")')
+                .then(response => response.json())
+                .catch(error => {
+                    console.error('Error loading stats:', error);
+                    return {
+                        completedCourses: 0,
+                        inProgress: 0,
+                        notStarted: 0
+                    };
+                });
+        }
+
+        // Configure toastr
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": 3000
+        };
+    </script>
+}

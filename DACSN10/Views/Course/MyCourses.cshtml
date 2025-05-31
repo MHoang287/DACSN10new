@@ -1,446 +1,455 @@
-﻿@model List<DACSN10.Models.Course>
+﻿@model List<dynamic>
 @{
-    ViewData["Title"] = "Khóa học của tôi";
+    ViewData["Title"] = "Khóa học của tôi - OnlineLearning";
+    var totalPages = ViewBag.TotalPages ?? 1;
+    var currentPage = ViewBag.Page ?? 1;
+    var totalCourses = ViewBag.TotalCourses ?? 0;
 }
 
-<div class="container animate__animated animate__fadeIn">
-    <h1 class="mb-4 text-center fw-bold">
-        <i class="fas fa-book me-2 text-primary"></i> Khóa học của tôi
-    </h1>
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css" />
+	<link rel="stylesheet" href="~/css/MyCourses.css" />
+}
 
-    @if (!User.Identity.IsAuthenticated)
-    {
-        <div class="alert alert-warning text-center">
-            <i class="fas fa-exclamation-triangle me-2"></i> Vui lòng <a href="/Identity/Account/Login">đăng nhập</a> để xem khóa học của bạn.
+<!-- Dashboard Header -->
+<section class="dashboard-header">
+    <div class="container-fluid px-4 px-md-5">
+        <div class="text-center" data-aos="fade-up">
+            <h1 class="display-5 fw-bold mb-3">
+                <i class="fas fa-graduation-cap me-3"></i>Khóa học của tôi
+            </h1>
+            <p class="fs-5 mb-0">
+                Quản lý và theo dõi tiến độ học tập của bạn
+            </p>
         </div>
-    }
-    else
-    {
-        <ul class="nav nav-tabs mb-4" id="myCoursesTab" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab" aria-controls="all" aria-selected="true">
-                    <i class="fas fa-th-list me-1"></i> Tất cả
-                </button>
+    </div>
+</section>
+
+<div class="container-fluid px-4 px-md-5">
+    <!-- Statistics Cards -->
+    <div class="stats-cards" data-aos="fade-up">
+        <div class="stats-card">
+            <div class="stats-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+                <i class="fas fa-book-open"></i>
+            </div>
+            <div class="stats-number">@totalCourses</div>
+            <div class="stats-label">Khóa học đã đăng ký</div>
+        </div>
+
+        <div class="stats-card">
+            <div class="stats-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stats-number" id="completedCourses">0</div>
+            <div class="stats-label">Khóa học hoàn thành</div>
+        </div>
+
+        <div class="stats-card">
+            <div class="stats-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stats-number" id="inProgressCourses">0</div>
+            <div class="stats-label">Đang học</div>
+        </div>
+
+        <div class="stats-card">
+            <div class="stats-icon" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stats-number" id="avgProgress">0%</div>
+            <div class="stats-label">Tiến độ trung bình</div>
+        </div>
+    </div>
+
+    <!-- Progress Chart -->
+    <div class="chart-container" data-aos="fade-up">
+        <h5 class="mb-3">Biểu đồ tiến độ học tập</h5>
+        <canvas id="progressChart" height="100"></canvas>
+    </div>
+
+    <!-- Overview Cards -->
+    <div class="overview-cards" data-aos="fade-up">
+        <div class="overview-card">
+            <div class="overview-number" id="totalLessons">0</div>
+            <div class="overview-label">Tổng bài học</div>
+        </div>
+        <div class="overview-card">
+            <div class="overview-number" id="completedLessons">0</div>
+            <div class="overview-label">Bài học hoàn thành</div>
+        </div>
+        <div class="overview-card">
+            <div class="overview-number" id="studyHours">0</div>
+            <div class="overview-label">Giờ học (ước tính)</div>
+        </div>
+        <div class="overview-card">
+            <div class="overview-number" id="studyStreak">7</div>
+            <div class="overview-label">Ngày học liên tiếp</div>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs" data-aos="fade-up">
+        <ul class="nav nav-pills nav-pills-custom" id="courseFilter">
+            <li class="nav-item">
+                <a class="nav-link active" href="#" data-filter="all">
+                    <i class="fas fa-th-large me-2"></i>Tất cả
+                </a>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="inprogress-tab" data-bs-toggle="tab" data-bs-target="#inprogress" type="button" role="tab" aria-controls="inprogress" aria-selected="false">
-                    <i class="fas fa-spinner me-1"></i> Đang học
-                </button>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-filter="in-progress">
+                    <i class="fas fa-play me-2"></i>Đang học
+                </a>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab" aria-controls="completed" aria-selected="false">
-                    <i class="fas fa-check-circle me-1"></i> Đã hoàn thành
-                </button>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-filter="completed">
+                    <i class="fas fa-check me-2"></i>Hoàn thành
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-filter="not-started">
+                    <i class="fas fa-pause me-2"></i>Chưa bắt đầu
+                </a>
             </li>
         </ul>
+    </div>
 
-        <div class="tab-content" id="myCoursesTabContent">
-            <!-- Tab tất cả khóa học -->
-            <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
-                @if (Model != null && Model.Any())
-                {
-                    <div class="row row-cols-1 row-cols-md-3 g-4">
-                        @foreach (var course in Model)
-                        {
-                            var enrollment = course.Enrollments?.FirstOrDefault(e => e.UserID == User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
-                            var progress = enrollment?.Progress ?? 0;
+    <!-- Courses Grid -->
+    @if (Model != null && Model.Any())
+    {
+        <div class="row" id="coursesContainer">
+            @foreach (var item in Model)
+            {
+                var course = item.Course;
+                var progress = (float)item.Progress;
+                var enrollDate = (DateTime)item.EnrollDate;
+                var progressStatus = progress >= 100 ? "completed" : (progress > 0 ? "in-progress" : "not-started");
+                var statusClass = progress >= 100 ? "status-completed" : (progress > 0 ? "status-in-progress" : "status-not-started");
+                var statusText = progress >= 100 ? "Hoàn thành" : (progress > 0 ? "Đang học" : "Chưa bắt đầu");
 
-                            <div class="col course-item">
-                                <div class="card h-100 shadow-sm course-card">
-                                    <div class="position-relative">
-                                        <div class="position-absolute top-0 end-0 m-2">
-                                            @if (progress == 100)
-                                            {
-                                                <span class="badge bg-success">
-                                                    <i class="fas fa-check-circle me-1"></i> Hoàn thành
-                                                </span>
-                                            }
-                                            else if (progress > 0)
-                                            {
-                                                <span class="badge bg-primary">
-                                                    <i class="fas fa-spinner me-1"></i> Đang học
-                                                </span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-warning">
-                                                    <i class="fas fa-exclamation-circle me-1"></i> Chưa bắt đầu
-                                                </span>
-                                            }
-                                        </div>
-                                    </div>
-                                    <div class="card-body d-flex flex-column">
-                                        <h5 class="card-title">@course.TenKhoaHoc</h5>
-                                        <p class="card-text text-muted small">
-                                            <i class="fas fa-user me-1"></i> @(course.User?.HoTen ?? "Không có thông tin")
-                                        </p>
-                                        <div class="progress mt-2 mb-2">
-                                            <div class="progress-bar" role="progressbar" style="width: @progress%;" aria-valuenow="@progress" aria-valuemin="0" aria-valuemax="100">@progress%</div>
-                                        </div>
-                                        <p class="card-text" style="height: 50px; overflow: hidden;">
-                                            @(course.MoTa?.Length > 100 ? course.MoTa.Substring(0, 100) + "..." : course.MoTa)
-                                        </p>
-                                        <div class="mt-auto d-flex justify-content-between align-items-center">
-                                            <a href="@Url.Action("Details", new { id = course.CourseID })" class="btn btn-outline-primary btn-sm">
-                                                <i class="fas fa-info-circle me-1"></i> Chi tiết
-                                            </a>
-                                            <div>
-                                                <a href="@Url.Action("Progress", new { courseId = course.CourseID })" class="btn btn-primary btn-sm">
-                                                    <i class="fas fa-play-circle me-1"></i> Tiếp tục học
-                                                </a>
-                                            </div>
-                                        </div>
-                                        <div class="mt-2 small text-muted text-center">
-                                            @if (enrollment != null)
-                                            {
-                                                <span>Đăng ký: @enrollment.EnrollDate.ToString("dd/MM/yyyy")</span>
-                                            }
-                                        </div>
-                                    </div>
+                <div class="col-lg-6 col-xl-4 mb-4 course-item" data-filter="@progressStatus">
+                    <div class="my-course-card" data-aos="fade-up">
+                        <div class="course-status-badge @statusClass">
+                            @if (progress >= 100)
+                            {
+                                <i class="fas fa-trophy me-1"></i>
+                            }
+                            else if (progress > 0)
+                            {
+                                <i class="fas fa-play me-1"></i>
+                            }
+                            else
+                            {
+                                <i class="fas fa-pause me-1"></i>
+                            }
+                            @statusText
+                        </div>
+
+                        <div class="course-header-image">
+                            <div class="enrollment-badge">
+                                <i class="fas fa-calendar me-1"></i>
+                                @enrollDate.ToString("dd/MM/yyyy")
+                            </div>
+                            <div class="text-center">
+                                <i class="fas @(progress >= 100 ? "fa-trophy" : progress > 0 ? "fa-play-circle" : "fa-book") fa-3x mb-2"></i>
+                                <div style="font-size: 1rem; font-weight: 600;">
+                                    @statusText
                                 </div>
                             </div>
-                        }
-                    </div>
-                }
-                else
-                {
-                    <div class="text-center py-5">
-                        <img src="/images/empty-courses.svg" alt="Không có khóa học" style="max-width: 200px;" class="mb-4">
-                        <h3>Bạn chưa đăng ký khóa học nào</h3>
-                        <p class="text-muted">Khám phá và đăng ký các khóa học để bắt đầu hành trình học tập của bạn</p>
-                        <a href="@Url.Action("Index", "Course")" class="btn btn-primary mt-3">
-                            <i class="fas fa-search me-1"></i> Tìm khóa học
-                        </a>
-                    </div>
-                }
-            </div>
+                        </div>
 
-            <!-- Tab khóa học đang học -->
-            <div class="tab-pane fade" id="inprogress" role="tabpanel" aria-labelledby="inprogress-tab">
-                <div id="inprogressCourses" class="row row-cols-1 row-cols-md-3 g-4">
-                    <!-- Nội dung sẽ được thêm bằng JavaScript -->
-                </div>
-            </div>
+                        <div class="course-content">
+                            <h3 class="course-title">@course.TenKhoaHoc</h3>
 
-            <!-- Tab khóa học đã hoàn thành -->
-            <div class="tab-pane fade" id="completed" role="tabpanel" aria-labelledby="completed-tab">
-                <div id="completedCourses" class="row row-cols-1 row-cols-md-3 g-4">
-                    <!-- Nội dung sẽ được thêm bằng JavaScript -->
-                </div>
-            </div>
-        </div>
-
-        <!-- Thống kê tiến độ học tập -->
-        <div class="card shadow-sm mt-5">
-            <div class="card-header bg-light">
-                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i> Thống kê học tập</h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-7">
-                        <canvas id="progressChart"></canvas>
-                    </div>
-                    <div class="col-md-5">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <div>
-                                    <h6 class="mb-0">Tổng số khóa học</h6>
-                                    <small class="text-muted">Số khóa học đã đăng ký</small>
-                                </div>
-                                <span class="badge bg-primary rounded-pill fs-5">@(Model?.Count ?? 0)</span>
+                            <div class="course-teacher">
+                                <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(course.User?.HoTen ?? "Teacher")&background=667eea&color=fff&bold=true&size=32"
+                                     alt="@course.User?.HoTen" class="teacher-avatar">
+                                <span>@(course.User?.HoTen ?? "Chưa có thông tin")</span>
                             </div>
 
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <div>
-                                    <h6 class="mb-0">Đang học</h6>
-                                    <small class="text-muted">Số khóa học đang tiến hành</small>
+                            <div class="progress-section">
+                                <div class="progress-header">
+                                    <span class="fw-bold">Tiến độ học tập</span>
+                                    <span class="progress-percentage">@progress.ToString("F1")%</span>
                                 </div>
-                                <span id="inprogressCount" class="badge bg-warning rounded-pill fs-5">0</span>
+                                <div class="progress-bar-custom">
+                                    <div class="progress-fill" style="width: @progress%"></div>
+                                </div>
                             </div>
 
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <div>
-                                    <h6 class="mb-0">Hoàn thành</h6>
-                                    <small class="text-muted">Số khóa học đã hoàn thành</small>
+                            <div class="course-meta">
+                                <div class="enroll-date">
+                                    <i class="fas fa-calendar-plus"></i>
+                                    <span>@enrollDate.ToString("dd/MM/yyyy")</span>
                                 </div>
-                                <span id="completedCount" class="badge bg-success rounded-pill fs-5">0</span>
+                                <div class="lesson-count">
+                                    <i class="fas fa-play-circle"></i>
+                                    <span>@(course.Lessons?.Count ?? 0) bài học</span>
+                                </div>
                             </div>
 
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <div>
-                                    <h6 class="mb-0">Chưa bắt đầu</h6>
-                                    <small class="text-muted">Số khóa học chưa học</small>
-                                </div>
-                                <span id="notStartedCount" class="badge bg-secondary rounded-pill fs-5">0</span>
-                            </div>
+                            <div class="course-actions">
+                                @if (progress < 100)
+                                {
+                                    <a href="@Url.Action("Progress", new { courseId = course.CourseID })"
+                                       class="btn-continue">
+                                        <i class="fas fa-play me-2"></i>
+                                        @(progress > 0 ? "Tiếp tục học" : "Bắt đầu học")
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a href="@Url.Action("Progress", new { courseId = course.CourseID })"
+                                       class="btn-continue">
+                                        <i class="fas fa-trophy me-2"></i>Xem lại
+                                    </a>
+                                }
 
-                            <div class="mt-4">
-                                <a href="@Url.Action("GetAverageProgress", "Course")" id="refreshProgress" class="btn btn-outline-primary w-100">
-                                    <i class="fas fa-sync-alt me-1"></i> Cập nhật tiến độ
+                                <a href="@Url.Action("Details", new { id = course.CourseID })"
+                                   class="btn-details">
+                                    <i class="fas fa-info-circle"></i>
                                 </a>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            }
+        </div>
+
+        <!-- Pagination -->
+        @if (totalPages > 1)
+        {
+            <nav class="pagination-enhanced">
+                <ul class="pagination mb-0">
+                    @if (currentPage > 1)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="@Url.Action("MyCourses", new { page = currentPage - 1 })">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                    }
+
+                    @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
+                    {
+                        <li class="page-item @(i == currentPage ? "active" : "")">
+                            <a class="page-link" href="@Url.Action("MyCourses", new { page = i })">@i</a>
+                        </li>
+                    }
+
+                    @if (currentPage < totalPages)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="@Url.Action("MyCourses", new { page = currentPage + 1 })">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    }
+    else
+    {
+        <div class="empty-state" data-aos="fade-up">
+            <i class="fas fa-graduation-cap"></i>
+            <h3>Bạn chưa đăng ký khóa học nào</h3>
+            <p class="mb-4">Khám phá hàng ngàn khóa học chất lượng và bắt đầu hành trình học tập của bạn</p>
+            <a href="@Url.Action("Index")" class="btn btn-primary btn-lg">
+                <i class="fas fa-search me-2"></i>Khám phá khóa học
+            </a>
         </div>
     }
 </div>
 
 @section Scripts {
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script>
+        // Initialize AOS
+        AOS.init({
+            duration: 1000,
+            easing: 'ease-out-quart',
+            once: true
+        });
+
         $(document).ready(function() {
-        @if (User.Identity.IsAuthenticated && Model != null && Model.Any())
+            // Calculate and update statistics
+            updateStatistics();
+
+            // Initialize progress chart
+            initializeProgressChart();
+
+            // Filter functionality
+            $('#courseFilter .nav-link').on('click', function(e) {
+                e.preventDefault();
+
+                // Update active state
+                $('#courseFilter .nav-link').removeClass('active');
+                $(this).addClass('active');
+
+                // Filter courses
+                const filter = $(this).data('filter');
+                filterCourses(filter);
+            });
+
+            // Load average progress
+            loadAverageProgress();
+
+            // Calculate overview metrics
+            calculateOverviewMetrics();
+        });
+
+        function updateStatistics() {
+            const courses = $('.course-item');
+            const completed = courses.filter('[data-filter="completed"]').length;
+            const inProgress = courses.filter('[data-filter="in-progress"]').length;
+
+            $('#completedCourses').text(completed);
+            $('#inProgressCourses').text(inProgress);
+
+            // Animate numbers
+            animateNumber($('#completedCourses'), completed);
+            animateNumber($('#inProgressCourses'), inProgress);
+        }
+
+        function animateNumber(element, target) {
+            let current = 0;
+            const increment = target / 30;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                element.text(Math.floor(current));
+            }, 50);
+        }
+
+        function filterCourses(filter) {
+            const courses = $('.course-item');
+
+            if (filter === 'all') {
+                courses.show();
+            } else {
+                courses.hide();
+                courses.filter('[data-filter="' + filter + '"]').show();
+            }
+
+            // Re-trigger AOS for visible items
+            AOS.refresh();
+        }
+
+        function initializeProgressChart() {
+            const ctx = document.getElementById('progressChart').getContext('2d');
+
+            // Get progress data from courses
+            const courseNames = [];
+            const progressData = [];
+
+        @if (Model != null && Model.Any())
         {
             <text>
-                    // Lọc và hiển thị khóa học theo trạng thái
-                    var inprogressCourses = [];
-                    var completedCourses = [];
-                    var notStartedCourses = [];
-
-                @foreach (var course in Model)
+                @foreach (var item in Model.Take(10)) // Limit to 10 courses for chart readability
                 {
-                    var enrollment = course.Enrollments?.FirstOrDefault(e => e.UserID == User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
-                    var progress = enrollment?.Progress ?? 0;
-
                     <text>
-                            var course = {
-                                id: @course.CourseID,
-                                title: '@Html.Raw(Json.Serialize(course.TenKhoaHoc))',
-                                instructor: '@(course.User?.HoTen ?? "Không có thông tin")',
-                                progress: @progress,
-                                                                description: '@Html.Raw(Json.Serialize(course.MoTa?.Length > 100 ? course.MoTa.Substring(0, 100) + "..." : course.MoTa))',
-                                        enrollDate: '@(enrollment?.EnrollDate.ToString("dd/MM/yyyy") ?? DateTime.Now.ToString("dd/MM/yyyy"))'
-                                    };
-
-                                    if (@progress === 100) {
-                                        completedCourses.push(course);
-                                    } else if (@progress > 0) {
-                                        inprogressCourses.push(course);
-                                    } else {
-                                        notStartedCourses.push(course);
-                                    }
+                            courseNames.push('@Html.Raw(item.Course.TenKhoaHoc.Replace("'", "\\'"))');
+                            progressData.push(@item.Progress);
                     </text>
                 }
-
-                        // Cập nhật số lượng
-                        $("#inprogressCount").text(inprogressCourses.length);
-                        $("#completedCount").text(completedCourses.length);
-                        $("#notStartedCount").text(notStartedCourses.length);
-
-                        // Hiển thị khóa học đang học
-                        var inprogressHtml = '';
-                        if (inprogressCourses.length > 0) {
-                            inprogressCourses.forEach(function(course) {
-                                inprogressHtml += `
-                                    <div class="col course-item">
-                                        <div class="card h-100 shadow-sm course-card">
-                                            <div class="position-relative">
-                                                <img src="${course.image}" class="card-img-top" alt="${course.title}" style="height: 180px; object-fit: cover;">
-                                                <div class="position-absolute top-0 end-0 m-2">
-                                                    <span class="badge bg-primary">
-                                                        <i class="fas fa-spinner me-1"></i> Đang học
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div class="card-body d-flex flex-column">
-                                                <h5 class="card-title">${course.title}</h5>
-                                                <p class="card-text text-muted small">
-                                                    <i class="fas fa-user me-1"></i> ${course.instructor}
-                                                </p>
-                                                <div class="progress mt-2 mb-2">
-                                                    <div class="progress-bar" role="progressbar" style="width: ${course.progress}%;" aria-valuenow="${course.progress}" aria-valuemin="0" aria-valuemax="100">${course.progress}%</div>
-                                                </div>
-                                                <p class="card-text" style="height: 50px; overflow: hidden;">${course.description}</p>
-                                                <div class="mt-auto d-flex justify-content-between align-items-center">
-                                                    <a href="/Course/Details/${course.id}" class="btn btn-outline-primary btn-sm">
-                                                        <i class="fas fa-info-circle me-1"></i> Chi tiết
-                                                    </a>
-                                                    <div>
-                                                        <a href="/Course/Progress/${course.id}" class="btn btn-primary btn-sm">
-                                                            <i class="fas fa-play-circle me-1"></i> Tiếp tục học
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                                <div class="mt-2 small text-muted text-center">
-                                                    <span>Đăng ký: ${course.enrollDate}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                `;
-                            });
-                        } else {
-                            inprogressHtml = `
-                                <div class="col-12">
-                                    <div class="alert alert-info text-center">
-                                        <i class="fas fa-info-circle me-2"></i> Bạn chưa có khóa học nào đang học
-                                    </div>
-                                </div>
-                            `;
-                        }
-                        $("#inprogressCourses").html(inprogressHtml);
-
-                        // Hiển thị khóa học đã hoàn thành
-                        var completedHtml = '';
-                        if (completedCourses.length > 0) {
-                            completedCourses.forEach(function(course) {
-                                completedHtml += `
-                                    <div class="col course-item">
-                                        <div class="card h-100 shadow-sm course-card">
-                                            <div class="position-relative">
-                                                <img src="${course.image}" class="card-img-top" alt="${course.title}" style="height: 180px; object-fit: cover;">
-                                                <div class="position-absolute top-0 end-0 m-2">
-                                                    <span class="badge bg-success">
-                                                        <i class="fas fa-check-circle me-1"></i> Hoàn thành
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div class="card-body d-flex flex-column">
-                                                <h5 class="card-title">${course.title}</h5>
-                                                <p class="card-text text-muted small">
-                                                    <i class="fas fa-user me-1"></i> ${course.instructor}
-                                                </p>
-                                                <div class="progress mt-2 mb-2">
-                                                    <div class="progress-bar bg-success" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">100%</div>
-                                                </div>
-                                                <p class="card-text" style="height: 50px; overflow: hidden;">${course.description}</p>
-                                                <div class="mt-auto d-flex justify-content-between align-items-center">
-                                                    <a href="/Course/Details/${course.id}" class="btn btn-outline-primary btn-sm">
-                                                        <i class="fas fa-info-circle me-1"></i> Chi tiết
-                                                    </a>
-                                                    <a href="#" class="btn btn-success btn-sm get-certificate" data-id="${course.id}">
-                                                        <i class="fas fa-certificate me-1"></i> Chứng chỉ
-                                                    </a>
-                                                </div>
-                                                <div class="mt-2 small text-muted text-center">
-                                                    <span>Hoàn thành: ${course.enrollDate}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                `;
-                            });
-                        } else {
-                            completedHtml = `
-                                <div class="col-12">
-                                    <div class="alert alert-info text-center">
-                                        <i class="fas fa-info-circle me-2"></i> Bạn chưa hoàn thành khóa học nào
-                                    </div>
-                                </div>
-                            `;
-                        }
-                        $("#completedCourses").html(completedHtml);
-
-                        // Vẽ biểu đồ thống kê
-                        var ctx = document.getElementById('progressChart').getContext('2d');
-                        var progressChart = new Chart(ctx, {
-                            type: 'doughnut',
-                            data: {
-                                labels: ['Hoàn thành', 'Đang học', 'Chưa bắt đầu'],
-                                datasets: [{
-                                    data: [completedCourses.length, inprogressCourses.length, notStartedCourses.length],
-                                    backgroundColor: [
-                                        'rgba(40, 167, 69, 0.7)',
-                                        'rgba(0, 123, 255, 0.7)',
-                                        'rgba(108, 117, 125, 0.7)'
-                                    ],
-                                    borderColor: [
-                                        'rgba(40, 167, 69, 1)',
-                                        'rgba(0, 123, 255, 1)',
-                                        'rgba(108, 117, 125, 1)'
-                                    ],
-                                    borderWidth: 1
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: {
-                                    legend: {
-                                        position: 'bottom'
-                                    },
-                                    title: {
-                                        display: true,
-                                        text: 'Tiến độ học tập của bạn'
-                                    }
-                                },
-                                animation: {
-                                    animateScale: true,
-                                    animateRotate: true
-                                }
-                            }
-                        });
-
-                        // Xử lý nút lấy chứng chỉ
-                        $(document).on('click', '.get-certificate', function(e) {
-                            e.preventDefault();
-                            var courseId = $(this).data('id');
-
-                            Swal.fire({
-                                title: 'Chứng chỉ khóa học',
-                                html: 'Chúc mừng bạn đã hoàn thành khóa học!<br>Bạn có thể tải chứng chỉ của mình.',
-                                icon: 'success',
-                                showCancelButton: true,
-                                confirmButtonText: 'Tải chứng chỉ',
-                                cancelButtonText: 'Đóng'
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    toastr.success('Đang chuẩn bị chứng chỉ của bạn...');
-                                    setTimeout(function() {
-                                        toastr.info('Chức năng này đang được phát triển. Vui lòng thử lại sau!');
-                                    }, 2000);
-                                }
-                            });
-                        });
-
-                        // Xử lý nút cập nhật tiến độ
-                        $("#refreshProgress").click(function(e) {
-                            e.preventDefault();
-
-                            $(this).html('<i class="fas fa-spinner fa-spin me-1"></i> Đang cập nhật...');
-
-                            $.ajax({
-                                url: $(this).attr('href'),
-                                type: 'GET',
-                                success: function(data) {
-                                    toastr.success('Cập nhật tiến độ thành công!');
-                                    setTimeout(function() {
-                                        location.reload();
-                                    }, 1000);
-                                },
-                                error: function() {
-                                    toastr.error('Có lỗi xảy ra khi cập nhật tiến độ.');
-                                    $("#refreshProgress").html('<i class="fas fa-sync-alt me-1"></i> Cập nhật tiến độ');
-                                }
-                            });
-                        });
             </text>
         }
 
-            // Animation cho các thẻ
-            $('.card').hover(
-                function() {
-                    $(this).addClass('shadow');
-                    $(this).css('transform', 'translateY(-5px)');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: courseNames,
+                    datasets: [{
+                        label: 'Tiến độ (%)',
+                        data: progressData,
+                        backgroundColor: function(context) {
+                            const value = context.parsed.y;
+                            if (value >= 100) return '#10b981';
+                            if (value >= 50) return '#f59e0b';
+                            return '#3b82f6';
+                        },
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }]
                 },
-                function() {
-                    $(this).removeClass('shadow');
-                    $(this).css('transform', 'translateY(0)');
-                }
-            );
-
-            // Hiệu ứng cuộn trang
-            $(window).scroll(function() {
-                $(".course-card").each(function() {
-                    var position = $(this).offset().top;
-                    var scrollPosition = $(window).scrollTop() + $(window).height();
-
-                    if (scrollPosition > position) {
-                        $(this).addClass("animate__animated animate__fadeIn");
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
                     }
-                });
+                }
             });
-        });
+        }
+
+        function loadAverageProgress() {
+            $.get('@Url.Action("GetAverageProgress")')
+                .done(function(avgProgress) {
+                    $('#avgProgress').text(avgProgress + '%');
+                    animateNumber($('#avgProgress'), avgProgress);
+                })
+                .fail(function() {
+                    $('#avgProgress').text('N/A');
+                });
+        }
+
+        function calculateOverviewMetrics() {
+            let totalLessons = 0;
+            let completedLessons = 0;
+            let studyHours = 0;
+
+        @if (Model != null && Model.Any())
+        {
+            <text>
+                @foreach (var item in Model)
+                {
+                    <text>
+                            totalLessons += @(item.Course.Lessons?.Count ?? 0);
+                            completedLessons += Math.floor((@item.Progress / 100) * @(item.Course.Lessons?.Count ?? 0));
+                            studyHours += Math.floor((@item.Progress / 100) * @(item.Course.Lessons?.Count ?? 0) * 0.5); // Assume 30 min per lesson
+                    </text>
+                }
+            </text>
+        }
+
+            // Animate overview numbers
+            animateNumber($('#totalLessons'), totalLessons);
+            animateNumber($('#completedLessons'), completedLessons);
+            animateNumber($('#studyHours'), studyHours);
+        }
+
+        // Configure toastr
+        if (typeof toastr !== 'undefined') {
+            toastr.options = {
+                "closeButton": true,
+                "progressBar": true,
+                "positionClass": "toast-top-right",
+                "timeOut": 3000
+            };
+        }
     </script>
 }
