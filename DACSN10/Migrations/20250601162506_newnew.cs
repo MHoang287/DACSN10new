@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DACSN10.Migrations
 {
     /// <inheritdoc />
-    public partial class AddNgayDangKyToEnrollment : Migration
+    public partial class newnew : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

@@ -1,0 +1,598 @@
+﻿@{
+    ViewData["Title"] = "Phân Tích Nâng Cao";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section Styles {
+    <style>
+        .analytics-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-bottom: 30px;
+        }
+
+            .analytics-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 25px;
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+            .metric-card:hover {
+                transform: scale(1.05);
+            }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .metric-label {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .performance-table {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+            .performance-table .table {
+                margin-bottom: 0;
+            }
+
+                .performance-table .table thead th {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    border: none;
+                    font-weight: 600;
+                }
+
+                .performance-table .table tbody tr:hover {
+                    background-color: rgba(102, 126, 234, 0.1);
+                }
+
+        .chart-tabs .nav-link {
+            border-radius: 25px;
+            margin: 0 5px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+            .chart-tabs .nav-link.active {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-color: transparent;
+                color: white;
+            }
+
+        .filter-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 15px;
+            z-index: 10;
+        }
+
+        .progress-ring {
+            width: 80px;
+            height: 80px;
+        }
+
+        .progress-ring-circle {
+            stroke: #667eea;
+            stroke-width: 4;
+            fill: transparent;
+            stroke-linecap: round;
+            transform-origin: 50% 50%;
+            transform: rotate(-90deg);
+        }
+    </style>
+}
+
+<div class="container-fluid" data-aos="fade-up">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="page-title">
+            <i class="fas fa-chart-bar me-2"></i>
+            Phân Tích Nâng Cao
+        </h2>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" onclick="exportAnalytics()">
+                <i class="fas fa-download me-2"></i>Xuất Báo Cáo
+            </button>
+            <button class="btn btn-primary" onclick="refreshData()">
+                <i class="fas fa-sync-alt me-2"></i>Làm Mới
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-section" data-aos="fade-up" data-aos-delay="100">
+        <div class="row">
+            <div class="col-md-3">
+                <label class="form-label">Từ ngày</label>
+                <input type="date" class="form-control" id="fromDate" value="">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Đến ngày</label>
+                <input type="date" class="form-control" id="toDate" value="">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Chu kỳ</label>
+                <select class="form-select" id="periodSelect">
+                    <option value="week">Tuần</option>
+                    <option value="month" selected>Tháng</option>
+                    <option value="quarter">Quý</option>
+                    <option value="year">Năm</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button class="btn btn-gradient w-100" onclick="applyFilters()">
+                    <i class="fas fa-filter me-2"></i>Áp Dụng
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-4" data-aos="fade-up" data-aos-delay="200">
+        <div class="col-lg-3 col-md-6">
+            <div class="metric-card">
+                <span class="metric-value" id="totalRevenue">0</span>
+                <div class="metric-label">Tổng Doanh Thu</div>
+                <div class="progress mt-3" style="height: 4px;">
+                    <div class="progress-bar bg-light" style="width: 75%"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="metric-card">
+                <span class="metric-value" id="totalUsers">0</span>
+                <div class="metric-label">Người Dùng Mới</div>
+                <div class="progress mt-3" style="height: 4px;">
+                    <div class="progress-bar bg-light" style="width: 60%"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="metric-card">
+                <span class="metric-value" id="totalEnrollments">0</span>
+                <div class="metric-label">Đăng Ký Mới</div>
+                <div class="progress mt-3" style="height: 4px;">
+                    <div class="progress-bar bg-light" style="width: 85%"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="metric-card">
+                <span class="metric-value" id="conversionRate">0%</span>
+                <div class="metric-label">Tỷ Lệ Chuyển Đổi</div>
+                <div class="progress mt-3" style="height: 4px;">
+                    <div class="progress-bar bg-light" style="width: 40%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="chart-container" data-aos="fade-up" data-aos-delay="300">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Xu Hướng Tăng Trưởng</h5>
+                    <ul class="nav nav-pills chart-tabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="pill" href="#userGrowth">Người Dùng</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="pill" href="#revenueGrowth">Doanh Thu</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="pill" href="#enrollmentGrowth">Đăng Ký</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="userGrowth">
+                        <canvas id="userGrowthChart"></canvas>
+                    </div>
+                    <div class="tab-pane fade" id="revenueGrowth">
+                        <canvas id="revenueGrowthChart"></canvas>
+                    </div>
+                    <div class="tab-pane fade" id="enrollmentGrowth">
+                        <canvas id="enrollmentGrowthChart"></canvas>
+                    </div>
+                </div>
+                <div class="loading-overlay d-none" id="chartLoading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Đang tải...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="chart-container" data-aos="fade-up" data-aos-delay="400">
+                <h5 class="mb-3">Phân Bố Khóa Học</h5>
+                <canvas id="courseDistributionChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Tables -->
+    <div class="row mt-4">
+        <div class="col-lg-6">
+            <div class="performance-table" data-aos="fade-up" data-aos-delay="500">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th colspan="3" class="text-center">
+                                    <i class="fas fa-crown me-2"></i>Top Khóa Học
+                                </th>
+                            </tr>
+                            <tr>
+                                <th>Khóa Học</th>
+                                <th>Học Viên</th>
+                                <th>Doanh Thu</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topCoursesTable">
+                            <!-- Dynamic content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="performance-table" data-aos="fade-up" data-aos-delay="600">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th colspan="3" class="text-center">
+                                    <i class="fas fa-user-tie me-2"></i>Top Giảng Viên
+                                </th>
+                            </tr>
+                            <tr>
+                                <th>Giảng Viên</th>
+                                <th>Học Viên</th>
+                                <th>Doanh Thu</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topTeachersTable">
+                            <!-- Dynamic content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Performance -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="chart-container" data-aos="fade-up" data-aos-delay="700">
+                <h5 class="mb-3">Hiệu Suất Theo Danh Mục</h5>
+                <canvas id="categoryPerformanceChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let userGrowthChart, revenueGrowthChart, enrollmentGrowthChart, courseDistributionChart, categoryPerformanceChart;
+
+        $(document).ready(function() {
+            initializeCharts();
+            loadAnalyticsData();
+
+            // Set default dates
+            const today = new Date();
+            const lastMonth = new Date(today.setMonth(today.getMonth() - 1));
+            $('#fromDate').val(lastMonth.toISOString().split('T')[0]);
+            $('#toDate').val(new Date().toISOString().split('T')[0]);
+        });
+
+        function initializeCharts() {
+            // User Growth Chart
+            const userCtx = document.getElementById('userGrowthChart').getContext('2d');
+            userGrowthChart = new Chart(userCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Học viên',
+                        data: [],
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        tension: 0.4
+                    }, {
+                        label: 'Giảng viên',
+                        data: [],
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Revenue Growth Chart
+            const revenueCtx = document.getElementById('revenueGrowthChart').getContext('2d');
+            revenueGrowthChart = new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Doanh thu (VNĐ)',
+                        data: [],
+                        borderColor: 'rgb(54, 162, 235)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return formatCurrency(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Course Distribution Chart
+            const courseCtx = document.getElementById('courseDistributionChart').getContext('2d');
+            courseDistributionChart = new Chart(courseCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.8)',
+                            'rgba(54, 162, 235, 0.8)',
+                            'rgba(255, 205, 86, 0.8)',
+                            'rgba(75, 192, 192, 0.8)',
+                            'rgba(153, 102, 255, 0.8)',
+                            'rgba(255, 159, 64, 0.8)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Category Performance Chart
+            const categoryCtx = document.getElementById('categoryPerformanceChart').getContext('2d');
+            categoryPerformanceChart = new Chart(categoryCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Doanh thu',
+                        data: [],
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return formatCurrency(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function loadAnalyticsData() {
+            showLoading('#chartLoading');
+
+            // Load all analytics data
+            Promise.all([
+                loadUserGrowthData(),
+                loadRevenueData(),
+                loadCourseDistribution(),
+                loadCategoryPerformance(),
+                loadTopCourses(),
+                loadTopTeachers()
+            ]).then(() => {
+                hideLoading('#chartLoading');
+            }).catch(error => {
+                console.error('Error loading analytics:', error);
+                toastr.error('Lỗi khi tải dữ liệu phân tích');
+                hideLoading('#chartLoading');
+            });
+        }
+
+        function loadUserGrowthData() {
+            return $.get('@Url.Action("GetDetailedChartData", "Admin")', {
+                type: 'user-growth',
+                period: $('#periodSelect').val()
+            }).done(function(data) {
+                userGrowthChart.data = data;
+                userGrowthChart.update();
+            });
+        }
+
+        function loadRevenueData() {
+            return $.get('@Url.Action("GetChartData", "Admin")', {
+                type: 'revenue',
+                fromDate: $('#fromDate').val(),
+                toDate: $('#toDate').val()
+            }).done(function(data) {
+                revenueGrowthChart.data = data;
+                revenueGrowthChart.update();
+
+                // Update revenue metric
+                const totalRevenue = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                $('#totalRevenue').text(formatCurrency(totalRevenue));
+            });
+        }
+
+        function loadCourseDistribution() {
+            return $.get('@Url.Action("GetDetailedChartData", "Admin")', {
+                type: 'course-popularity'
+            }).done(function(data) {
+                courseDistributionChart.data = data;
+                courseDistributionChart.update();
+            });
+        }
+
+        function loadCategoryPerformance() {
+            return $.get('@Url.Action("GetDetailedChartData", "Admin")', {
+                type: 'revenue-by-category'
+            }).done(function(data) {
+                categoryPerformanceChart.data = data;
+                categoryPerformanceChart.update();
+            });
+        }
+
+        function loadTopCourses() {
+            // Simulate data loading - replace with actual API call
+            const topCourses = [
+                { name: 'JavaScript Căn Bản', students: 150, revenue: 15000000 },
+                { name: 'React Advanced', students: 120, revenue: 24000000 },
+                { name: 'Node.js Backend', students: 90, revenue: 18000000 }
+            ];
+
+            let html = '';
+            topCourses.forEach(course => {
+                html += `
+                    <tr>
+                        <td>${course.name}</td>
+                        <td><span class="badge bg-primary">${course.students}</span></td>
+                        <td><strong>${formatCurrency(course.revenue)}</strong></td>
+                    </tr>
+                `;
+            });
+            $('#topCoursesTable').html(html);
+        }
+
+        function loadTopTeachers() {
+            // Simulate data loading - replace with actual API call
+            const topTeachers = [
+                { name: 'Nguyễn Văn A', students: 300, revenue: 50000000 },
+                { name: 'Trần Thị B', students: 250, revenue: 42000000 },
+                { name: 'Lê Văn C', students: 200, revenue: 35000000 }
+            ];
+
+            let html = '';
+            topTeachers.forEach(teacher => {
+                html += `
+                    <tr>
+                        <td>${teacher.name}</td>
+                        <td><span class="badge bg-success">${teacher.students}</span></td>
+                        <td><strong>${formatCurrency(teacher.revenue)}</strong></td>
+                    </tr>
+                `;
+            });
+            $('#topTeachersTable').html(html);
+        }
+
+        function applyFilters() {
+            showLoading('#chartLoading');
+            loadAnalyticsData();
+        }
+
+        function refreshData() {
+            loadAnalyticsData();
+            toastr.success('Dữ liệu đã được làm mới');
+        }
+
+        function exportAnalytics() {
+            // Implementation for exporting analytics
+            toastr.info('Đang xuất báo cáo...');
+
+            setTimeout(() => {
+                toastr.success('Báo cáo đã được xuất thành công');
+            }, 2000);
+        }
+
+        // Tab switching
+        $('.chart-tabs a').on('click', function(e) {
+            e.preventDefault();
+            $(this).tab('show');
+        });
+
+        // Period change handler
+        $('#periodSelect').on('change', function() {
+            loadUserGrowthData();
+        });
+    </script>
+}

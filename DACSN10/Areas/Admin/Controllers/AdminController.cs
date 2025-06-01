@@ -1507,28 +1507,6 @@ namespace DACSN10.Controllers
             }
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> BulkRejectPayments(int[] paymentIds)
-        {
-            try
-            {
-                var payments = await _context.Payments.Where(p => paymentIds.Contains(p.PaymentID)).ToListAsync();
-
-                foreach (var payment in payments)
-                {
-                    payment.Status = PaymentStatus.Rejected;
-                }
-
-                await _context.SaveChangesAsync();
-                return Json(new { success = true, message = $"Đã từ chối {payments.Count} giao dịch!" });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = "Lỗi khi từ chối hàng loạt: " + ex.Message });
-            }
-        }
-
         #endregion
 
         #region Export Functions

@@ -1,0 +1,268 @@
+﻿@model DACSN10.Models.User
+@{
+    ViewData["Title"] = "Tạo Tài Khoản Học Viên";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section Styles {
+	<link href="~/css/admin/create-student.css" rel="stylesheet" />
+}
+
+<div class="container-fluid" data-aos="fade-up">
+    <!-- Header -->
+    <div class="form-header" data-aos="fade-up" data-aos-delay="100">
+        <h2><i class="fas fa-user-plus me-3"></i>Tạo Tài Khoản Học Viên Mới</h2>
+        <p class="mb-0">Điền thông tin để tạo tài khoản học viên mới trong hệ thống</p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Tips -->
+            <div class="form-tips" data-aos="fade-up" data-aos-delay="200">
+                <h6><i class="fas fa-lightbulb me-2"></i>Hướng Dẫn Tạo Tài Khoản</h6>
+                <ul>
+                    <li>Tất cả các trường có dấu (*) là bắt buộc</li>
+                    <li>Email sẽ được sử dụng làm tên đăng nhập</li>
+                    <li>Mật khẩu phải có ít nhất 6 ký tự, bao gồm chữ và số</li>
+                    <li>Thông tin có thể được chỉnh sửa sau khi tạo tài khoản</li>
+                </ul>
+            </div>
+
+            <!-- Form -->
+            <div class="create-form-container" data-aos="fade-up" data-aos-delay="300">
+                <form asp-action="CreateStudent" method="post" id="createStudentForm">
+                    @Html.AntiForgeryToken()
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="validation-summary" data-aos="shake">
+                            <h6><i class="fas fa-exclamation-triangle me-2"></i>Vui lòng kiểm tra lại thông tin:</h6>
+                            <ul class="mb-0">
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                    <!-- Avatar Preview -->
+                    <div class="text-center mb-4">
+                        <div class="avatar-preview">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                    </div>
+
+                    <!-- Basic Information -->
+                    <div class="form-section">
+                        <h5><i class="fas fa-user me-2"></i>Thông Tin Cơ Bản</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="HoTen" class="form-label required">Họ và Tên</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                        <input asp-for="HoTen" class="form-control" placeholder="Nhập họ và tên đầy đủ" />
+                                    </div>
+                                    <span asp-validation-for="HoTen" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Email" class="form-label required">Email</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                        <input asp-for="Email" type="email" class="form-control" placeholder="Nhập địa chỉ email" />
+                                    </div>
+                                    <span asp-validation-for="Email" class="text-danger"></span>
+                                    <div class="form-text">Email sẽ được sử dụng làm tên đăng nhập</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="PhoneNumber" class="form-label">Số Điện Thoại</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                        <input asp-for="PhoneNumber" type="tel" class="form-control" placeholder="Nhập số điện thoại" />
+                                    </div>
+                                    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="TrangThai" class="form-label required">Trạng Thái</label>
+                                    <select asp-for="TrangThai" class="form-select">
+                                        <option value="Active">Hoạt động</option>
+                                        <option value="Locked">Bị khóa</option>
+                                    </select>
+                                    <span asp-validation-for="TrangThai" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Security Information -->
+                    <div class="form-section">
+                        <h5><i class="fas fa-shield-alt me-2"></i>Thông Tin Bảo Mật</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="password" class="form-label required">Mật Khẩu</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                        <input type="password" name="password" id="password" class="form-control"
+                                               placeholder="Nhập mật khẩu" required />
+                                        <button type="button" class="btn btn-outline-secondary" id="togglePassword">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <div class="password-strength">
+                                        <div class="strength-bar">
+                                            <div class="strength-fill" id="strengthFill"></div>
+                                        </div>
+                                        <small class="form-text" id="strengthText">Nhập mật khẩu để kiểm tra độ mạnh</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="confirmPassword" class="form-label required">Xác Nhận Mật Khẩu</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                        <input type="password" name="confirmPassword" id="confirmPassword"
+                                               class="form-control" placeholder="Nhập lại mật khẩu" required />
+                                    </div>
+                                    <div class="form-text" id="passwordMatch"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-create me-3">
+                            <i class="fas fa-user-plus me-2"></i>Tạo Tài Khoản
+                        </button>
+                        <a href="@Url.Action("Students", "Admin")" class="btn btn-cancel">
+                            <i class="fas fa-times me-2"></i>Hủy Bỏ
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Password visibility toggle
+            $('#togglePassword').click(function() {
+                const password = $('#password');
+                const type = password.attr('type') === 'password' ? 'text' : 'password';
+                password.attr('type', type);
+                $(this).find('i').toggleClass('fa-eye fa-eye-slash');
+            });
+
+            // Password strength checker
+            $('#password').on('input', function() {
+                const password = $(this).val();
+                checkPasswordStrength(password);
+            });
+
+            // Password confirmation
+            $('#confirmPassword').on('input', function() {
+                const password = $('#password').val();
+                const confirm = $(this).val();
+                checkPasswordMatch(password, confirm);
+            });
+
+            // Form validation
+            $('#createStudentForm').on('submit', function(e) {
+                const password = $('#password').val();
+                const confirm = $('#confirmPassword').val();
+
+                if (password !== confirm) {
+                    e.preventDefault();
+                    toastr.error('Mật khẩu xác nhận không khớp!');
+                    return false;
+                }
+
+                if (password.length < 6) {
+                    e.preventDefault();
+                    toastr.error('Mật khẩu phải có ít nhất 6 ký tự!');
+                    return false;
+                }
+
+                // Show loading
+                showLoading();
+            });
+
+            // Auto-format phone number
+            $('#PhoneNumber').on('input', function() {
+                let value = $(this).val().replace(/\D/g, '');
+                if (value.length >= 10) {
+                    value = value.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+                }
+                $(this).val(value);
+            });
+        });
+
+        function checkPasswordStrength(password) {
+            const strengthFill = $('#strengthFill');
+            const strengthText = $('#strengthText');
+
+            let strength = 0;
+            let text = '';
+            let className = '';
+
+            if (password.length >= 6) strength++;
+            if (password.match(/[a-z]/)) strength++;
+            if (password.match(/[A-Z]/)) strength++;
+            if (password.match(/[0-9]/)) strength++;
+            if (password.match(/[^a-zA-Z0-9]/)) strength++;
+
+            switch (strength) {
+                case 0:
+                case 1:
+                    text = 'Mật khẩu rất yếu';
+                    className = 'strength-weak';
+                    break;
+                case 2:
+                    text = 'Mật khẩu yếu';
+                    className = 'strength-fair';
+                    break;
+                case 3:
+                    text = 'Mật khẩu trung bình';
+                    className = 'strength-good';
+                    break;
+                case 4:
+                case 5:
+                    text = 'Mật khẩu mạnh';
+                    className = 'strength-strong';
+                    break;
+            }
+
+            strengthFill.removeClass().addClass('strength-fill ' + className);
+            strengthText.text(text);
+        }
+
+        function checkPasswordMatch(password, confirm) {
+            const matchText = $('#passwordMatch');
+
+            if (confirm === '') {
+                matchText.text('').removeClass();
+                return;
+            }
+
+            if (password === confirm) {
+                matchText.text('Mật khẩu khớp ✓').removeClass().addClass('text-success');
+            } else {
+                matchText.text('Mật khẩu không khớp ✗').removeClass().addClass('text-danger');
+            }
+        }
+    </script>
+}

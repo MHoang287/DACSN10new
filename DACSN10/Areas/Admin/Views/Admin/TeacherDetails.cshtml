@@ -1,0 +1,681 @@
+﻿@model DACSN10.Models.User
+@{
+    ViewData["Title"] = "Chi Tiết Giảng Viên";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section Styles {
+        <style>
+            .teacher-header {
+                background: linear-gradient(135deg, #fd7e14 0%, #e55e34 100%);
+                border-radius: 15px;
+                padding: 30px;
+                color: white;
+                margin-bottom: 30px;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .teacher-header::before {
+                content: '';
+                position: absolute;
+                top: -50%;
+                right: -50%;
+                width: 200%;
+                height: 200%;
+                background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/><rect x="48" y="48" width="4" height="4" fill="rgba(255,255,255,0.1)"/></svg>') repeat;
+                animation: float 25s infinite linear;
+            }
+
+            .teacher-avatar {
+                width: 120px;
+                height: 120px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.2);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 3.5rem;
+                margin-bottom: 20px;
+                border: 5px solid rgba(255, 255, 255, 0.3);
+                position: relative;
+            }
+
+            .teacher-badge {
+                position: absolute;
+                bottom: 5px;
+                right: 5px;
+                background: #28a745;
+                color: white;
+                border-radius: 50%;
+                width: 30px;
+                height: 30px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.8rem;
+                border: 3px solid white;
+            }
+
+            .info-card {
+                background: white;
+                border-radius: 15px;
+                padding: 25px;
+                margin-bottom: 30px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                transition: all 0.3s ease;
+            }
+
+            .info-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            }
+
+            .info-card h5 {
+                color: #fd7e14;
+                margin-bottom: 20px;
+                font-weight: 600;
+                border-bottom: 2px solid #f8f9fa;
+                padding-bottom: 10px;
+            }
+
+            .stat-item {
+                text-align: center;
+                padding: 25px 20px;
+                background: linear-gradient(135deg, #fff8f3 0%, #ffe8dc 100%);
+                border-radius: 10px;
+                margin-bottom: 15px;
+                transition: all 0.3s ease;
+                border: 1px solid #fee6d6;
+            }
+
+            .stat-item:hover {
+                transform: scale(1.05);
+                background: linear-gradient(135deg, #fd7e14 0%, #e55e34 100%);
+                color: white;
+                border-color: #fd7e14;
+            }
+
+            .stat-value {
+                font-size: 2.5rem;
+                font-weight: bold;
+                display: block;
+                margin-bottom: 8px;
+            }
+
+            .stat-label {
+                font-size: 0.9rem;
+                opacity: 0.8;
+            }
+
+            .course-card {
+                border: 1px solid #e9ecef;
+                border-radius: 12px;
+                padding: 20px;
+                margin-bottom: 20px;
+                transition: all 0.3s ease;
+                background: white;
+            }
+
+            .course-card:hover {
+                border-color: #fd7e14;
+                transform: translateY(-3px);
+                box-shadow: 0 6px 20px rgba(253, 126, 20, 0.1);
+            }
+
+            .course-title {
+                font-size: 1.1rem;
+                font-weight: 600;
+                color: #fd7e14;
+                margin-bottom: 10px;
+            }
+
+            .course-meta {
+                font-size: 0.9rem;
+                color: #6c757d;
+                margin-bottom: 15px;
+            }
+
+            .course-stats {
+                display: flex;
+                gap: 15px;
+                flex-wrap: wrap;
+            }
+
+            .course-stat {
+                background: #f8f9fa;
+                padding: 8px 12px;
+                border-radius: 15px;
+                font-size: 0.8rem;
+                color: #495057;
+            }
+
+            .revenue-chart-container {
+                background: white;
+                border-radius: 15px;
+                padding: 25px;
+                margin-bottom: 30px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            }
+
+            .performance-metrics {
+                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                border-radius: 15px;
+                padding: 25px;
+                margin-bottom: 30px;
+                border: 1px solid #dee2e6;
+            }
+
+            .metric-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 15px 0;
+                border-bottom: 1px solid #dee2e6;
+            }
+
+            .metric-row:last-child {
+                border-bottom: none;
+            }
+
+            .metric-label {
+                font-weight: 600;
+                color: #495057;
+            }
+
+            .metric-value {
+                font-size: 1.2rem;
+                font-weight: bold;
+                color: #fd7e14;
+            }
+
+            .followers-list {
+                max-height: 300px;
+                overflow-y: auto;
+            }
+
+            .follower-item {
+                display: flex;
+                align-items: center;
+                padding: 10px 0;
+                border-bottom: 1px solid #f8f9fa;
+            }
+
+            .follower-avatar {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #fd7e14 0%, #e55e34 100%);
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-right: 12px;
+                font-size: 0.9rem;
+            }
+
+            .rating-stars {
+                color: #ffc107;
+                font-size: 1.1rem;
+            }
+
+            .action-btn {
+                width: 100%;
+                margin-bottom: 10px;
+                border-radius: 25px;
+                padding: 12px 20px;
+                font-weight: 600;
+                transition: all 0.3s ease;
+            }
+
+            .action-btn:hover {
+                transform: scale(1.02);
+            }
+
+            .monthly-chart {
+                position: relative;
+                height: 300px;
+            }
+        </style>
+}
+
+<div class="container-fluid" data-aos="fade-up">
+    <!-- Teacher Header -->
+    <div class="teacher-header" data-aos="fade-up" data-aos-delay="100">
+        <div class="row align-items-center">
+            <div class="col-md-2">
+                <div class="teacher-avatar">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    <div class="teacher-badge">
+                        <i class="fas fa-star"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-7">
+                <h2 class="mb-2">@Model.HoTen</h2>
+                <p class="mb-1"><i class="fas fa-envelope me-2"></i>@Model.Email</p>
+                <p class="mb-1"><i class="fas fa-phone me-2"></i>@(Model.PhoneNumber ?? "Chưa cập nhật")</p>
+                <p class="mb-1"><i class="fas fa-calendar me-2"></i>Tham gia: @Model.NgayDangKy.ToString("dd/MM/yyyy")</p>
+                <p class="mb-0">
+                    <i class="fas fa-users me-2"></i>
+                    @(Model.Followers?.Count ?? 0) người theo dõi
+                </p>
+            </div>
+            <div class="col-md-3 text-end">
+                <span class="badge @(Model.TrangThai == "Active" ? "bg-success" : "bg-danger") fs-6 px-3 py-2">
+                    @(Model.TrangThai == "Active" ? "Hoạt động" : "Bị khóa")
+                </span>
+                <div class="mt-2">
+                    <div class="rating-stars">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star-half-alt"></i>
+                        <span class="text-white ms-1">4.8</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Statistics -->
+            <div class="info-card" data-aos="fade-up" data-aos-delay="200">
+                <h5><i class="fas fa-chart-bar me-2"></i>Thống Kê Tổng Quan</h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="stat-item">
+                            <span class="stat-value">@(Model.Courses?.Count ?? 0)</span>
+                            <div class="stat-label">Khóa Học</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-item">
+                            <span class="stat-value">@(Model.Courses?.Sum(c => c.Enrollments?.Count ?? 0) ?? 0)</span>
+                            <div class="stat-label">Tổng Học Viên</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-item">
+                            <span class="stat-value">@ViewBag.TotalRevenue.ToString("C0")</span>
+                            <div class="stat-label">Tổng Doanh Thu</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-item">
+                            <span class="stat-value">@(Model.Followers?.Count ?? 0)</span>
+                            <div class="stat-label">Người Theo Dõi</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revenue Chart -->
+            <div class="revenue-chart-container" data-aos="fade-up" data-aos-delay="300">
+                <h5 class="mb-3"><i class="fas fa-chart-line me-2"></i>Biểu Đồ Doanh Thu 6 Tháng Gần Đây</h5>
+                <div class="monthly-chart">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Courses List -->
+            <div class="info-card" data-aos="fade-up" data-aos-delay="400">
+                <h5><i class="fas fa-book me-2"></i>Khóa Học (@(Model.Courses?.Count ?? 0))</h5>
+                @if (Model.Courses?.Any() == true)
+                {
+                    @foreach (var course in Model.Courses.OrderByDescending(c => c.NgayTao))
+                    {
+                                <div class="course-card">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-8">
+                                            <div class="course-title">@course.TenKhoaHoc</div>
+                                            <div class="course-meta">
+                                                Tạo: @course.NgayTao.ToString("dd/MM/yyyy") | 
+                                                Giá: @course.Gia.ToString("C0") |
+                                                Trạng thái: <span class="badge @(course.TrangThai == "Active" ? "bg-success" : "bg-warning")">@course.TrangThai</span>
+                                            </div>
+                                            <div class="course-stats">
+                                                <div class="course-stat">
+                                                    <i class="fas fa-users me-1"></i>
+                                            @(course.Enrollments?.Count ?? 0) học viên
+                                                </div>
+                                                <div class="course-stat">
+                                                    <i class="fas fa-book-open me-1"></i>
+                                            @(course.Lessons?.Count ?? 0) bài học
+                                                </div>
+                                                <div class="course-stat">
+                                                    <i class="fas fa-quiz me-1"></i>
+                                            @(course.Quizzes?.Count ?? 0) bài kiểm tra
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 text-end">
+                                            <a href="@Url.Action("CourseDetails", "Admin", new { id = course.CourseID })" 
+                                               class="btn btn-outline-warning btn-sm me-2">
+                                                <i class="fas fa-eye"></i> Xem
+                                            </a>
+                                            <a href="@Url.Action("EditCourse", "Admin", new { id = course.CourseID })" 
+                                               class="btn btn-outline-secondary btn-sm">
+                                                <i class="fas fa-edit"></i> Sửa
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                    }
+                }
+                else
+                {
+                        <div class="text-center py-4 text-muted">
+                            <i class="fas fa-book-open fa-3x mb-3"></i>
+                            <p>Giảng viên chưa có khóa học nào</p>
+                        </div>
+                }
+            </div>
+
+            <!-- Performance Metrics -->
+            <div class="performance-metrics" data-aos="fade-up" data-aos-delay="500">
+                <h5 class="mb-3"><i class="fas fa-tachometer-alt me-2"></i>Chỉ Số Hiệu Suất</h5>
+
+                <div class="metric-row">
+                    <div class="metric-label">Tỷ lệ hoàn thành khóa học</div>
+                    <div class="metric-value">
+                        @{
+                            var totalEnrollments = Model.Courses?.Sum(c => c.Enrollments?.Count ?? 0) ?? 0;
+                            var completedEnrollments = Model.Courses?.Sum(c => c.Enrollments?.Count(e => e.Progress >= 100) ?? 0) ?? 0;
+                            var completionRate = totalEnrollments > 0 ? (completedEnrollments * 100.0 / totalEnrollments) : 0;
+                        }
+                        @completionRate.ToString("F1")%
+                    </div>
+                </div>
+
+                <div class="metric-row">
+                    <div class="metric-label">Doanh thu trung bình/khóa học</div>
+                    <div class="metric-value">
+                        @{
+                            var courseCount = Model.Courses?.Count ?? 0;
+                            var avgRevenue = courseCount > 0 ? (ViewBag.TotalRevenue / courseCount) : 0;
+                        }
+                        @avgRevenue.ToString("C0")
+                    </div>
+                </div>
+
+                <div class="metric-row">
+                    <div class="metric-label">Số học viên trung bình/khóa học</div>
+                    <div class="metric-value">
+                        @{
+                            var avgStudents = courseCount > 0 ? (totalEnrollments / (double)courseCount) : 0;
+                        }
+                        @avgStudents.ToString("F1")
+                    </div>
+                </div>
+
+                <div class="metric-row">
+                    <div class="metric-label">Thời gian hoạt động</div>
+                    <div class="metric-value">@((DateTime.Now - Model.NgayDangKy).Days) ngày</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Actions -->
+            <div class="info-card" data-aos="fade-up" data-aos-delay="600">
+                <h5><i class="fas fa-tools me-2"></i>Thao Tác</h5>
+                <a href="@Url.Action("EditTeacher", "Admin", new { id = Model.Id })" 
+                   class="btn btn-warning action-btn">
+                    <i class="fas fa-edit me-2"></i>Chỉnh Sửa Thông Tin
+                </a>
+
+                @if (Model.TrangThai == "Active")
+                {
+                        <button class="btn btn-danger action-btn" onclick="lockTeacher('@Model.Id')">
+                            <i class="fas fa-lock me-2"></i>Khóa Tài Khoản
+                        </button>
+                }
+                else
+                {
+                        <button class="btn btn-success action-btn" onclick="lockTeacher('@Model.Id')">
+                            <i class="fas fa-unlock me-2"></i>Mở Khóa Tài Khoản
+                        </button>
+                }
+
+                <button class="btn btn-info action-btn" onclick="sendMessage('@Model.Id')">
+                    <i class="fas fa-envelope me-2"></i>Gửi Tin Nhắn
+                </button>
+
+                <button class="btn btn-secondary action-btn" onclick="viewRevenueReport('@Model.Id')">
+                    <i class="fas fa-chart-line me-2"></i>Báo Cáo Doanh Thu
+                </button>
+
+                <button class="btn btn-outline-danger action-btn" onclick="deleteTeacher('@Model.Id')">
+                    <i class="fas fa-trash me-2"></i>Xóa Tài Khoản
+                </button>
+            </div>
+
+            <!-- Followers -->
+            <div class="info-card" data-aos="fade-up" data-aos-delay="700">
+                <h5><i class="fas fa-users me-2"></i>Người Theo Dõi (@(Model.Followers?.Count ?? 0))</h5>
+                <div class="followers-list">
+                    @if (Model.Followers?.Any() == true)
+                    {
+                        @foreach (var follower in Model.Followers.Take(10))
+                        {
+                                    <div class="follower-item">
+                                        <div class="follower-avatar">
+                                    @follower.Follower.HoTen.Substring(0, 1).ToUpper()
+                                        </div>
+                                        <div>
+                                            <strong>@follower.Follower.HoTen</strong>
+                                            <br><small class="text-muted">@follower.Follower.Email</small>
+                                        </div>
+                                    </div>
+                        }
+
+                        @if (Model.Followers.Count > 10)
+                        {
+                                    <div class="text-center mt-3">
+                                        <button class="btn btn-outline-warning btn-sm" onclick="viewAllFollowers('@Model.Id')">
+                                            Xem thêm @(Model.Followers.Count - 10) người
+                                        </button>
+                                    </div>
+                        }
+                    }
+                    else
+                    {
+                            <div class="text-center py-3 text-muted">
+                                <i class="fas fa-user-friends fa-2x mb-2"></i>
+                                <p>Chưa có người theo dõi</p>
+                            </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="info-card" data-aos="fade-up" data-aos-delay="800">
+                <h5><i class="fas fa-bolt me-2"></i>Thống Kê Nhanh</h5>
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <div class="h4 text-warning">@(Model.Courses?.Count(c => c.TrangThai == "Active") ?? 0)</div>
+                            <small class="text-muted">Khóa học hoạt động</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <div class="h4 text-success">@(Model.Courses?.Count(c => c.TrangThai == "Pending") ?? 0)</div>
+                            <small class="text-muted">Khóa học chờ duyệt</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row text-center">
+                    <div class="col-12">
+                        <div class="mb-3">
+                            <div class="h4 text-info">
+                                @{
+                                    var thisMonthRevenue = 0m; // Calculate this month's revenue
+                                }
+                                @thisMonthRevenue.ToString("C0")
+                            </div>
+                            <small class="text-muted">Doanh thu tháng này</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+        <script>
+            let revenueChart;
+
+            $(document).ready(function() {
+                initializeChart();
+            });
+
+            function initializeChart() {
+                const ctx = document.getElementById('revenueChart').getContext('2d');
+
+                // Sample data - replace with actual data from controller
+                const months = ['T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
+                const revenueData = [5000000, 7500000, 6200000, 8900000, 12000000, 15500000];
+
+                revenueChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: [{
+                            label: 'Doanh thu (VNĐ)',
+                            data: revenueData,
+                            borderColor: '#fd7e14',
+                            backgroundColor: 'rgba(253, 126, 20, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            pointBackgroundColor: '#fd7e14',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return formatCurrency(value);
+                                    }
+                                }
+                            }
+                        },
+                        elements: {
+                            point: {
+                                hoverRadius: 8
+                            }
+                        }
+                    }
+                });
+            }
+
+            function lockTeacher(id) {
+                const action = '@Model.TrangThai' === 'Active' ? 'khóa' : 'mở khóa';
+
+                Swal.fire({
+                    title: `Xác nhận ${action} tài khoản?`,
+                    text: `Bạn có chắc chắn muốn ${action} tài khoản giảng viên này?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#fd7e14',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Xác nhận',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.post('@Url.Action("LockTeacher", "Admin")', {
+                            id: id,
+                            __RequestVerificationToken: $('[name="__RequestVerificationToken"]').val()
+                        }).done(function(response) {
+                            if (response.success) {
+                                toastr.success(response.message);
+                                setTimeout(() => location.reload(), 1500);
+                            } else {
+                                toastr.error(response.message);
+                            }
+                        }).fail(function() {
+                            toastr.error('Có lỗi xảy ra!');
+                        });
+                    }
+                });
+            }
+
+            function sendMessage(id) {
+                Swal.fire({
+                    title: 'Gửi tin nhắn cho giảng viên',
+                    input: 'textarea',
+                    inputPlaceholder: 'Nhập nội dung tin nhắn...',
+                    showCancelButton: true,
+                    confirmButtonText: 'Gửi',
+                    cancelButtonText: 'Hủy',
+                    inputValidator: (value) => {
+                        if (!value) {
+                            return 'Vui lòng nhập nội dung tin nhắn!';
+                        }
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Implement send message functionality
+                        toastr.success('Tin nhắn đã được gửi!');
+                    }
+                });
+            }
+
+            function viewRevenueReport(id) {
+                window.open('@Url.Action("RevenueReport", "Admin")?teacherId=' + id, '_blank');
+            }
+
+            function deleteTeacher(id) {
+                Swal.fire({
+                    title: 'Xóa tài khoản giảng viên?',
+                    text: 'Hành động này không thể hoàn tác!',
+                    icon: 'error',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Xóa',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.post('@Url.Action("DeleteTeacher", "Admin")', {
+                            id: id,
+                            __RequestVerificationToken: $('[name="__RequestVerificationToken"]').val()
+                        }).done(function(response) {
+                            if (response.success) {
+                                toastr.success(response.message);
+                                setTimeout(() => window.location.href = '@Url.Action("Teachers", "Admin")', 1500);
+                            } else {
+                                toastr.error(response.message);
+                            }
+                        }).fail(function() {
+                            toastr.error('Có lỗi xảy ra!');
+                        });
+                    }
+                });
+            }
+
+            function viewAllFollowers(id) {
+                // Implement view all followers functionality
+                toastr.info('Chức năng xem tất cả người theo dõi đang được phát triển...');
+            }
+        </script>
+}

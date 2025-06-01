@@ -1,0 +1,612 @@
+﻿@model DACSN10.Models.Category
+@{
+    ViewData["Title"] = "Chỉnh Sửa Danh Mục";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section Styles {
+    <style>
+        .edit-form-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .form-header {
+            background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .category-info-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 5px solid #6f42c1;
+        }
+
+        .category-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            margin: 0 auto 15px;
+            border: 3px solid white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 4px solid #6f42c1;
+        }
+
+            .form-section h5 {
+                color: #6f42c1;
+                margin-bottom: 20px;
+                font-weight: 600;
+            }
+
+        .btn-update {
+            background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+            .btn-update:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(111, 66, 193, 0.3);
+                color: white;
+            }
+
+        .input-group-text {
+            background: #6f42c1;
+            color: white;
+            border: none;
+        }
+
+        .course-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .course-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 3px solid #6f42c1;
+            transition: all 0.3s ease;
+        }
+
+            .course-item:hover {
+                transform: translateX(5px);
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
+
+        .course-title {
+            font-weight: 600;
+            color: #6f42c1;
+            margin-bottom: 5px;
+        }
+
+        .course-meta {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        .stats-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .stats-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #6f42c1;
+            display: block;
+        }
+
+        .stats-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .color-picker {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+            .color-option:hover {
+                transform: scale(1.1);
+            }
+
+            .color-option.selected {
+                border-color: #212529;
+                transform: scale(1.2);
+            }
+
+        .icon-picker {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .icon-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+            .icon-option:hover {
+                background: #6f42c1;
+                color: white;
+                transform: scale(1.1);
+            }
+
+            .icon-option.selected {
+                background: #6f42c1;
+                color: white;
+                border-color: #5a32a3;
+            }
+
+        .category-preview {
+            background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+            border: 2px dashed #6f42c1;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .preview-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #6f42c1;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin: 0 auto 15px;
+        }
+
+        .validation-errors {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #721c24;
+        }
+    </style>
+}
+
+<div class="container-fluid" data-aos="fade-up">
+    <!-- Header -->
+    <div class="form-header" data-aos="fade-up" data-aos-delay="100">
+        <h2><i class="fas fa-edit me-3"></i>Chỉnh Sửa Danh Mục</h2>
+        <p class="mb-0">Cập nhật thông tin cho danh mục: @Model.Name</p>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Current Category Info -->
+            <div class="category-info-card" data-aos="fade-up" data-aos-delay="200">
+                <div class="row align-items-center">
+                    <div class="col-md-2">
+                        <div class="category-icon">
+                            <i class="fas fa-tags"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-7">
+                        <h5 class="mb-2">@Model.Name</h5>
+                        <p class="mb-1">@Model.Description</p>
+                        <small class="text-muted">
+                            <i class="fas fa-book me-1"></i>
+                            @(Model.CourseCategories?.Count ?? 0) khóa học
+                        </small>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="badge bg-primary fs-6 px-3 py-2">
+                            Danh mục hoạt động
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Form -->
+            <div class="edit-form-container" data-aos="fade-up" data-aos-delay="300">
+                <form asp-action="EditCategory" method="post" id="editCategoryForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="CategoryID" />
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="validation-errors" data-aos="shake">
+                            <h6><i class="fas fa-exclamation-triangle me-2"></i>Vui lòng kiểm tra lại thông tin:</h6>
+                            <ul class="mb-0">
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                    <!-- Basic Information -->
+                    <div class="form-section">
+                        <h5><i class="fas fa-info-circle me-2"></i>Thông Tin Cơ Bản</h5>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Name" class="form-label">Tên Danh Mục</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                                        <input asp-for="Name" class="form-control" placeholder="Nhập tên danh mục" />
+                                    </div>
+                                    <span asp-validation-for="Name" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="slug" class="form-label">URL Slug</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-link"></i></span>
+                                        <input type="text" id="slug" name="slug" class="form-control"
+                                               placeholder="url-friendly-name" readonly />
+                                    </div>
+                                    <div class="form-text">URL thân thiện sẽ được tạo tự động</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">Mô Tả</label>
+                            <textarea asp-for="Description" class="form-control" rows="4"
+                                      placeholder="Mô tả chi tiết về danh mục này..."></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                            <div class="form-text text-end">
+                                <span id="descriptionCount">@(Model.Description?.Length ?? 0)</span>/500 ký tự
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Appearance Settings -->
+                    <div class="form-section">
+                        <h5><i class="fas fa-palette me-2"></i>Tùy Chỉnh Giao Diện</h5>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Màu Sắc Đại Diện</label>
+                                    <div class="color-picker">
+                                        <div class="color-option" data-color="#6f42c1" style="background: #6f42c1;"></div>
+                                        <div class="color-option" data-color="#007bff" style="background: #007bff;"></div>
+                                        <div class="color-option" data-color="#28a745" style="background: #28a745;"></div>
+                                        <div class="color-option" data-color="#ffc107" style="background: #ffc107;"></div>
+                                        <div class="color-option" data-color="#dc3545" style="background: #dc3545;"></div>
+                                        <div class="color-option" data-color="#fd7e14" style="background: #fd7e14;"></div>
+                                        <div class="color-option" data-color="#20c997" style="background: #20c997;"></div>
+                                        <div class="color-option" data-color="#6c757d" style="background: #6c757d;"></div>
+                                    </div>
+                                    <input type="hidden" id="selectedColor" name="color" value="#6f42c1" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Icon Đại Diện</label>
+                                    <div class="icon-picker">
+                                        <div class="icon-option selected" data-icon="fa-tags"><i class="fas fa-tags"></i></div>
+                                        <div class="icon-option" data-icon="fa-book"><i class="fas fa-book"></i></div>
+                                        <div class="icon-option" data-icon="fa-laptop-code"><i class="fas fa-laptop-code"></i></div>
+                                        <div class="icon-option" data-icon="fa-paint-brush"><i class="fas fa-paint-brush"></i></div>
+                                        <div class="icon-option" data-icon="fa-chart-line"><i class="fas fa-chart-line"></i></div>
+                                        <div class="icon-option" data-icon="fa-cog"><i class="fas fa-cog"></i></div>
+                                        <div class="icon-option" data-icon="fa-graduation-cap"><i class="fas fa-graduation-cap"></i></div>
+                                        <div class="icon-option" data-icon="fa-lightbulb"><i class="fas fa-lightbulb"></i></div>
+                                    </div>
+                                    <input type="hidden" id="selectedIcon" name="icon" value="fa-tags" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SEO Settings -->
+                    <div class="form-section">
+                        <h5><i class="fas fa-search me-2"></i>Tối Ưu SEO</h5>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="metaTitle" class="form-label">Meta Title</label>
+                                    <input type="text" id="metaTitle" name="metaTitle" class="form-control"
+                                           placeholder="Tiêu đề SEO..." />
+                                    <div class="form-text">Tối đa 60 ký tự</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="keywords" class="form-label">Keywords</label>
+                                    <input type="text" id="keywords" name="keywords" class="form-control"
+                                           placeholder="từ khóa, phân cách, bằng dấu phẩy" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="metaDescription" class="form-label">Meta Description</label>
+                            <textarea id="metaDescription" name="metaDescription" class="form-control" rows="3"
+                                      placeholder="Mô tả ngắn gọn cho công cụ tìm kiếm..."></textarea>
+                            <div class="form-text">Tối đa 160 ký tự</div>
+                        </div>
+                    </div>
+
+                    <!-- Preview -->
+                    <div class="form-section">
+                        <h5><i class="fas fa-eye me-2"></i>Xem Trước</h5>
+
+                        <div class="category-preview">
+                            <div class="preview-icon" id="previewIcon">
+                                <i class="fas fa-tags"></i>
+                            </div>
+                            <h6 id="previewName">@Model.Name</h6>
+                            <p class="text-muted" id="previewDescription">@Model.Description</p>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-update me-3">
+                            <i class="fas fa-save me-2"></i>Cập Nhật Danh Mục
+                        </button>
+                        <a href="@Url.Action("CategoryDetails", "Admin", new { id = Model.CategoryID })" class="btn btn-outline-primary">
+                            <i class="fas fa-eye me-2"></i>Xem Chi Tiết
+                        </a>
+                        <a href="@Url.Action("Categories", "Admin")" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Quay Lại
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Statistics -->
+            <div class="stats-card" data-aos="fade-up" data-aos-delay="400">
+                <span class="stats-value">@(Model.CourseCategories?.Count ?? 0)</span>
+                <div class="stats-label">Khóa học trong danh mục</div>
+            </div>
+
+            <div class="stats-card" data-aos="fade-up" data-aos-delay="500">
+                <span class="stats-value">@(Model.CourseCategories?.Sum(cc => cc.Course.Enrollments?.Count ?? 0) ?? 0)</span>
+                <div class="stats-label">Tổng số học viên</div>
+            </div>
+
+            <div class="stats-card" data-aos="fade-up" data-aos-delay="600">
+                <span class="stats-value">@(Model.CourseCategories?.Sum(cc => cc.Course.Gia) ?? 0).ToString("C0")</span>
+                <div class="stats-label">Tổng giá trị khóa học</div>
+            </div>
+
+            <!-- Courses in Category -->
+            <div class="edit-form-container" data-aos="fade-up" data-aos-delay="700">
+                <h6 class="mb-3"><i class="fas fa-book me-2"></i>Khóa Học Trong Danh Mục</h6>
+
+                <div class="course-list">
+                    @if (Model.CourseCategories?.Any() == true)
+                    {
+                        @foreach (var courseCategory in Model.CourseCategories.Take(10))
+                        {
+                            <div class="course-item">
+                                <div class="course-title">@courseCategory.Course.TenKhoaHoc</div>
+                                <div class="course-meta">
+                                    <i class="fas fa-user me-1"></i>@courseCategory.Course.User.HoTen |
+                                    <i class="fas fa-users me-1"></i>@(courseCategory.Course.Enrollments?.Count ?? 0) học viên |
+                                    <i class="fas fa-money-bill me-1"></i>@courseCategory.Course.Gia.ToString("C0")
+                                </div>
+                            </div>
+                        }
+
+                        @if (Model.CourseCategories.Count > 10)
+                        {
+                            <div class="text-center mt-3">
+                                <small class="text-muted">Và @(Model.CourseCategories.Count - 10) khóa học khác...</small>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted">
+                            <i class="fas fa-book-open fa-2x mb-2"></i>
+                            <p>Chưa có khóa học nào</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="edit-form-container" data-aos="fade-up" data-aos-delay="800">
+                <h6 class="mb-3"><i class="fas fa-bolt me-2"></i>Thao Tác Nhanh</h6>
+
+                <button class="btn btn-outline-primary btn-sm w-100 mb-2" onclick="viewCategoryCourses(@Model.CategoryID)">
+                    <i class="fas fa-list me-2"></i>Xem Tất Cả Khóa Học
+                </button>
+
+                <button class="btn btn-outline-success btn-sm w-100 mb-2" onclick="exportCategoryData(@Model.CategoryID)">
+                    <i class="fas fa-download me-2"></i>Xuất Dữ Liệu
+                </button>
+
+                <button class="btn btn-outline-warning btn-sm w-100" onclick="duplicateCategory(@Model.CategoryID)">
+                    <i class="fas fa-copy me-2"></i>Nhân Bản Danh Mục
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Auto-generate slug from name
+            $('#Name').on('input', function() {
+                const name = $(this).val();
+                const slug = generateSlug(name);
+                $('#slug').val(slug);
+                updatePreview();
+            });
+
+            // Description character counter
+            $('#Description').on('input', function() {
+                const length = $(this).val().length;
+                $('#descriptionCount').text(length);
+
+                if (length > 450) {
+                    $('#descriptionCount').addClass('text-warning');
+                } else if (length > 480) {
+                    $('#descriptionCount').addClass('text-danger');
+                } else {
+                    $('#descriptionCount').removeClass('text-warning text-danger');
+                }
+
+                updatePreview();
+            });
+
+            // Color picker
+            $('.color-option').click(function() {
+                $('.color-option').removeClass('selected');
+                $(this).addClass('selected');
+                $('#selectedColor').val($(this).data('color'));
+                updatePreview();
+            });
+
+            // Icon picker
+            $('.icon-option').click(function() {
+                $('.icon-option').removeClass('selected');
+                $(this).addClass('selected');
+                $('#selectedIcon').val($(this).data('icon'));
+                updatePreview();
+            });
+
+            // Initialize preview
+            updatePreview();
+
+            // Form validation
+            $('#editCategoryForm').on('submit', function(e) {
+                const name = $('#Name').val().trim();
+                const description = $('#Description').val().trim();
+
+                if (name.length < 2) {
+                    e.preventDefault();
+                    toastr.error('Tên danh mục phải có ít nhất 2 ký tự!');
+                    return false;
+                }
+
+                if (description.length < 10) {
+                    e.preventDefault();
+                    toastr.error('Mô tả phải có ít nhất 10 ký tự!');
+                    return false;
+                }
+
+                showLoading();
+            });
+        });
+
+        function generateSlug(text) {
+            return text
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[đĐ]/g, 'd')
+                .replace(/[^a-z0-9 -]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .trim();
+        }
+
+        function updatePreview() {
+            const name = $('#Name').val() || 'Tên danh mục';
+            const description = $('#Description').val() || 'Mô tả danh mục';
+            const color = $('#selectedColor').val() || '#6f42c1';
+            const icon = $('#selectedIcon').val() || 'fa-tags';
+
+            $('#previewName').text(name);
+            $('#previewDescription').text(description);
+            $('#previewIcon').css('background', color).find('i').attr('class', `fas ${icon}`);
+        }
+
+        function viewCategoryCourses(id) {
+            window.location.href = '@Url.Action("Courses", "Admin")?categoryId=' + id;
+        }
+
+        function exportCategoryData(id) {
+            toastr.info('Đang xuất dữ liệu danh mục...');
+            setTimeout(() => {
+                toastr.success('Dữ liệu danh mục đã được xuất thành công!');
+            }, 2000);
+        }
+
+        function duplicateCategory(id) {
+            Swal.fire({
+                title: 'Nhân bản danh mục?',
+                text: 'Tạo một danh mục mới với thông tin tương tự?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#6f42c1',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Nhân bản',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    toastr.success('Đã tạo bản sao danh mục thành công!');
+                }
+            });
+        }
+    </script>
+}

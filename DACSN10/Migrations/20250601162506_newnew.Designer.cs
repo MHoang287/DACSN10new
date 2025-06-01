@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DACSN10.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250531070831_AddNgayDangKyToEnrollment")]
-    partial class AddNgayDangKyToEnrollment
+    [Migration("20250601162506_newnew")]
+    partial class newnew
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

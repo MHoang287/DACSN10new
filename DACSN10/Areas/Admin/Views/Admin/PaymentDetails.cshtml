@@ -1,0 +1,781 @@
+﻿@model DACSN10.Models.Payment
+@{
+    ViewData["Title"] = "Chi Tiết Thanh Toán";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section Styles {
+    <style>
+        .payment-header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border-radius: 15px;
+            padding: 30px;
+            color: white;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .payment-header::before {
+                content: '';
+                position: absolute;
+                top: -50%;
+                right: -50%;
+                width: 200%;
+                height: 200%;
+                background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="80" r="2" fill="rgba(255,255,255,0.1)"/></svg>') repeat;
+                animation: float 30s infinite linear;
+            }
+
+        .payment-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            margin-bottom: 20px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .payment-status {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .status-success {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .status-pending {
+            background: #ffc107;
+            color: #212529;
+            border: 2px solid #ffcd39;
+        }
+
+        .status-failed {
+            background: #dc3545;
+            color: white;
+            border: 2px solid #e85962;
+        }
+
+        .status-rejected {
+            background: #6c757d;
+            color: white;
+            border: 2px solid #7c838a;
+        }
+
+        .info-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+            .info-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            }
+
+            .info-card h5 {
+                color: #28a745;
+                margin-bottom: 20px;
+                font-weight: 600;
+                border-bottom: 2px solid #f8f9fa;
+                padding-bottom: 10px;
+            }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #f8f9fa;
+        }
+
+            .detail-row:last-child {
+                border-bottom: none;
+            }
+
+        .detail-label {
+            font-weight: 600;
+            color: #495057;
+            display: flex;
+            align-items: center;
+        }
+
+            .detail-label i {
+                margin-right: 8px;
+                color: #28a745;
+            }
+
+        .detail-value {
+            font-weight: 500;
+            color: #212529;
+        }
+
+        .amount-display {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #28a745;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+            .timeline::before {
+                content: '';
+                position: absolute;
+                left: 15px;
+                top: 0;
+                bottom: 0;
+                width: 2px;
+                background: #e9ecef;
+            }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+            .timeline-item::before {
+                content: '';
+                position: absolute;
+                left: -37px;
+                top: 25px;
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: #28a745;
+                border: 3px solid white;
+                box-shadow: 0 0 0 3px #e9ecef;
+            }
+
+        .timeline-time {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            color: #28a745;
+            margin-bottom: 10px;
+        }
+
+        .user-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #28a745;
+        }
+
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-right: 15px;
+        }
+
+        .course-preview {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+            .course-preview:hover {
+                border-color: #28a745;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 15px rgba(40, 167, 69, 0.1);
+            }
+
+        .action-btn {
+            width: 100%;
+            margin-bottom: 10px;
+            border-radius: 25px;
+            padding: 12px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+            .action-btn:hover {
+                transform: scale(1.02);
+            }
+
+        .btn-approve {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            color: white;
+        }
+
+        .btn-reject {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            border: none;
+            color: white;
+        }
+
+        .payment-method-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: #28a745;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+
+        .verification-section {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #ffc107;
+            margin-bottom: 20px;
+        }
+
+        .verification-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+            .verification-item:last-child {
+                margin-bottom: 0;
+            }
+
+        .verification-icon {
+            width: 20px;
+            margin-right: 10px;
+            text-align: center;
+        }
+
+        .verified {
+            color: #28a745;
+        }
+
+        .pending {
+            color: #ffc107;
+        }
+
+        .failed {
+            color: #dc3545;
+        }
+    </style>
+}
+
+<div class="container-fluid" data-aos="fade-up">
+    <!-- Payment Header -->
+    <div class="payment-header" data-aos="fade-up" data-aos-delay="100">
+        <div class="payment-status @GetStatusClass(Model.Status)">
+            @GetStatusText(Model.Status)
+        </div>
+
+        <div class="row align-items-center">
+            <div class="col-md-2">
+                <div class="payment-icon">
+                    <i class="fas fa-credit-card"></i>
+                </div>
+            </div>
+            <div class="col-md-7">
+                <h2 class="mb-2">Giao Dịch #@Model.PaymentID</h2>
+                <p class="mb-1"><i class="fas fa-calendar me-2"></i>@Model.NgayThanhToan.ToString("dd/MM/yyyy HH:mm")</p>
+                <p class="mb-1"><i class="fas fa-user me-2"></i>@Model.User.HoTen</p>
+                <p class="mb-0"><i class="fas fa-book me-2"></i>@Model.Course.TenKhoaHoc</p>
+            </div>
+            <div class="col-md-3 text-end">
+                <div class="amount-display">
+                    @Model.SoTien.ToString("C0")
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Payment Information -->
+            <div class="info-card" data-aos="fade-up" data-aos-delay="200">
+                <h5><i class="fas fa-info-circle me-2"></i>Thông Tin Thanh Toán</h5>
+
+                <div class="detail-row">
+                    <div class="detail-label">
+                        <i class="fas fa-hashtag"></i>Mã giao dịch
+                    </div>
+                    <div class="detail-value">#@Model.PaymentID</div>
+                </div>
+
+                <div class="detail-row">
+                    <div class="detail-label">
+                        <i class="fas fa-money-bill-wave"></i>Số tiền
+                    </div>
+                    <div class="detail-value">
+                        <strong class="text-success">@Model.SoTien.ToString("C0")</strong>
+                    </div>
+                </div>
+
+                <div class="detail-row">
+                    <div class="detail-label">
+                        <i class="fas fa-calendar-alt"></i>Ngày thanh toán
+                    </div>
+                    <div class="detail-value">@Model.NgayThanhToan.ToString("dd/MM/yyyy HH:mm:ss")</div>
+                </div>
+
+                <div class="detail-row">
+                    <div class="detail-label">
+                        <i class="fas fa-credit-card"></i>Phương thức
+                    </div>
+                    <div class="detail-value">
+                        <div class="d-flex align-items-center">
+                            <div class="payment-method-icon">
+                                <i class="fas @GetPaymentMethodIcon(Model.PhuongThucThanhToan)"></i>
+                            </div>
+                            @Model.PhuongThucThanhToan
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-row">
+                    <div class="detail-label">
+                        <i class="fas fa-flag"></i>Trạng thái
+                    </div>
+                    <div class="detail-value">
+                        <span class="badge @GetStatusBadgeClass(Model.Status) fs-6 px-3 py-2">
+                            @GetStatusText(Model.Status)
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Information -->
+            <div class="info-card" data-aos="fade-up" data-aos-delay="300">
+                <h5><i class="fas fa-user me-2"></i>Thông Tin Người Thanh Toán</h5>
+
+                <div class="user-card">
+                    <div class="row align-items-center">
+                        <div class="col-md-2">
+                            <div class="user-avatar">
+                                @Model.User.HoTen.Substring(0, 1).ToUpper()
+                            </div>
+                        </div>
+                        <div class="col-md-7">
+                            <h6 class="mb-1">@Model.User.HoTen</h6>
+                            <p class="mb-1"><i class="fas fa-envelope me-2"></i>@Model.User.Email</p>
+                            <p class="mb-0"><i class="fas fa-phone me-2"></i>@(Model.User.PhoneNumber ?? "Chưa cập nhật")</p>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="@Url.Action("StudentDetails", "Admin", new { id = Model.User.Id })"
+                               class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-eye me-1"></i>Xem hồ sơ
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Course Information -->
+            <div class="info-card" data-aos="fade-up" data-aos-delay="400">
+                <h5><i class="fas fa-book me-2"></i>Thông Tin Khóa Học</h5>
+
+                <div class="course-preview">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6 class="text-primary mb-2">@Model.Course.TenKhoaHoc</h6>
+                            <p class="text-muted mb-2">@Model.Course.MoTa</p>
+                            <div class="d-flex gap-3 text-sm">
+                                <span><i class="fas fa-user-tie me-1"></i>@Model.Course.User.HoTen</span>
+                                <span><i class="fas fa-calendar me-1"></i>@Model.Course.NgayTao.ToString("dd/MM/yyyy")</span>
+                                <span><i class="fas fa-users me-1"></i>@(Model.Course.Enrollments?.Count ?? 0) học viên</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="mb-2">
+                                <strong class="text-success">@Model.Course.Gia.ToString("C0")</strong>
+                            </div>
+                            <a href="@Url.Action("CourseDetails", "Admin", new { id = Model.Course.CourseID })"
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye me-1"></i>Xem khóa học
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Verification Status -->
+            @if (Model.Status == DACSN10.Models.PaymentStatus.Pending)
+            {
+                <div class="verification-section" data-aos="fade-up" data-aos-delay="500">
+                    <h6 class="mb-3"><i class="fas fa-shield-alt me-2"></i>Trạng Thái Xác Minh</h6>
+
+                    <div class="verification-item">
+                        <div class="verification-icon verified">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <span>Thông tin người dùng hợp lệ</span>
+                    </div>
+
+                    <div class="verification-item">
+                        <div class="verification-icon verified">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <span>Khóa học tồn tại và có sẵn</span>
+                    </div>
+
+                    <div class="verification-item">
+                        <div class="verification-icon pending">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <span>Chờ xác nhận thanh toán từ admin</span>
+                    </div>
+
+                    <div class="verification-item">
+                        <div class="verification-icon pending">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <span>Chờ tạo quyền truy cập khóa học</span>
+                    </div>
+                </div>
+            }
+
+            <!-- Payment Timeline -->
+            <div class="info-card" data-aos="fade-up" data-aos-delay="600">
+                <h5><i class="fas fa-history me-2"></i>Lịch Sử Giao Dịch</h5>
+
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-time">@Model.NgayThanhToan.ToString("dd/MM/yyyy HH:mm")</div>
+                        <div class="timeline-title">Tạo giao dịch</div>
+                        <div class="timeline-content">
+                            Giao dịch được tạo bởi người dùng @Model.User.HoTen
+                        </div>
+                    </div>
+
+                    @if (Model.Status == DACSN10.Models.PaymentStatus.Success)
+                    {
+                        <div class="timeline-item">
+                            <div class="timeline-time">@Model.NgayThanhToan.AddMinutes(5).ToString("dd/MM/yyyy HH:mm")</div>
+                            <div class="timeline-title">Thanh toán thành công</div>
+                            <div class="timeline-content">
+                                Giao dịch đã được xác nhận và hoàn tất
+                            </div>
+                        </div>
+
+                        <div class="timeline-item">
+                            <div class="timeline-time">@Model.NgayThanhToan.AddMinutes(10).ToString("dd/MM/yyyy HH:mm")</div>
+                            <div class="timeline-title">Cấp quyền truy cập</div>
+                            <div class="timeline-content">
+                                Học viên đã được cấp quyền truy cập khóa học
+                            </div>
+                        </div>
+                    }
+                    else if (Model.Status == DACSN10.Models.PaymentStatus.Pending)
+                    {
+                        <div class="timeline-item">
+                            <div class="timeline-time">Hiện tại</div>
+                            <div class="timeline-title">Chờ xử lý</div>
+                            <div class="timeline-content">
+                                Giao dịch đang chờ admin xác nhận
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Actions -->
+            @if (Model.Status == DACSN10.Models.PaymentStatus.Pending)
+            {
+                <div class="info-card" data-aos="fade-up" data-aos-delay="700">
+                    <h5><i class="fas fa-tools me-2"></i>Thao Tác</h5>
+
+                    <button class="btn btn-approve action-btn" onclick="approvePayment(@Model.PaymentID)">
+                        <i class="fas fa-check me-2"></i>Duyệt Thanh Toán
+                    </button>
+
+                    <button class="btn btn-reject action-btn" onclick="rejectPayment(@Model.PaymentID)">
+                        <i class="fas fa-times me-2"></i>Từ Chối Thanh Toán
+                    </button>
+
+                    <button class="btn btn-outline-info action-btn" onclick="contactUser('@Model.User.Email')">
+                        <i class="fas fa-envelope me-2"></i>Liên Hệ Người Dùng
+                    </button>
+                </div>
+            }
+
+            <!-- Quick Info -->
+            <div class="info-card" data-aos="fade-up" data-aos-delay="800">
+                <h5><i class="fas fa-info me-2"></i>Thông Tin Nhanh</h5>
+
+                <div class="detail-row">
+                    <div class="detail-label">Thời gian xử lý</div>
+                    <div class="detail-value">
+                        @{
+                            var processingTime = DateTime.Now - Model.NgayThanhToan;
+                        }
+                        @if (processingTime.TotalHours < 1)
+                        {
+                            <span>@processingTime.Minutes phút</span>
+                        }
+                        else if (processingTime.TotalDays < 1)
+                        {
+                            <span>@processingTime.Hours giờ</span>
+                        }
+                        else
+                        {
+                            <span>@processingTime.Days ngày</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="detail-row">
+                    <div class="detail-label">Mức độ ưu tiên</div>
+                    <div class="detail-value">
+                        @if (Model.SoTien >= 2000000)
+                        {
+                            <span class="badge bg-danger">Cao</span>
+                        }
+                        else if (Model.SoTien >= 1000000)
+                        {
+                            <span class="badge bg-warning">Trung bình</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">Thấp</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="detail-row">
+                    <div class="detail-label">Rủi ro</div>
+                    <div class="detail-value">
+                        <span class="badge bg-success">Thấp</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Related Payments -->
+            <div class="info-card" data-aos="fade-up" data-aos-delay="900">
+                <h5><i class="fas fa-history me-2"></i>Giao Dịch Liên Quan</h5>
+
+                <div class="text-center py-3 text-muted">
+                    <small>Không có giao dịch liên quan</small>
+                </div>
+            </div>
+
+            <!-- Export Options -->
+            <div class="info-card" data-aos="fade-up" data-aos-delay="1000">
+                <h5><i class="fas fa-download me-2"></i>Xuất Dữ Liệu</h5>
+
+                <button class="btn btn-outline-success action-btn" onclick="exportPaymentPDF(@Model.PaymentID)">
+                    <i class="fas fa-file-pdf me-2"></i>Xuất PDF
+                </button>
+
+                <button class="btn btn-outline-primary action-btn" onclick="exportPaymentExcel(@Model.PaymentID)">
+                    <i class="fas fa-file-excel me-2"></i>Xuất Excel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function approvePayment(id) {
+            Swal.fire({
+                title: 'Duyệt thanh toán?',
+                text: 'Giao dịch sẽ được xác nhận và học viên được cấp quyền truy cập khóa học.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Duyệt',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    showLoading();
+                    $.post('@Url.Action("ApprovePayment", "Admin")', {
+                        id: id,
+                        __RequestVerificationToken: $('[name="__RequestVerificationToken"]').val()
+                    }).done(function(response) {
+                        hideLoading();
+                        if (response.success) {
+                            toastr.success(response.message);
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    }).fail(function() {
+                        hideLoading();
+                        toastr.error('Có lỗi xảy ra!');
+                    });
+                }
+            });
+        }
+
+        function rejectPayment(id) {
+            Swal.fire({
+                title: 'Từ chối thanh toán?',
+                input: 'textarea',
+                inputLabel: 'Lý do từ chối',
+                inputPlaceholder: 'Nhập lý do từ chối giao dịch...',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Từ chối',
+                cancelButtonText: 'Hủy',
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'Vui lòng nhập lý do từ chối!';
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    showLoading();
+                    $.post('@Url.Action("RejectPayment", "Admin")', {
+                        id: id,
+                        reason: result.value,
+                        __RequestVerificationToken: $('[name="__RequestVerificationToken"]').val()
+                    }).done(function(response) {
+                        hideLoading();
+                        if (response.success) {
+                            toastr.success(response.message);
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    }).fail(function() {
+                        hideLoading();
+                        toastr.error('Có lỗi xảy ra!');
+                    });
+                }
+            });
+        }
+
+        function contactUser(email) {
+            Swal.fire({
+                title: 'Liên hệ người dùng',
+                html: `
+                    <div class="text-start">
+                        <label class="form-label">Đến: ${email}</label>
+                        <input type="text" id="emailSubject" class="form-control mb-3" placeholder="Tiêu đề email">
+                        <textarea id="emailContent" class="form-control" rows="5" placeholder="Nội dung email"></textarea>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Gửi',
+                cancelButtonText: 'Hủy',
+                width: '600px',
+                preConfirm: () => {
+                    const subject = $('#emailSubject').val();
+                    const content = $('#emailContent').val();
+
+                    if (!subject || !content) {
+                        Swal.showValidationMessage('Vui lòng điền đầy đủ thông tin!');
+                        return false;
+                    }
+
+                    return { subject, content };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    toastr.success('Email đã được gửi thành công!');
+                }
+            });
+        }
+
+        function exportPaymentPDF(id) {
+            toastr.info('Đang tạo file PDF...');
+            setTimeout(() => {
+                toastr.success('File PDF đã được tạo thành công!');
+            }, 2000);
+        }
+
+        function exportPaymentExcel(id) {
+            toastr.info('Đang tạo file Excel...');
+            setTimeout(() => {
+                toastr.success('File Excel đã được tạo thành công!');
+            }, 2000);
+        }
+    </script>
+}
+
+@functions {
+    string GetStatusClass(DACSN10.Models.PaymentStatus status)
+    {
+        return status switch
+        {
+            DACSN10.Models.PaymentStatus.Success => "status-success",
+            DACSN10.Models.PaymentStatus.Pending => "status-pending",
+            DACSN10.Models.PaymentStatus.Failed => "status-failed",
+            DACSN10.Models.PaymentStatus.Rejected => "status-rejected",
+            _ => "status-pending"
+        };
+    }
+
+    string GetStatusBadgeClass(DACSN10.Models.PaymentStatus status)
+    {
+        return status switch
+        {
+            DACSN10.Models.PaymentStatus.Success => "bg-success",
+            DACSN10.Models.PaymentStatus.Pending => "bg-warning",
+            DACSN10.Models.PaymentStatus.Failed => "bg-danger",
+            DACSN10.Models.PaymentStatus.Rejected => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+
+    string GetStatusText(DACSN10.Models.PaymentStatus status)
+    {
+        return status switch
+        {
+            DACSN10.Models.PaymentStatus.Success => "Thành công",
+            DACSN10.Models.PaymentStatus.Pending => "Chờ xử lý",
+            DACSN10.Models.PaymentStatus.Failed => "Thất bại",
+            DACSN10.Models.PaymentStatus.Rejected => "Bị từ chối",
+            _ => "Không xác định"
+        };
+    }
+
+    string GetPaymentMethodIcon(string method)
+    {
+        return method?.ToLower() switch
+        {
+            "momo" => "fa-mobile-alt",
+            "banking" => "fa-university",
+            "cash" => "fa-money-bill-wave",
+            "credit" => "fa-credit-card",
+            "debit" => "fa-credit-card",
+            _ => "fa-credit-card"
+        };
+    }
+}

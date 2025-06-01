@@ -1,0 +1,491 @@
+﻿@model dynamic
+@{
+    ViewData["Title"] = "Báo Cáo Doanh Thu";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section Styles {
+    <style>
+        .revenue-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 25px;
+            color: white;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+            .revenue-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            }
+
+        .revenue-value {
+            font-size: 2.2rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .revenue-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        .report-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+            margin: 20px 0;
+        }
+
+        .filter-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid #dee2e6;
+        }
+
+        .data-table {
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+            .data-table .table thead th {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: none;
+                font-weight: 600;
+                text-align: center;
+            }
+
+            .data-table .table tbody tr:hover {
+                background-color: rgba(102, 126, 234, 0.1);
+            }
+
+        .export-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 25px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+            .export-btn:hover {
+                transform: scale(1.05);
+                box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+                color: white;
+            }
+
+        .trend-indicator {
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .trend-up {
+            color: #28a745;
+        }
+
+        .trend-down {
+            color: #dc3545;
+        }
+
+        .revenue-chart-tabs .nav-link {
+            border-radius: 25px;
+            margin: 0 5px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+            .revenue-chart-tabs .nav-link.active {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-color: transparent;
+                color: white;
+            }
+    </style>
+}
+
+<div class="container-fluid" data-aos="fade-up">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="page-title">
+            <i class="fas fa-file-invoice-dollar me-2"></i>
+            Báo Cáo Doanh Thu
+        </h2>
+        <div class="d-flex gap-2">
+            <button class="btn export-btn" onclick="exportToExcel()">
+                <i class="fas fa-file-excel me-2"></i>Xuất Excel
+            </button>
+            <button class="btn export-btn" onclick="exportToPDF()">
+                <i class="fas fa-file-pdf me-2"></i>Xuất PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-section" data-aos="fade-up" data-aos-delay="100">
+        <form method="get" id="filterForm">
+            <div class="row">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Từ ngày</label>
+                    <input type="date" class="form-control" name="fromDate" value="@ViewBag.FromDate?.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Đến ngày</label>
+                    <input type="date" class="form-control" name="toDate" value="@ViewBag.ToDate?.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Nhóm theo</label>
+                    <select class="form-select" name="groupBy">
+                        <option value="day">Ngày</option>
+                        <option value="week">Tuần</option>
+                        <option value="month" selected>Tháng</option>
+                        <option value="quarter">Quý</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-2"></i>Tạo Báo Cáo
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4" data-aos="fade-up" data-aos-delay="200">
+        <div class="col-lg-3 col-md-6">
+            <div class="revenue-card">
+                <span class="revenue-value">@(Model?.TotalRevenue?.ToString("C0") ?? "0 VNĐ")</span>
+                <div class="revenue-label">Tổng Doanh Thu</div>
+                <div class="trend-indicator">
+                    <i class="fas fa-arrow-up trend-up"></i>
+                    <span class="trend-up">+12.5% so với kỳ trước</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="revenue-card">
+                <span class="revenue-value">@(Model?.TotalTransactions?.ToString("N0") ?? "0")</span>
+                <div class="revenue-label">Tổng Giao Dịch</div>
+                <div class="trend-indicator">
+                    <i class="fas fa-arrow-up trend-up"></i>
+                    <span class="trend-up">+8.3% so với kỳ trước</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="revenue-card">
+                <span class="revenue-value">@(Model?.AverageTransactionValue?.ToString("C0") ?? "0 VNĐ")</span>
+                <div class="revenue-label">Giá Trị Trung Bình</div>
+                <div class="trend-indicator">
+                    <i class="fas fa-arrow-down trend-down"></i>
+                    <span class="trend-down">-2.1% so với kỳ trước</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="revenue-card">
+                <span class="revenue-value">@((Model?.TotalRevenue ?? 0) > 0 ? (Model.TotalTransactions * 100.0 / Model.TotalRevenue).ToString("F1") + "%" : "0%")</span>
+                <div class="revenue-label">Tỷ Lệ Thành Công</div>
+                <div class="trend-indicator">
+                    <i class="fas fa-arrow-up trend-up"></i>
+                    <span class="trend-up">+5.7% so với kỳ trước</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="report-section" data-aos="fade-up" data-aos-delay="300">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Biểu Đồ Doanh Thu</h5>
+                    <ul class="nav nav-pills revenue-chart-tabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="pill" href="#dailyRevenue">Theo Ngày</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="pill" href="#monthlyRevenue">Theo Tháng</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="pill" href="#categoryRevenue">Theo Danh Mục</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="dailyRevenue">
+                        <div class="chart-container">
+                            <canvas id="dailyRevenueChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="monthlyRevenue">
+                        <div class="chart-container">
+                            <canvas id="monthlyRevenueChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="categoryRevenue">
+                        <div class="chart-container">
+                            <canvas id="categoryRevenueChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="report-section" data-aos="fade-up" data-aos-delay="400">
+                <h5 class="mb-3">Top Giảng Viên</h5>
+                <div class="list-group list-group-flush">
+                    @if (Model?.RevenueByTeacher != null)
+                    {
+                        @foreach (var teacher in Model.RevenueByTeacher.Take(5))
+                        {
+                            <div class="list-group-item border-0 px-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">@teacher.TeacherName</h6>
+                                        <small class="text-muted">@teacher.Count giao dịch</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <strong>@teacher.Revenue.ToString("C0")</strong>
+                                    </div>
+                                </div>
+                                <div class="progress mt-2" style="height: 4px;">
+                                    <div class="progress-bar bg-primary" style="width: @(Convert.ToDouble(teacher.Revenue) / Convert.ToDouble(((IEnumerable<dynamic>)Model.RevenueByTeacher).Max(t => (double)t.Revenue)) * 100)%"></div>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Tables -->
+    <div class="row mt-4">
+        <div class="col-lg-6">
+            <div class="report-section" data-aos="fade-up" data-aos-delay="500">
+                <h5 class="mb-3">Doanh Thu Theo Khóa Học</h5>
+                <div class="data-table">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="courseRevenueTable">
+                            <thead>
+                                <tr>
+                                    <th>Khóa Học</th>
+                                    <th>Số Giao Dịch</th>
+                                    <th>Doanh Thu</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model?.RevenueByCategory != null)
+                                {
+                                    @foreach (var course in Model.RevenueByCategory)
+                                    {
+                                        <tr>
+                                            <td>@course.CourseName</td>
+                                            <td><span class="badge bg-primary">@course.Count</span></td>
+                                            <td><strong>@course.Revenue.ToString("C0")</strong></td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="report-section" data-aos="fade-up" data-aos-delay="600">
+                <h5 class="mb-3">Doanh Thu Theo Ngày</h5>
+                <div class="data-table">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="dailyRevenueTable">
+                            <thead>
+                                <tr>
+                                    <th>Ngày</th>
+                                    <th>Số Giao Dịch</th>
+                                    <th>Doanh Thu</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model?.DailyRevenue != null)
+                                {
+                                    @foreach (var daily in ((IEnumerable<dynamic>)Model.DailyRevenue).OrderByDescending(d => d.Date))  
+                                    {  
+                                       <tr>  
+                                           <td>@daily.Date.ToString("dd/MM/yyyy")</td>  
+                                           <td><span class="badge bg-success">@daily.Count</span></td>  
+                                           <td><strong>@daily.Revenue.ToString("C0")</strong></td>  
+                                       </tr>  
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let dailyChart, monthlyChart, categoryChart;
+
+        $(document).ready(function() {
+            initializeCharts();
+            initializeTables();
+        });
+
+        function initializeCharts() {
+            // Daily Revenue Chart
+            const dailyCtx = document.getElementById('dailyRevenueChart').getContext('2d');
+            dailyChart = new Chart(dailyCtx, {
+                type: 'line',
+                data: {
+                    labels: @Html.Raw(Json.Serialize((Model?.DailyRevenue as IEnumerable<dynamic>)?.Select(d => ((DateTime)d.Date).ToString("dd/MM")) ?? new List<string>())),
+                    datasets: [{
+                        label: 'Doanh thu (VNĐ)',
+                        data: @Html.Raw(Json.Serialize((Model?.DailyRevenue as IEnumerable<dynamic>)?.Select(d => (decimal)d.Revenue) ?? new List<decimal>())),
+                        borderColor: 'rgb(102, 126, 234)',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return formatCurrency(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Monthly Revenue Chart
+            const monthlyCtx = document.getElementById('monthlyRevenueChart').getContext('2d');
+            monthlyChart = new Chart(monthlyCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'],
+                    datasets: [{
+                        label: 'Doanh thu',
+                        data: [120000000, 150000000, 180000000, 170000000, 190000000, 200000000, 220000000, 210000000, 240000000, 230000000, 250000000, 280000000],
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return formatCurrency(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Category Revenue Chart
+            const categoryCtx = document.getElementById('categoryRevenueChart').getContext('2d');
+            categoryChart = new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: @Html.Raw(Json.Serialize((Model?.RevenueByCategory as IEnumerable<dynamic>)?.Take(6).Cast<dynamic>().Select(c => (string)c.CourseName) ?? new List<string>())),
+                    datasets: [{
+                        data: @Html.Raw(Json.Serialize((Model?.RevenueByCategory as IEnumerable<dynamic>)?.Take(6).Cast<dynamic>().Select(c => (decimal)c.Revenue) ?? new List<decimal>())),
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.8)',
+                            'rgba(54, 162, 235, 0.8)',
+                            'rgba(255, 205, 86, 0.8)',
+                            'rgba(75, 192, 192, 0.8)',
+                            'rgba(153, 102, 255, 0.8)',
+                            'rgba(255, 159, 64, 0.8)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function initializeTables() {
+            $('#courseRevenueTable').DataTable({
+                pageLength: 10,
+                order: [[2, 'desc']],
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/vi.json'
+                }
+            });
+
+            $('#dailyRevenueTable').DataTable({
+                pageLength: 10,
+                order: [[0, 'desc']],
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/vi.json'
+                }
+            });
+        }
+
+        function exportToExcel() {
+            const fromDate = $('input[name="fromDate"]').val();
+            const toDate = $('input[name="toDate"]').val();
+
+            window.location.href = '@Url.Action("ExportRevenueReport", "Admin")'
+                + '?fromDate=' + fromDate + '&toDate=' + toDate;
+
+            toastr.success('Đang xuất báo cáo Excel...');
+        }
+
+        function exportToPDF() {
+            toastr.info('Tính năng xuất PDF đang được phát triển...');
+        }
+
+        // Chart tab switching
+        $('.revenue-chart-tabs a').on('click', function(e) {
+            e.preventDefault();
+            $(this).tab('show');
+        });
+    </script>
+}

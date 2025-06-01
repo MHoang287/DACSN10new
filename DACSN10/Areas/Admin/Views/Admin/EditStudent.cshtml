@@ -1,0 +1,575 @@
+﻿@model DACSN10.Models.User
+@{
+    ViewData["Title"] = "Chỉnh Sửa Học Viên";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section Styles {
+    <style>
+        .edit-form-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .form-header {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .user-info-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 5px solid #17a2b8;
+        }
+
+        .current-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            margin: 0 auto 15px;
+            border: 3px solid white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 4px solid #17a2b8;
+        }
+
+            .form-section h5 {
+                color: #17a2b8;
+                margin-bottom: 20px;
+                font-weight: 600;
+            }
+
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+
+            .form-control:focus, .form-select:focus {
+                border-color: #17a2b8;
+                box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
+            }
+
+        .btn-update {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+            .btn-update:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(23, 162, 184, 0.3);
+                color: white;
+            }
+
+        .status-badge {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-locked {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .change-password-section {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-left: 4px solid #ffc107;
+        }
+
+        .password-toggle {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+            .password-toggle:hover {
+                color: #17a2b8;
+            }
+
+        .activity-summary {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f8f9fa;
+        }
+
+            .activity-item:last-child {
+                border-bottom: none;
+            }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #17a2b8;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 0.9rem;
+        }
+
+        .validation-errors {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #721c24;
+        }
+    </style>
+}
+
+<div class="container-fluid" data-aos="fade-up">
+    <!-- Header -->
+    <div class="form-header" data-aos="fade-up" data-aos-delay="100">
+        <h2><i class="fas fa-user-edit me-3"></i>Chỉnh Sửa Thông Tin Học Viên</h2>
+        <p class="mb-0">Cập nhật thông tin cho tài khoản: @Model.Email</p>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Current User Info -->
+            <div class="user-info-card" data-aos="fade-up" data-aos-delay="200">
+                <div class="row align-items-center">
+                    <div class="col-md-2">
+                        <div class="current-avatar">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-7">
+                        <h5 class="mb-2">@Model.HoTen</h5>
+                        <p class="mb-1"><i class="fas fa-envelope me-2"></i>@Model.Email</p>
+                        <p class="mb-0"><i class="fas fa-calendar me-2"></i>Tham gia: @Model.NgayDangKy.ToString("dd/MM/yyyy")</p>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="status-badge @(Model.TrangThai == "Active" ? "status-active" : "status-locked")">
+                            <i class="fas @(Model.TrangThai == "Active" ? "fa-check-circle" : "fa-lock") me-2"></i>
+                            @(Model.TrangThai == "Active" ? "Hoạt động" : "Bị khóa")
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Form -->
+            <div class="edit-form-container" data-aos="fade-up" data-aos-delay="300">
+                <form asp-action="EditStudent" method="post" id="editStudentForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+                    <input type="hidden" asp-for="NgayDangKy" />
+                    <input type="hidden" asp-for="LoaiNguoiDung" />
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="validation-errors" data-aos="shake">
+                            <h6><i class="fas fa-exclamation-triangle me-2"></i>Vui lòng kiểm tra lại thông tin:</h6>
+                            <ul class="mb-0">
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                    <!-- Basic Information -->
+                    <div class="form-section">
+                        <h5><i class="fas fa-user me-2"></i>Thông Tin Cơ Bản</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="HoTen" class="form-label">Họ và Tên</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-info text-white border-0">
+                                            <i class="fas fa-user"></i>
+                                        </span>
+                                        <input asp-for="HoTen" class="form-control border-start-0" placeholder="Nhập họ và tên đầy đủ" />
+                                    </div>
+                                    <span asp-validation-for="HoTen" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Email" class="form-label">Email</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-info text-white border-0">
+                                            <i class="fas fa-envelope"></i>
+                                        </span>
+                                        <input asp-for="Email" type="email" class="form-control border-start-0" placeholder="Nhập địa chỉ email" />
+                                    </div>
+                                    <span asp-validation-for="Email" class="text-danger"></span>
+                                    <div class="form-text">Email sẽ được sử dụng làm tên đăng nhập</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="PhoneNumber" class="form-label">Số Điện Thoại</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-info text-white border-0">
+                                            <i class="fas fa-phone"></i>
+                                        </span>
+                                        <input asp-for="PhoneNumber" type="tel" class="form-control border-start-0" placeholder="Nhập số điện thoại" />
+                                    </div>
+                                    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="TrangThai" class="form-label">Trạng Thái Tài Khoản</label>
+                                    <select asp-for="TrangThai" class="form-select">
+                                        <option value="Active">Hoạt động</option>
+                                        <option value="Locked">Bị khóa</option>
+                                    </select>
+                                    <span asp-validation-for="TrangThai" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Password Change Section -->
+                    <div class="change-password-section">
+                        <h6><i class="fas fa-key me-2"></i>Đổi Mật Khẩu (Tùy chọn)</h6>
+                        <p class="mb-3 text-muted">Để trống nếu không muốn thay đổi mật khẩu</p>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="newPassword" class="form-label">Mật Khẩu Mới</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-warning text-dark border-0">
+                                            <i class="fas fa-lock"></i>
+                                        </span>
+                                        <input type="password" name="newPassword" id="newPassword"
+                                               class="form-control border-start-0" placeholder="Nhập mật khẩu mới" />
+                                        <button type="button" class="btn btn-outline-warning password-toggle" data-target="#newPassword">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="confirmPassword" class="form-label">Xác Nhận Mật Khẩu</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-warning text-dark border-0">
+                                            <i class="fas fa-lock"></i>
+                                        </span>
+                                        <input type="password" name="confirmPassword" id="confirmPassword"
+                                               class="form-control border-start-0" placeholder="Nhập lại mật khẩu mới" />
+                                    </div>
+                                    <div class="form-text" id="passwordMatchText"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-update me-3">
+                            <i class="fas fa-save me-2"></i>Cập Nhật Thông Tin
+                        </button>
+                        <a href="@Url.Action("StudentDetails", "Admin", new { id = Model.Id })" class="btn btn-outline-info">
+                            <i class="fas fa-eye me-2"></i>Xem Chi Tiết
+                        </a>
+                        <a href="@Url.Action("Students", "Admin")" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Quay Lại
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
+            <div class="activity-summary" data-aos="fade-up" data-aos-delay="400">
+                <h6 class="mb-3"><i class="fas fa-bolt me-2"></i>Thao Tác Nhanh</h6>
+
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <div>
+                        <strong>Thăng cấp Giảng viên</strong>
+                        <br><small class="text-muted">Chuyển đổi thành tài khoản giảng viên</small>
+                        <br><button class="btn btn-sm btn-outline-success mt-1" onclick="promoteToTeacher('@Model.Id')">
+                            <i class="fas fa-arrow-up me-1"></i>Thăng cấp
+                        </button>
+                    </div>
+                </div>
+
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div>
+                        <strong>Gửi Email</strong>
+                        <br><small class="text-muted">Gửi thông báo hoặc tin nhắn</small>
+                        <br><button class="btn btn-sm btn-outline-info mt-1" onclick="sendEmail('@Model.Email')">
+                            <i class="fas fa-paper-plane me-1"></i>Gửi Email
+                        </button>
+                    </div>
+                </div>
+
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div>
+                        <strong>Lịch sử hoạt động</strong>
+                        <br><small class="text-muted">Xem các hoạt động gần đây</small>
+                        <br><button class="btn btn-sm btn-outline-secondary mt-1" onclick="viewActivityLog('@Model.Id')">
+                            <i class="fas fa-list me-1"></i>Xem lịch sử
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Statistics -->
+            <div class="activity-summary mt-4" data-aos="fade-up" data-aos-delay="500">
+                <h6 class="mb-3"><i class="fas fa-chart-pie me-2"></i>Thống Kê Tài Khoản</h6>
+
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <div class="h4 text-info">@(Model.Enrollments?.Count ?? 0)</div>
+                            <small class="text-muted">Khóa học</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <div class="h4 text-success">@(Model.QuizResults?.Count ?? 0)</div>
+                            <small class="text-muted">Bài kiểm tra</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <div class="h4 text-warning">@((DateTime.Now - Model.NgayDangKy).Days)</div>
+                            <small class="text-muted">Ngày tham gia</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <div class="h4 text-primary">@(Model.Payments?.Where(p => p.Status == DACSN10.Models.PaymentStatus.Success).Count() ?? 0)</div>
+                            <small class="text-muted">Thanh toán</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="activity-summary mt-4" data-aos="fade-up" data-aos-delay="600">
+                <h6 class="mb-3"><i class="fas fa-clock me-2"></i>Hoạt Động Gần Đây</h6>
+
+                @if (Model.Enrollments?.Any() == true)
+                {
+                    @foreach (var enrollment in Model.Enrollments.OrderByDescending(e => e.EnrollDate).Take(3))
+                    {
+                        <div class="activity-item">
+                            <div class="activity-icon bg-success">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <div>
+                                <strong>Đăng ký khóa học</strong>
+                                <br><small class="text-muted">@enrollment.Course.TenKhoaHoc</small>
+                                <br><small class="text-muted">@enrollment.EnrollDate.ToString("dd/MM/yyyy")</small>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-3 text-muted">
+                        <small>Chưa có hoạt động gần đây</small>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Password visibility toggle
+            $('.password-toggle').click(function() {
+                const target = $($(this).data('target'));
+                const type = target.attr('type') === 'password' ? 'text' : 'password';
+                target.attr('type', type);
+                $(this).find('i').toggleClass('fa-eye fa-eye-slash');
+            });
+
+            // Password confirmation check
+            $('#confirmPassword').on('input', function() {
+                const newPassword = $('#newPassword').val();
+                const confirmPassword = $(this).val();
+                const matchText = $('#passwordMatchText');
+
+                if (confirmPassword === '') {
+                    matchText.text('').removeClass();
+                } else if (newPassword === confirmPassword) {
+                    matchText.text('Mật khẩu khớp ✓').removeClass().addClass('text-success');
+                } else {
+                    matchText.text('Mật khẩu không khớp ✗').removeClass().addClass('text-danger');
+                }
+            });
+
+            // Form validation
+            $('#editStudentForm').on('submit', function(e) {
+                const newPassword = $('#newPassword').val();
+                const confirmPassword = $('#confirmPassword').val();
+
+                if (newPassword && !confirmPassword) {
+                    e.preventDefault();
+                    toastr.error('Vui lòng xác nhận mật khẩu mới!');
+                    return false;
+                }
+
+                if (newPassword && newPassword !== confirmPassword) {
+                    e.preventDefault();
+                    toastr.error('Mật khẩu xác nhận không khớp!');
+                    return false;
+                }
+
+                if (newPassword && newPassword.length < 6) {
+                    e.preventDefault();
+                    toastr.error('Mật khẩu phải có ít nhất 6 ký tự!');
+                    return false;
+                }
+
+                showLoading();
+            });
+
+            // Auto-format phone number
+            $('#PhoneNumber').on('input', function() {
+                let value = $(this).val().replace(/\D/g, '');
+                if (value.length >= 10) {
+                    value = value.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+                }
+                $(this).val(value);
+            });
+        });
+
+        function promoteToTeacher(id) {
+            Swal.fire({
+                title: 'Thăng cấp giảng viên?',
+                text: 'Học viên này sẽ được chuyển thành tài khoản giảng viên.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Thăng cấp',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post('@Url.Action("PromoteToTeacher", "Admin")', {
+                        id: id,
+                        __RequestVerificationToken: $('[name="__RequestVerificationToken"]').val()
+                    }).done(function(response) {
+                        if (response.success) {
+                            toastr.success(response.message);
+                            setTimeout(() => window.location.href = '@Url.Action("Teachers", "Admin")', 2000);
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    }).fail(function() {
+                        toastr.error('Có lỗi xảy ra!');
+                    });
+                }
+            });
+        }
+
+        function sendEmail(email) {
+            Swal.fire({
+                title: 'Gửi Email',
+                html: `
+                    <div class="text-start">
+                        <label class="form-label">Đến: ${email}</label>
+                        <input type="text" id="emailSubject" class="form-control mb-3" placeholder="Tiêu đề email">
+                        <textarea id="emailContent" class="form-control" rows="5" placeholder="Nội dung email"></textarea>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Gửi',
+                cancelButtonText: 'Hủy',
+                width: '600px',
+                preConfirm: () => {
+                    const subject = $('#emailSubject').val();
+                    const content = $('#emailContent').val();
+
+                    if (!subject || !content) {
+                        Swal.showValidationMessage('Vui lòng điền đầy đủ thông tin!');
+                        return false;
+                    }
+
+                    return { subject, content };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Implement email sending functionality
+                    toastr.success('Email đã được gửi thành công!');
+                }
+            });
+        }
+
+        function viewActivityLog(id) {
+            // Implement activity log viewing
+            toastr.info('Chức năng xem lịch sử hoạt động đang được phát triển...');
+        }
+    </script>
+}

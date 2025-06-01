@@ -1,0 +1,639 @@
+﻿@model DACSN10.Models.User
+@{
+    ViewData["Title"] = "Tạo Tài Khoản Giảng Viên";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section Styles {
+    <style>
+        .create-form-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .form-header {
+            background: linear-gradient(135deg, #fd7e14 0%, #e55e34 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .form-header::before {
+                content: '';
+                position: absolute;
+                top: -50%;
+                right: -50%;
+                width: 200%;
+                height: 200%;
+                background: repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255,255,255,.1) 35px, rgba(255,255,255,.1) 70px);
+                animation: slide 20s linear infinite;
+            }
+
+        .form-section {
+            background: #fff8f3;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 4px solid #fd7e14;
+        }
+
+            .form-section h5 {
+                color: #fd7e14;
+                margin-bottom: 20px;
+                font-weight: 600;
+            }
+
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+
+            .form-control:focus, .form-select:focus {
+                border-color: #fd7e14;
+                box-shadow: 0 0 0 0.2rem rgba(253, 126, 20, 0.25);
+            }
+
+        .btn-create {
+            background: linear-gradient(135deg, #fd7e14 0%, #e55e34 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+            .btn-create:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(253, 126, 20, 0.3);
+                color: white;
+            }
+
+        .teacher-avatar-preview {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #fd7e14 0%, #e55e34 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+            margin: 0 auto 20px;
+            border: 4px solid #e9ecef;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+            .teacher-avatar-preview:hover {
+                transform: scale(1.05);
+                border-color: #fd7e14;
+            }
+
+        .teacher-badge {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background: #28a745;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            border: 3px solid white;
+        }
+
+        .input-group-text {
+            background: #fd7e14;
+            color: white;
+            border: none;
+            border-radius: 10px 0 0 10px;
+        }
+
+        .input-group .form-control {
+            border-radius: 0 10px 10px 0;
+            border-left: none;
+        }
+
+        .form-tips {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-left: 4px solid #ff9800;
+        }
+
+            .form-tips h6 {
+                color: #f57c00;
+                margin-bottom: 15px;
+            }
+
+        .specialization-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .specialization-tag {
+            background: #fd7e14;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+            .specialization-tag:hover {
+                background: #e55e34;
+                transform: scale(1.05);
+            }
+
+            .specialization-tag.selected {
+                background: #28a745;
+            }
+
+        .experience-slider {
+            margin: 20px 0;
+        }
+
+        .experience-display {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #fd7e14;
+            margin-top: 10px;
+        }
+
+        .bio-counter {
+            text-align: right;
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+    </style>
+}
+
+<div class="container-fluid" data-aos="fade-up">
+    <!-- Header -->
+    <div class="form-header" data-aos="fade-up" data-aos-delay="100">
+        <h2><i class="fas fa-chalkboard-teacher me-3"></i>Tạo Tài Khoản Giảng Viên Mới</h2>
+        <p class="mb-0">Điền thông tin để tạo tài khoản giảng viên chuyên nghiệp</p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Tips -->
+            <div class="form-tips" data-aos="fade-up" data-aos-delay="200">
+                <h6><i class="fas fa-graduation-cap me-2"></i>Hướng Dẫn Tạo Tài Khoản Giảng Viên</h6>
+                <ul>
+                    <li>Giảng viên cần có kinh nghiệm và chuyên môn phù hợp</li>
+                    <li>Tài khoản giảng viên có quyền tạo và quản lý khóa học</li>
+                    <li>Thông tin sẽ được hiển thị công khai cho học viên</li>
+                    <li>Hệ thống sẽ gửi email xác nhận sau khi tạo tài khoản</li>
+                </ul>
+            </div>
+
+            <!-- Form -->
+            <div class="create-form-container" data-aos="fade-up" data-aos-delay="300">
+                <form asp-action="CreateTeacher" method="post" id="createTeacherForm">
+                    @Html.AntiForgeryToken()
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger" data-aos="shake">
+                            <h6><i class="fas fa-exclamation-triangle me-2"></i>Vui lòng kiểm tra lại thông tin:</h6>
+                            <ul class="mb-0">
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                    <!-- Avatar Preview -->
+                    <div class="text-center mb-4">
+                        <div class="teacher-avatar-preview">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                            <div class="teacher-badge">
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Basic Information -->
+                    <div class="form-section">
+                        <h5><i class="fas fa-user me-2"></i>Thông Tin Cơ Bản</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="HoTen" class="form-label required">Họ và Tên</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                        <input asp-for="HoTen" class="form-control" placeholder="Nhập họ và tên đầy đủ" />
+                                    </div>
+                                    <span asp-validation-for="HoTen" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Email" class="form-label required">Email</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                        <input asp-for="Email" type="email" class="form-control" placeholder="Nhập địa chỉ email" />
+                                    </div>
+                                    <span asp-validation-for="Email" class="text-danger"></span>
+                                    <div class="form-text">Email sẽ được sử dụng làm tên đăng nhập</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="PhoneNumber" class="form-label required">Số Điện Thoại</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                        <input asp-for="PhoneNumber" type="tel" class="form-control" placeholder="Nhập số điện thoại" />
+                                    </div>
+                                    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="TrangThai" class="form-label required">Trạng Thái</label>
+                                    <select asp-for="TrangThai" class="form-select">
+                                        <option value="Active">Hoạt động</option>
+                                        <option value="Locked">Bị khóa</option>
+                                    </select>
+                                    <span asp-validation-for="TrangThai" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Professional Information -->
+                    <div class="form-section">
+                        <h5><i class="fas fa-briefcase me-2"></i>Thông Tin Chuyên Môn</h5>
+
+                        <div class="mb-3">
+                            <label for="bio" class="form-label">Giới Thiệu Bản Thân</label>
+                            <textarea id="bio" name="bio" class="form-control" rows="4"
+                                      placeholder="Mô tả về bản thân, kinh nghiệm, thành tựu..." maxlength="500"></textarea>
+                            <div class="bio-counter">
+                                <span id="bioCount">0</span>/500 ký tự
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="education" class="form-label">Học Vấn</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-graduation-cap"></i></span>
+                                        <input type="text" id="education" name="education" class="form-control"
+                                               placeholder="VD: Thạc sĩ Công nghệ thông tin" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="experience" class="form-label">Kinh Nghiệm (năm)</label>
+                                    <input type="range" id="experienceSlider" class="form-range experience-slider"
+                                           min="0" max="20" value="3" />
+                                    <div class="experience-display">
+                                        <span id="experienceValue">3</span> năm kinh nghiệm
+                                    </div>
+                                    <input type="hidden" id="experience" name="experience" value="3" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Chuyên Môn</label>
+                            <div class="specialization-tags">
+                                <div class="specialization-tag" data-value="web-development">Web Development</div>
+                                <div class="specialization-tag" data-value="mobile-development">Mobile Development</div>
+                                <div class="specialization-tag" data-value="data-science">Data Science</div>
+                                <div class="specialization-tag" data-value="ai-ml">AI & Machine Learning</div>
+                                <div class="specialization-tag" data-value="devops">DevOps</div>
+                                <div class="specialization-tag" data-value="cybersecurity">Cybersecurity</div>
+                                <div class="specialization-tag" data-value="ui-ux">UI/UX Design</div>
+                                <div class="specialization-tag" data-value="blockchain">Blockchain</div>
+                                <div class="specialization-tag" data-value="game-development">Game Development</div>
+                                <div class="specialization-tag" data-value="cloud-computing">Cloud Computing</div>
+                            </div>
+                            <input type="hidden" id="specializations" name="specializations" />
+                            <div class="form-text">Chọn các lĩnh vực chuyên môn (có thể chọn nhiều)</div>
+                        </div>
+                    </div>
+
+                    <!-- Security Information -->
+                    <div class="form-section">
+                        <h5><i class="fas fa-shield-alt me-2"></i>Thông Tin Bảo Mật</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="password" class="form-label required">Mật Khẩu</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                        <input type="password" name="password" id="password" class="form-control"
+                                               placeholder="Nhập mật khẩu" required />
+                                        <button type="button" class="btn btn-outline-warning" id="togglePassword">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <div class="password-strength mt-2">
+                                        <div class="strength-bar">
+                                            <div class="strength-fill" id="strengthFill"></div>
+                                        </div>
+                                        <small class="form-text" id="strengthText">Nhập mật khẩu để kiểm tra độ mạnh</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="confirmPassword" class="form-label required">Xác Nhận Mật Khẩu</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                        <input type="password" name="confirmPassword" id="confirmPassword"
+                                               class="form-control" placeholder="Nhập lại mật khẩu" required />
+                                    </div>
+                                    <div class="form-text" id="passwordMatch"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Settings -->
+                    <div class="form-section">
+                        <h5><i class="fas fa-cog me-2"></i>Cài Đặt Bổ Sung</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="allowMessages" name="allowMessages" checked>
+                                    <label class="form-check-label" for="allowMessages">
+                                        Cho phép nhận tin nhắn từ học viên
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="publicProfile" name="publicProfile" checked>
+                                    <label class="form-check-label" for="publicProfile">
+                                        Hiển thị hồ sơ công khai
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="emailNotifications" name="emailNotifications" checked>
+                                    <label class="form-check-label" for="emailNotifications">
+                                        Nhận thông báo qua email
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="autoApproveStudents" name="autoApproveStudents">
+                                    <label class="form-check-label" for="autoApproveStudents">
+                                        Tự động duyệt học viên đăng ký
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-create me-3">
+                            <i class="fas fa-chalkboard-teacher me-2"></i>Tạo Tài Khoản Giảng Viên
+                        </button>
+                        <a href="@Url.Action("Teachers", "Admin")" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Hủy Bỏ
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let selectedSpecializations = [];
+
+        $(document).ready(function() {
+            // Experience slider
+            $('#experienceSlider').on('input', function() {
+                const value = $(this).val();
+                $('#experienceValue').text(value);
+                $('#experience').val(value);
+            });
+
+            // Bio character counter
+            $('#bio').on('input', function() {
+                const length = $(this).val().length;
+                $('#bioCount').text(length);
+
+                if (length > 450) {
+                    $('#bioCount').addClass('text-warning');
+                } else if (length > 480) {
+                    $('#bioCount').addClass('text-danger');
+                } else {
+                    $('#bioCount').removeClass('text-warning text-danger');
+                }
+            });
+
+            // Specialization tags
+            $('.specialization-tag').click(function() {
+                const value = $(this).data('value');
+
+                if ($(this).hasClass('selected')) {
+                    $(this).removeClass('selected');
+                    selectedSpecializations = selectedSpecializations.filter(s => s !== value);
+                } else {
+                    $(this).addClass('selected');
+                    selectedSpecializations.push(value);
+                }
+
+                $('#specializations').val(selectedSpecializations.join(','));
+            });
+
+            // Password visibility toggle
+            $('#togglePassword').click(function() {
+                const password = $('#password');
+                const type = password.attr('type') === 'password' ? 'text' : 'password';
+                password.attr('type', type);
+                $(this).find('i').toggleClass('fa-eye fa-eye-slash');
+            });
+
+            // Password strength checker
+            $('#password').on('input', function() {
+                const password = $(this).val();
+                checkPasswordStrength(password);
+            });
+
+            // Password confirmation
+            $('#confirmPassword').on('input', function() {
+                const password = $('#password').val();
+                const confirm = $(this).val();
+                checkPasswordMatch(password, confirm);
+            });
+
+            // Form validation
+            $('#createTeacherForm').on('submit', function(e) {
+                if (!validateForm()) {
+                    e.preventDefault();
+                    return false;
+                }
+
+                showLoading();
+            });
+
+            // Auto-format phone number
+            $('#PhoneNumber').on('input', function() {
+                let value = $(this).val().replace(/\D/g, '');
+                if (value.length >= 10) {
+                    value = value.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+                }
+                $(this).val(value);
+            });
+        });
+
+        function checkPasswordStrength(password) {
+            const strengthFill = $('#strengthFill');
+            const strengthText = $('#strengthText');
+
+            let strength = 0;
+            let text = '';
+            let className = '';
+
+            if (password.length >= 8) strength++;
+            if (password.match(/[a-z]/)) strength++;
+            if (password.match(/[A-Z]/)) strength++;
+            if (password.match(/[0-9]/)) strength++;
+            if (password.match(/[^a-zA-Z0-9]/)) strength++;
+
+            switch (strength) {
+                case 0:
+                case 1:
+                    text = 'Mật khẩu rất yếu';
+                    className = 'strength-weak';
+                    break;
+                case 2:
+                    text = 'Mật khẩu yếu';
+                    className = 'strength-fair';
+                    break;
+                case 3:
+                    text = 'Mật khẩu trung bình';
+                    className = 'strength-good';
+                    break;
+                case 4:
+                case 5:
+                    text = 'Mật khẩu mạnh';
+                    className = 'strength-strong';
+                    break;
+            }
+
+            strengthFill.removeClass().addClass('strength-fill ' + className);
+            strengthText.text(text);
+        }
+
+        function checkPasswordMatch(password, confirm) {
+            const matchText = $('#passwordMatch');
+
+            if (confirm === '') {
+                matchText.text('').removeClass();
+                return;
+            }
+
+            if (password === confirm) {
+                matchText.text('Mật khẩu khớp ✓').removeClass().addClass('text-success');
+            } else {
+                matchText.text('Mật khẩu không khớp ✗').removeClass().addClass('text-danger');
+            }
+        }
+
+        function validateForm() {
+            const password = $('#password').val();
+            const confirm = $('#confirmPassword').val();
+            const bio = $('#bio').val();
+
+            if (password !== confirm) {
+                toastr.error('Mật khẩu xác nhận không khớp!');
+                return false;
+            }
+
+            if (password.length < 6) {
+                toastr.error('Mật khẩu phải có ít nhất 6 ký tự!');
+                return false;
+            }
+
+            if (selectedSpecializations.length === 0) {
+                toastr.error('Vui lòng chọn ít nhất một chuyên môn!');
+                return false;
+            }
+
+            if (bio.length < 50) {
+                toastr.error('Phần giới thiệu bản thân phải có ít nhất 50 ký tự!');
+                return false;
+            }
+
+            return true;
+        }
+    </script>
+
+    <style>
+        .strength-bar {
+            height: 4px;
+            border-radius: 2px;
+            background: #e9ecef;
+            overflow: hidden;
+        }
+
+        .strength-fill {
+            height: 100%;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+
+        .strength-weak {
+            background: #dc3545;
+            width: 25%;
+        }
+
+        .strength-fair {
+            background: #ffc107;
+            width: 50%;
+        }
+
+        .strength-good {
+            background: #17a2b8;
+            width: 75%;
+        }
+
+        .strength-strong {
+            background: #28a745;
+            width: 100%;
+        }
+    </style>
+}

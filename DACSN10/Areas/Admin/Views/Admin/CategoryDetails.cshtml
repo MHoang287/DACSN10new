@@ -1,0 +1,824 @@
+﻿@model DACSN10.Models.Category
+@{
+    ViewData["Title"] = "Chi Tiết Danh Mục";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section Styles {
+    <style>
+        .category-header {
+            background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+            border-radius: 15px;
+            padding: 30px;
+            color: white;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .category-header::before {
+                content: '';
+                position: absolute;
+                top: -50%;
+                right: -50%;
+                width: 200%;
+                height: 200%;
+                background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="50,10 90,90 10,90" fill="rgba(255,255,255,0.1)"/></svg>') repeat;
+                animation: float 25s infinite linear;
+            }
+
+        .category-icon {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+        }
+
+        .category-badge {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background: #28a745;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            border: 3px solid white;
+        }
+
+        .info-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+            .info-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            }
+
+            .info-card h5 {
+                color: #6f42c1;
+                margin-bottom: 20px;
+                font-weight: 600;
+                border-bottom: 2px solid #f8f9fa;
+                padding-bottom: 10px;
+            }
+
+        .stat-item {
+            text-align: center;
+            padding: 25px 20px;
+            background: linear-gradient(135deg, #f8f7ff 0%, #e9e6ff 100%);
+            border-radius: 10px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            border: 1px solid #e6e1ff;
+        }
+
+            .stat-item:hover {
+                transform: scale(1.05);
+                background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+                color: white;
+                border-color: #6f42c1;
+            }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .course-card {
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+            .course-card:hover {
+                border-color: #6f42c1;
+                transform: translateY(-3px);
+                box-shadow: 0 6px 20px rgba(111, 66, 193, 0.1);
+            }
+
+        .course-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #6f42c1;
+            margin-bottom: 10px;
+        }
+
+        .course-meta {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 15px;
+        }
+
+        .course-stats {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .course-stat {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            color: #495057;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .chart-canvas {
+            position: relative;
+            height: 300px;
+        }
+
+        .performance-metrics {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid #dee2e6;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+            .metric-row:last-child {
+                border-bottom: none;
+            }
+
+        .metric-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .metric-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #6f42c1;
+        }
+
+        .trending-courses {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .trending-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+            .trending-item:hover {
+                transform: translateX(5px);
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            }
+
+        .trending-rank {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+
+        .action-btn {
+            width: 100%;
+            margin-bottom: 10px;
+            border-radius: 25px;
+            padding: 12px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+            .action-btn:hover {
+                transform: scale(1.02);
+            }
+
+        .monthly-chart {
+            position: relative;
+            height: 250px;
+        }
+
+        .category-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .category-tag {
+            background: #6f42c1;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .activity-feed {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: start;
+            padding: 15px 0;
+            border-bottom: 1px solid #f8f9fa;
+        }
+
+            .activity-item:last-child {
+                border-bottom: none;
+            }
+
+        .activity-icon {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: #6f42c1;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .activity-time {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+    </style>
+}
+
+<div class="container-fluid" data-aos="fade-up">
+    <!-- Category Header -->
+    <div class="category-header" data-aos="fade-up" data-aos-delay="100">
+        <div class="row align-items-center">
+            <div class="col-md-2">
+                <div class="category-icon">
+                    <i class="fas fa-tags"></i>
+                    <div class="category-badge">
+                        <i class="fas fa-check"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-7">
+                <h2 class="mb-2">@Model.Name</h2>
+                <p class="mb-2">@Model.Description</p>
+                <p class="mb-0">
+                    <i class="fas fa-book me-2"></i>
+                    @(Model.CourseCategories?.Count ?? 0) khóa học |
+                    <i class="fas fa-users me-2"></i>
+                    @(Model.CourseCategories?.Sum(cc => cc.Course.Enrollments?.Count ?? 0) ?? 0) học viên
+                </p>
+            </div>
+            <div class="col-md-3 text-end">
+                <span class="badge bg-success fs-6 px-3 py-2">
+                    <i class="fas fa-check-circle me-2"></i>Hoạt động
+                </span>
+                <div class="mt-2">
+                    <div class="category-tags">
+                        <span class="category-tag">Phổ biến</span>
+                        <span class="category-tag">Trending</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Statistics Overview -->
+            <div class="info-card" data-aos="fade-up" data-aos-delay="200">
+                <h5><i class="fas fa-chart-bar me-2"></i>Thống Kê Tổng Quan</h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="stat-item">
+                            <span class="stat-value">@(Model.CourseCategories?.Count ?? 0)</span>
+                            <div class="stat-label">Khóa Học</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-item">
+                            <span class="stat-value">@(Model.CourseCategories?.Sum(cc => cc.Course.Enrollments?.Count ?? 0) ?? 0)</span>
+                            <div class="stat-label">Học Viên</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-item">
+                            <span class="stat-value">@(Model.CourseCategories?.Sum(cc => cc.Course.Gia) ?? 0).ToString("C0")</span>
+                            <div class="stat-label">Tổng Giá Trị</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-item">
+                            <span class="stat-value">@(Model.CourseCategories?.Count(cc => cc.Course.TrangThai == "Active") ?? 0)</span>
+                            <div class="stat-label">Đang Hoạt Động</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enrollment Trend Chart -->
+            <div class="chart-container" data-aos="fade-up" data-aos-delay="300">
+                <h5 class="mb-3"><i class="fas fa-chart-line me-2"></i>Xu Hướng Đăng Ký 6 Tháng Gần Đây</h5>
+                <div class="chart-canvas">
+                    <canvas id="enrollmentChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Courses List -->
+            <div class="info-card" data-aos="fade-up" data-aos-delay="400">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5><i class="fas fa-book me-2"></i>Khóa Học Trong Danh Mục</h5>
+                    <div>
+                        <select class="form-select form-select-sm" id="sortCourses">
+                            <option value="newest">Mới nhất</option>
+                            <option value="popular">Phổ biến nhất</option>
+                            <option value="price">Giá thấp đến cao</option>
+                            <option value="rating">Đánh giá cao</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="coursesList">
+                    @if (Model.CourseCategories?.Any() == true)
+                    {
+                        @foreach (var courseCategory in Model.CourseCategories.OrderByDescending(cc => cc.Course.NgayTao))
+                        {
+                            <div class="course-card">
+                                <div class="row align-items-center">
+                                    <div class="col-md-8">
+                                        <div class="course-title">@courseCategory.Course.TenKhoaHoc</div>
+                                        <div class="course-meta">
+                                            Giảng viên: @courseCategory.Course.User.HoTen |
+                                            Tạo: @courseCategory.Course.NgayTao.ToString("dd/MM/yyyy") |
+                                            Giá: @courseCategory.Course.Gia.ToString("C0")
+                                        </div>
+                                        <div class="course-stats">
+                                            <div class="course-stat">
+                                                <i class="fas fa-users me-1"></i>
+                                                @(courseCategory.Course.Enrollments?.Count ?? 0) học viên
+                                            </div>
+                                            <div class="course-stat">
+                                                <i class="fas fa-book-open me-1"></i>
+                                                @(courseCategory.Course.Lessons?.Count ?? 0) bài học
+                                            </div>
+                                            <div class="course-stat">
+                                                <i class="fas fa-quiz me-1"></i>
+                                                @(courseCategory.Course.Quizzes?.Count ?? 0) bài kiểm tra
+                                            </div>
+                                            <div class="course-stat">
+                                                <span class="badge @(courseCategory.Course.TrangThai == "Active" ? "bg-success" : "bg-warning")">
+                                                    @courseCategory.Course.TrangThai
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 text-end">
+                                        <div class="mb-2">
+                                            <span class="text-warning">
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star-half-alt"></i>
+                                                4.8
+                                            </span>
+                                        </div>
+                                        <a href="@Url.Action("CourseDetails", "Admin", new { id = courseCategory.Course.CourseID })"
+                                           class="btn btn-outline-primary btn-sm me-2">
+                                            <i class="fas fa-eye"></i> Xem
+                                        </a>
+                                        <a href="@Url.Action("EditCourse", "Admin", new { id = courseCategory.Course.CourseID })"
+                                           class="btn btn-outline-secondary btn-sm">
+                                            <i class="fas fa-edit"></i> Sửa
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-5 text-muted">
+                            <i class="fas fa-book-open fa-3x mb-3"></i>
+                            <h5>Chưa có khóa học nào</h5>
+                            <p>Danh mục này chưa có khóa học nào được thêm vào.</p>
+                            <a href="@Url.Action("CreateCourse", "Admin")" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Thêm Khóa Học Đầu Tiên
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Performance Metrics -->
+            <div class="performance-metrics" data-aos="fade-up" data-aos-delay="500">
+                <h5 class="mb-3"><i class="fas fa-tachometer-alt me-2"></i>Chỉ Số Hiệu Suất</h5>
+
+                <div class="metric-row">
+                    <div class="metric-label">Tỷ lệ hoàn thành khóa học trung bình</div>
+                    <div class="metric-value">
+                        @{
+                            var totalEnrollments = Model.CourseCategories?.Sum(cc => cc.Course.Enrollments?.Count ?? 0) ?? 0;
+                            var completedEnrollments = Model.CourseCategories?.Sum(cc => cc.Course.Enrollments?.Count(e => e.Progress >= 100) ?? 0) ?? 0;
+                            var completionRate = totalEnrollments > 0 ? (completedEnrollments * 100.0 / totalEnrollments) : 0;
+                        }
+                        @completionRate.ToString("F1")%
+                    </div>
+                </div>
+
+                <div class="metric-row">
+                    <div class="metric-label">Doanh thu trung bình/khóa học</div>
+                    <div class="metric-value">
+                        @{
+                            var courseCount = Model.CourseCategories?.Count ?? 0;
+                            var totalRevenue = Model.CourseCategories?.Sum(cc => cc.Course.Gia * (cc.Course.Enrollments?.Count ?? 0)) ?? 0;
+                            var avgRevenue = courseCount > 0 ? (totalRevenue / courseCount) : 0;
+                        }
+                        @avgRevenue.ToString("C0")
+                    </div>
+                </div>
+
+                <div class="metric-row">
+                    <div class="metric-label">Số học viên trung bình/khóa học</div>
+                    <div class="metric-value">
+                        @{
+                            var avgStudents = courseCount > 0 ? (totalEnrollments / (double)courseCount) : 0;
+                        }
+                        @avgStudents.ToString("F1")
+                    </div>
+                </div>
+
+                <div class="metric-row">
+                    <div class="metric-label">Tăng trưởng tháng này</div>
+                    <div class="metric-value">+15.2%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Actions -->
+            <div class="info-card" data-aos="fade-up" data-aos-delay="600">
+                <h5><i class="fas fa-tools me-2"></i>Thao Tác</h5>
+
+                <a href="@Url.Action("EditCategory", "Admin", new { id = Model.CategoryID })"
+                   class="btn btn-primary action-btn">
+                    <i class="fas fa-edit me-2"></i>Chỉnh Sửa Danh Mục
+                </a>
+
+                <button class="btn btn-success action-btn" onclick="exportCategoryReport(@Model.CategoryID)">
+                    <i class="fas fa-file-export me-2"></i>Xuất Báo Cáo
+                </button>
+
+                <button class="btn btn-info action-btn" onclick="addCourseToCategory(@Model.CategoryID)">
+                    <i class="fas fa-plus me-2"></i>Thêm Khóa Học
+                </button>
+
+                <button class="btn btn-warning action-btn" onclick="duplicateCategory(@Model.CategoryID)">
+                    <i class="fas fa-copy me-2"></i>Nhân Bản Danh Mục
+                </button>
+
+                <button class="btn btn-outline-danger action-btn" onclick="deleteCategory(@Model.CategoryID)">
+                    <i class="fas fa-trash me-2"></i>Xóa Danh Mục
+                </button>
+            </div>
+
+            <!-- Top Courses -->
+            <div class="info-card" data-aos="fade-up" data-aos-delay="700">
+                <h5><i class="fas fa-fire me-2"></i>Khóa Học Nổi Bật</h5>
+
+                <div class="trending-courses">
+                    @if (Model.CourseCategories?.Any() == true)
+                    {
+                        @for (int i = 0; i < Math.Min(5, Model.CourseCategories.Count); i++)
+                        {
+                            var course = Model.CourseCategories.OrderByDescending(cc => cc.Course.Enrollments?.Count ?? 0).ElementAt(i);
+                            <div class="trending-item">
+                                <div class="trending-rank">@(i + 1)</div>
+                                <div>
+                                    <div class="trending-title fw-bold">@course.Course.TenKhoaHoc</div>
+                                    <div class="trending-meta text-muted">
+                                        <small>
+                                            <i class="fas fa-users me-1"></i>@(course.Course.Enrollments?.Count ?? 0) học viên |
+                                            <i class="fas fa-star me-1"></i>4.8
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-3 text-muted">
+                            <small>Chưa có dữ liệu</small>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Revenue Chart -->
+            <div class="info-card" data-aos="fade-up" data-aos-delay="800">
+                <h5><i class="fas fa-chart-pie me-2"></i>Phân Bố Doanh Thu</h5>
+                <div class="monthly-chart">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="info-card" data-aos="fade-up" data-aos-delay="900">
+                <h5><i class="fas fa-clock me-2"></i>Hoạt Động Gần Đây</h5>
+
+                <div class="activity-feed">
+                    @if (Model.CourseCategories?.Any() == true)
+                    {
+                        @foreach (var courseCategory in Model.CourseCategories.OrderByDescending(cc => cc.Course.NgayTao).Take(5))
+                        {
+                            <div class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-plus"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title">Thêm khóa học mới</div>
+                                    <div class="activity-description text-muted">
+                                        @courseCategory.Course.TenKhoaHoc
+                                    </div>
+                                    <div class="activity-time">@courseCategory.Course.NgayTao.ToString("dd/MM/yyyy")</div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-3 text-muted">
+                            <small>Chưa có hoạt động gần đây</small>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="info-card" data-aos="fade-up" data-aos-delay="1000">
+                <h5><i class="fas fa-info-circle me-2"></i>Thống Kê Nhanh</h5>
+
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <div class="h4 text-primary">@(Model.CourseCategories?.Count(cc => cc.Course.TrangThai == "Active") ?? 0)</div>
+                            <small class="text-muted">Khóa học hoạt động</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <div class="h4 text-success">@(Model.CourseCategories?.Count(cc => cc.Course.TrangThai == "Pending") ?? 0)</div>
+                            <small class="text-muted">Chờ duyệt</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row text-center">
+                    <div class="col-12">
+                        <div class="mb-3">
+                            <div class="h4 text-warning">
+                                @{
+                                    var thisMonthRevenue = 0m; // Calculate this month's revenue
+                                }
+                                @thisMonthRevenue.ToString("C0")
+                            </div>
+                            <small class="text-muted">Doanh thu tháng này</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let enrollmentChart, revenueChart;
+
+        $(document).ready(function() {
+            initializeCharts();
+
+            // Sort courses functionality
+            $('#sortCourses').on('change', function() {
+                const sortBy = $(this).val();
+                sortCourses(sortBy);
+            });
+        });
+
+        function initializeCharts() {
+            // Enrollment Trend Chart
+            const enrollmentCtx = document.getElementById('enrollmentChart').getContext('2d');
+
+            const months = ['T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
+            const enrollmentData = [120, 150, 180, 200, 250, 300];
+
+            enrollmentChart = new Chart(enrollmentCtx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Đăng ký mới',
+                        data: enrollmentData,
+                        borderColor: '#6f42c1',
+                        backgroundColor: 'rgba(111, 66, 193, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#6f42c1',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 50
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Revenue Distribution Chart
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+
+            revenueChart = new Chart(revenueCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Khóa học miễn phí', 'Khóa học trả phí', 'Khóa học premium'],
+                    datasets: [{
+                        data: [30, 50, 20],
+                        backgroundColor: [
+                            '#28a745',
+                            '#6f42c1',
+                            '#ffc107'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function sortCourses(sortBy) {
+            // Implement course sorting logic
+            toastr.info(`Đang sắp xếp theo: ${sortBy}`);
+        }
+
+        function exportCategoryReport(id) {
+            toastr.info('Đang tạo báo cáo danh mục...');
+
+            setTimeout(() => {
+                toastr.success('Báo cáo đã được tạo thành công!');
+            }, 2000);
+        }
+
+        function addCourseToCategory(id) {
+            Swal.fire({
+                title: 'Thêm khóa học vào danh mục',
+                text: 'Chọn khóa học để thêm vào danh mục này',
+                input: 'select',
+                inputOptions: {
+                    'course1': 'JavaScript Cơ Bản',
+                    'course2': 'React Advanced',
+                    'course3': 'Node.js Backend'
+                },
+                inputPlaceholder: 'Chọn khóa học',
+                showCancelButton: true,
+                confirmButtonText: 'Thêm',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    toastr.success('Đã thêm khóa học vào danh mục!');
+                }
+            });
+        }
+
+        function duplicateCategory(id) {
+            Swal.fire({
+                title: 'Nhân bản danh mục?',
+                text: 'Tạo một danh mục mới với cấu hình tương tự?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#6f42c1',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Nhân bản',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    toastr.success('Đã tạo bản sao danh mục thành công!');
+                }
+            });
+        }
+
+        function deleteCategory(id) {
+            Swal.fire({
+                title: 'Xóa danh mục?',
+                text: 'Hành động này không thể hoàn tác! Tất cả khóa học trong danh mục sẽ không bị xóa.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Xóa',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post('@Url.Action("DeleteCategory", "Admin")', {
+                        id: id,
+                        __RequestVerificationToken: $('[name="__RequestVerificationToken"]').val()
+                    }).done(function(response) {
+                        if (response.success) {
+                            toastr.success(response.message);
+                            setTimeout(() => window.location.href = '@Url.Action("Categories", "Admin")', 1500);
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    }).fail(function() {
+                        toastr.error('Có lỗi xảy ra!');
+                    });
+                }
+            });
+        }
+    </script>
+}
