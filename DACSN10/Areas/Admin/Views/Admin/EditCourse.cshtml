@@ -1,0 +1,441 @@
+﻿@model Course
+@{
+    ViewData["Title"] = "Chỉnh sửa khóa học";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item"><a href="/Admin/Admin/Courses">Quản lý khóa học</a></li>
+    <li class="breadcrumb-item active">Chỉnh sửa khóa học</li>
+}
+
+@section Styles {
+    <style>
+        .form-floating .form-control {
+            border-radius: 10px;
+        }
+
+        .category-checkbox {
+            transition: all 0.3s ease;
+        }
+
+            .category-checkbox:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            }
+
+        .preview-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+        }
+
+        .price-input-group {
+            position: relative;
+        }
+
+            .price-input-group .form-control {
+                padding-left: 50px;
+            }
+
+        .price-currency {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            color: #6c757d;
+            font-weight: 600;
+        }
+    </style>
+}
+
+<div class="container-fluid" data-aos="fade-up">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg border-0 mb-4">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="card-title mb-0">
+                                <i class="fas fa-edit me-2"></i>Chỉnh sửa khóa học
+                            </h4>
+                            <small class="opacity-75">Cập nhật thông tin khóa học</small>
+                        </div>
+                        <a href="/Admin/Admin/Courses" class="btn btn-light btn-sm">
+                            <i class="fas fa-arrow-left me-1"></i>Quay lại
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form asp-action="EditCourse" method="post" id="editCourseForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="CourseID" />
+        <input type="hidden" asp-for="NgayTao" />
+
+        <div class="row">
+            <!-- Form chính -->
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0 mb-4" data-aos="fade-right">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="fas fa-info-circle text-primary me-2"></i>Thông tin cơ bản
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    <input asp-for="TenKhoaHoc" class="form-control" id="tenKhoaHoc"
+                                           placeholder="Tên khóa học" maxlength="200" required>
+                                    <label for="tenKhoaHoc">
+                                        <i class="fas fa-book me-1"></i>Tên khóa học *
+                                    </label>
+                                    <span asp-validation-for="TenKhoaHoc" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select asp-for="UserID" class="form-select" id="giangVien" required>
+                                        <option value="">-- Chọn giảng viên --</option>
+                                        @foreach (var teacher in ViewBag.Teachers as SelectList)
+                                        {
+                                            <option value="@teacher.Value" selected="@(teacher.Selected)">@teacher.Text</option>
+                                        }
+                                    </select>
+                                    <label for="giangVien">
+                                        <i class="fas fa-chalkboard-teacher me-1"></i>Giảng viên *
+                                    </label>
+                                    <span asp-validation-for="UserID" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select asp-for="TrangThai" class="form-select" id="trangThai" required>
+                                        <option value="Active">Đã kích hoạt</option>
+                                        <option value="Pending">Chờ duyệt</option>
+                                        <option value="Inactive">Tạm ngưng</option>
+                                        <option value="Archived">Lưu trữ</option>
+                                    </select>
+                                    <label for="trangThai">
+                                        <i class="fas fa-toggle-on me-1"></i>Trạng thái *
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-floating price-input-group">
+                                    <span class="price-currency">₫</span>
+                                    <input asp-for="Gia" class="form-control" id="gia"
+                                           type="number" min="0" max="50000000" step="1000"
+                                           placeholder="Giá khóa học" required>
+                                    <label for="gia">Giá khóa học (VNĐ) *</label>
+                                    <span asp-validation-for="Gia" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-floating price-input-group">
+                                    <span class="price-currency">₫</span>
+                                    <input name="discountPrice" class="form-control" id="discountPrice"
+                                           type="number" min="0" step="1000"
+                                           placeholder="Giá khuyến mãi">
+                                    <label for="discountPrice">Giá khuyến mãi (VNĐ)</label>
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle me-1"></i>Để trống nếu không có khuyến mãi
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    <textarea asp-for="MoTa" class="form-control" id="moTa"
+                                              style="height: 120px" placeholder="Mô tả khóa học" maxlength="1000"></textarea>
+                                    <label for="moTa">
+                                        <i class="fas fa-align-left me-1"></i>Mô tả khóa học
+                                    </label>
+                                    <span asp-validation-for="MoTa" class="text-danger small"></span>
+                                    <div class="form-text">
+                                        <span id="charCount">0</span>/1000 ký tự
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Danh mục -->
+                <div class="card shadow-sm border-0 mb-4" data-aos="fade-right" data-aos-delay="100">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="fas fa-tags text-success me-2"></i>Danh mục khóa học
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            @if (ViewBag.Categories != null)
+                            {
+                                @foreach (var category in ViewBag.Categories as SelectList)
+                                {
+                                    var isSelected = ViewBag.SelectedCategories != null &&
+                                    ((int[])ViewBag.SelectedCategories).Contains(int.Parse(category.Value));
+
+                                    <div class="col-md-6 col-lg-4">
+                                        <div class="form-check category-checkbox p-3 border rounded-3 h-100">
+                                            <input class="form-check-input" type="checkbox"
+                                                   name="selectedCategories" value="@category.Value"
+                                                   id="category_@category.Value" @(isSelected ? "checked" : "")>
+                                            <label class="form-check-label w-100" for="category_@category.Value">
+                                                <i class="fas fa-tag text-primary me-2"></i>
+                                                <strong>@category.Text</strong>
+                                            </label>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                        <div class="form-text mt-3">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Chọn các danh mục phù hợp với khóa học của bạn
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview và Actions -->
+            <div class="col-lg-4">
+                <!-- Preview Card -->
+                <div class="card preview-card shadow-lg border-0 mb-4" data-aos="fade-left">
+                    <div class="card-body p-4">
+                        <h5 class="card-title text-white mb-3">
+                            <i class="fas fa-eye me-2"></i>Xem trước
+                        </h5>
+
+                        <div class="preview-content">
+                            <h6 class="text-white-50 mb-2">Tên khóa học:</h6>
+                            <p id="previewTitle" class="text-white fw-bold mb-3">
+                                @Model.TenKhoaHoc
+                            </p>
+
+                            <h6 class="text-white-50 mb-2">Giá:</h6>
+                            <p id="previewPrice" class="text-white fw-bold mb-3">
+                                @(Model.Gia.ToString("N0")) VNĐ
+                            </p>
+
+                            <h6 class="text-white-50 mb-2">Trạng thái:</h6>
+                            <span id="previewStatus" class="badge bg-light text-dark mb-3">
+                                @(Model.TrangThai == "Active" ? "Đã kích hoạt" :
+                                    Model.TrangThai == "Pending" ? "Chờ duyệt" :
+                                    Model.TrangThai == "Inactive" ? "Tạm ngưng" : "Lưu trữ")
+                            </span>
+
+                            <h6 class="text-white-50 mb-2">Mô tả:</h6>
+                            <p id="previewDescription" class="text-white-50 small">
+                                @(string.IsNullOrEmpty(Model.MoTa) ? "Chưa có mô tả" :
+                                    Model.MoTa.Length > 100 ? Model.MoTa.Substring(0, 100) + "..." : Model.MoTa)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="card shadow-sm border-0" data-aos="fade-left" data-aos-delay="100">
+                    <div class="card-body p-4">
+                        <div class="d-grid gap-3">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save me-2"></i>Cập nhật khóa học
+                            </button>
+
+                            <a href="/Admin/Admin/CourseDetails/@Model.CourseID"
+                               class="btn btn-outline-info">
+                                <i class="fas fa-eye me-2"></i>Xem chi tiết
+                            </a>
+
+                            <a href="/Admin/Admin/Courses" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Hủy bỏ
+                            </a>
+                        </div>
+
+                        <hr class="my-3">
+
+                        <div class="text-center">
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>
+                                Tạo ngày: @Model.NgayTao.ToString("dd/MM/yyyy HH:mm")
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Character count for description
+            const moTaTextarea = $('#moTa');
+            const charCount = $('#charCount');
+
+            function updateCharCount() {
+                const count = moTaTextarea.val().length;
+                charCount.text(count);
+
+                if (count > 800) {
+                    charCount.addClass('text-danger');
+                } else if (count > 600) {
+                    charCount.addClass('text-warning').removeClass('text-danger');
+                } else {
+                    charCount.removeClass('text-warning text-danger');
+                }
+            }
+
+            moTaTextarea.on('input', updateCharCount);
+            updateCharCount();
+
+            // Real-time preview updates
+            $('#tenKhoaHoc').on('input', function() {
+                const value = $(this).val() || 'Tên khóa học chưa được nhập';
+                $('#previewTitle').text(value);
+            });
+
+            $('#gia').on('input', function() {
+                const value = $(this).val();
+                const formatted = value ? parseInt(value).toLocaleString('vi-VN') + ' VNĐ' : '0 VNĐ';
+                $('#previewPrice').text(formatted);
+            });
+
+            $('#discountPrice').on('input', function() {
+                const originalPrice = $('#gia').val();
+                const discountPrice = $(this).val();
+
+                if (discountPrice && discountPrice < originalPrice) {
+                    const formatted = parseInt(discountPrice).toLocaleString('vi-VN') + ' VNĐ';
+                    const originalFormatted = parseInt(originalPrice).toLocaleString('vi-VN') + ' VNĐ';
+                    $('#previewPrice').html(
+                        '<span class="text-decoration-line-through opacity-75">' + originalFormatted + '</span><br>' +
+                        '<span class="text-warning fw-bold">' + formatted + '</span>'
+                    );
+                } else {
+                    const value = originalPrice;
+                    const formatted = value ? parseInt(value).toLocaleString('vi-VN') + ' VNĐ' : '0 VNĐ';
+                    $('#previewPrice').text(formatted);
+                }
+            });
+
+            $('#trangThai').on('change', function() {
+                const value = $(this).val();
+                const statusMap = {
+                    'Active': { text: 'Đã kích hoạt', class: 'bg-success' },
+                    'Pending': { text: 'Chờ duyệt', class: 'bg-warning text-dark' },
+                    'Inactive': { text: 'Tạm ngưng', class: 'bg-secondary' },
+                    'Archived': { text: 'Lưu trữ', class: 'bg-dark' }
+                };
+
+                const status = statusMap[value] || { text: value, class: 'bg-light text-dark' };
+                $('#previewStatus').attr('class', 'badge mb-3 ' + status.class).text(status.text);
+            });
+
+            $('#moTa').on('input', function() {
+                const value = $(this).val();
+                const preview = value.length > 100 ? value.substring(0, 100) + '...' : value;
+                $('#previewDescription').text(preview || 'Chưa có mô tả');
+            });
+
+            // Form validation
+            $('#editCourseForm').on('submit', function(e) {
+                const tenKhoaHoc = $('#tenKhoaHoc').val().trim();
+                const gia = $('#gia').val();
+                const giangVien = $('#giangVien').val();
+
+                if (!tenKhoaHoc) {
+                    e.preventDefault();
+                    showError('Vui lòng nhập tên khóa học');
+                    $('#tenKhoaHoc').focus();
+                    return;
+                }
+
+                if (!gia || gia < 0) {
+                    e.preventDefault();
+                    showError('Vui lòng nhập giá khóa học hợp lệ');
+                    $('#gia').focus();
+                    return;
+                }
+
+                if (!giangVien) {
+                    e.preventDefault();
+                    showError('Vui lòng chọn giảng viên');
+                    $('#giangVien').focus();
+                    return;
+                }
+
+                // Show loading
+                showLoading();
+            });
+
+            // Format currency inputs
+            $('#gia, #discountPrice').on('blur', function() {
+                const value = $(this).val();
+                if (value) {
+                    $(this).val(Math.round(value));
+                }
+            });
+
+            // Category selection counter
+            $('input[name="selectedCategories"]').on('change', function() {
+                const selectedCount = $('input[name="selectedCategories"]:checked').length;
+                console.log('Đã chọn ' + selectedCount + ' danh mục');
+            });
+
+            // Smooth scrolling for validation errors
+            if ($('.text-danger').length > 0) {
+                $('html, body').animate({
+                    scrollTop: $('.text-danger').first().offset().top - 100
+                }, 500);
+            }
+        });
+
+        // Auto-save draft functionality (optional)
+        let autoSaveTimer;
+        function autoSaveDraft() {
+            clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(function() {
+                const formData = {
+                    tenKhoaHoc: $('#tenKhoaHoc').val(),
+                    moTa: $('#moTa').val(),
+                    gia: $('#gia').val()
+                };
+                localStorage.setItem('editCourse_draft_@Model.CourseID', JSON.stringify(formData));
+                console.log('Draft saved');
+            }, 2000);
+        }
+
+        $('#tenKhoaHoc, #moTa, #gia').on('input', autoSaveDraft);
+
+        // Load draft on page load
+        $(document).ready(function() {
+            const draftKey = 'editCourse_draft_@Model.CourseID';
+            const draft = localStorage.getItem(draftKey);
+
+            if (draft) {
+                try {
+                    const draftData = JSON.parse(draft);
+                    if (confirm('Bạn có muốn khôi phục bản nháp đã lưu không?')) {
+                        $('#tenKhoaHoc').val(draftData.tenKhoaHoc || '').trigger('input');
+                        $('#moTa').val(draftData.moTa || '').trigger('input');
+                        $('#gia').val(draftData.gia || '').trigger('input');
+                    }
+                    localStorage.removeItem(draftKey);
+                } catch (e) {
+                    console.log('Error loading draft:', e);
+                }
+            }
+        });
+    </script>
+}

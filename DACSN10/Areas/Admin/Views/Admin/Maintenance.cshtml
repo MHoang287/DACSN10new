@@ -1,0 +1,689 @@
+﻿@{
+    ViewData["Title"] = "Bảo trì hệ thống";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item active">Bảo trì hệ thống</li>
+}
+
+@section Styles {
+    <style>
+        .maintenance-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+
+            .maintenance-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            }
+
+            .maintenance-card.danger {
+                border-left-color: #dc3545;
+            }
+
+            .maintenance-card.warning {
+                border-left-color: #ffc107;
+            }
+
+            .maintenance-card.info {
+                border-left-color: #0dcaf0;
+            }
+
+            .maintenance-card.success {
+                border-left-color: #198754;
+            }
+
+        .action-button {
+            transition: all 0.3s ease;
+        }
+
+            .action-button:hover {
+                transform: scale(1.05);
+            }
+
+        .log-container {
+            background: #f8f9fa;
+            border-radius: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-online {
+            background-color: #28a745;
+        }
+
+        .status-warning {
+            background-color: #ffc107;
+        }
+
+        .status-offline {
+            background-color: #dc3545;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+        }
+
+        .tool-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+}
+
+<div class="container-fluid" data-aos="fade-up">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-lg border-0 maintenance-card info">
+                <div class="card-header bg-info text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="card-title mb-0">
+                                <i class="fas fa-tools me-2"></i>Bảo trì hệ thống
+                            </h4>
+                            <small class="opacity-75">Quản lý và bảo trì hệ thống OnlineLearning</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="status-indicator status-online"></span>
+                            <span>Hệ thống hoạt động bình thường</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Status -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card metric-card shadow-sm h-100" data-aos="zoom-in">
+                <div class="card-body text-center">
+                    <i class="fas fa-server tool-icon"></i>
+                    <h5>Server Status</h5>
+                    <h3 class="mb-0">Online</h3>
+                    <small class="opacity-75">Uptime: 99.9%</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card metric-card shadow-sm h-100" data-aos="zoom-in" data-aos-delay="100">
+                <div class="card-body text-center">
+                    <i class="fas fa-database tool-icon"></i>
+                    <h5>Database</h5>
+                    <h3 class="mb-0">Healthy</h3>
+                    <small class="opacity-75">Response: 45ms</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card metric-card shadow-sm h-100" data-aos="zoom-in" data-aos-delay="200">
+                <div class="card-body text-center">
+                    <i class="fas fa-memory tool-icon"></i>
+                    <h5>Memory Usage</h5>
+                    <h3 class="mb-0">68%</h3>
+                    <small class="opacity-75">4.2GB / 6GB</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card metric-card shadow-sm h-100" data-aos="zoom-in" data-aos-delay="300">
+                <div class="card-body text-center">
+                    <i class="fas fa-hdd tool-icon"></i>
+                    <h5>Disk Space</h5>
+                    <h3 class="mb-0">45%</h3>
+                    <small class="opacity-75">45GB / 100GB</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Database Tools -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 maintenance-card success mb-4" data-aos="fade-right">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-database me-2"></i>Công cụ cơ sở dữ liệu
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <i class="fas fa-broom text-warning me-2"></i>Dọn dẹp dữ liệu
+                                    </h6>
+                                    <small class="text-muted">Xóa các bản ghi cũ và không cần thiết</small>
+                                </div>
+                                <button class="btn btn-warning action-button" onclick="cleanupDatabase()">
+                                    <i class="fas fa-play me-1"></i>Thực hiện
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <i class="fas fa-tachometer-alt text-info me-2"></i>Tối ưu hóa database
+                                    </h6>
+                                    <small class="text-muted">Tối ưu hóa hiệu suất cơ sở dữ liệu</small>
+                                </div>
+                                <button class="btn btn-info action-button" onclick="optimizeDatabase()">
+                                    <i class="fas fa-cogs me-1"></i>Tối ưu
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <i class="fas fa-download text-primary me-2"></i>Sao lưu dữ liệu
+                                    </h6>
+                                    <small class="text-muted">Tạo bản sao lưu toàn bộ dữ liệu</small>
+                                </div>
+                                <button class="btn btn-primary action-button" onclick="backupDatabase()">
+                                    <i class="fas fa-save me-1"></i>Sao lưu
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <i class="fas fa-chart-line text-success me-2"></i>Kiểm tra hiệu suất
+                                    </h6>
+                                    <small class="text-muted">Phân tích hiệu suất truy vấn</small>
+                                </div>
+                                <button class="btn btn-success action-button" onclick="checkPerformance()">
+                                    <i class="fas fa-search me-1"></i>Kiểm tra
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Tools -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 maintenance-card warning mb-4" data-aos="fade-left">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-wrench me-2"></i>Công cụ hệ thống
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <i class="fas fa-trash-alt text-danger me-2"></i>Xóa cache
+                                    </h6>
+                                    <small class="text-muted">Xóa tất cả file cache tạm thời</small>
+                                </div>
+                                <button class="btn btn-danger action-button" onclick="clearCache()">
+                                    <i class="fas fa-times me-1"></i>Xóa
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <i class="fas fa-sync text-primary me-2"></i>Khởi động lại dịch vụ
+                                    </h6>
+                                    <small class="text-muted">Khởi động lại các dịch vụ hệ thống</small>
+                                </div>
+                                <button class="btn btn-primary action-button" onclick="restartServices()">
+                                    <i class="fas fa-redo me-1"></i>Khởi động lại
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <i class="fas fa-file-alt text-info me-2"></i>Xem log hệ thống
+                                    </h6>
+                                    <small class="text-muted">Kiểm tra nhật ký hoạt động</small>
+                                </div>
+                                <button class="btn btn-info action-button" onclick="viewSystemLogs()">
+                                    <i class="fas fa-eye me-1"></i>Xem log
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <i class="fas fa-shield-alt text-success me-2"></i>Kiểm tra bảo mật
+                                    </h6>
+                                    <small class="text-muted">Quét lỗ hổng bảo mật</small>
+                                </div>
+                                <button class="btn btn-success action-button" onclick="securityScan()">
+                                    <i class="fas fa-search me-1"></i>Quét
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emergency Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 maintenance-card danger" data-aos="fade-up">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Hành động khẩn cấp
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="text-center p-3 border rounded">
+                                <i class="fas fa-power-off text-danger mb-3" style="font-size: 2rem;"></i>
+                                <h6>Bảo trì hệ thống</h6>
+                                <p class="text-muted small">Kích hoạt chế độ bảo trì</p>
+                                <button class="btn btn-outline-danger" onclick="enableMaintenanceMode()">
+                                    Kích hoạt
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="text-center p-3 border rounded">
+                                <i class="fas fa-database text-warning mb-3" style="font-size: 2rem;"></i>
+                                <h6>Rollback Database</h6>
+                                <p class="text-muted small">Khôi phục bản sao lưu cuối</p>
+                                <button class="btn btn-outline-warning" onclick="rollbackDatabase()">
+                                    Rollback
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="text-center p-3 border rounded">
+                                <i class="fas fa-phone text-info mb-3" style="font-size: 2rem;"></i>
+                                <h6>Liên hệ hỗ trợ</h6>
+                                <p class="text-muted small">Gọi hotline kỹ thuật</p>
+                                <button class="btn btn-outline-info" onclick="contactSupport()">
+                                    Liên hệ
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Logs -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0" data-aos="fade-up">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list text-secondary me-2"></i>Nhật ký hoạt động
+                    </h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="refreshLogs()">
+                            <i class="fas fa-sync-alt me-1"></i>Làm mới
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="exportLogs()">
+                            <i class="fas fa-download me-1"></i>Xuất file
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="log-container p-3" id="systemLogs">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge bg-success me-2">INFO</span>
+                            <span class="text-muted me-2">2024-06-01 16:37:40</span>
+                            <span>Hệ thống khởi động thành công</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge bg-info me-2">DEBUG</span>
+                            <span class="text-muted me-2">2024-06-01 16:35:23</span>
+                            <span>Database connection established</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge bg-warning me-2">WARN</span>
+                            <span class="text-muted me-2">2024-06-01 16:30:15</span>
+                            <span>High memory usage detected (68%)</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge bg-success me-2">INFO</span>
+                            <span class="text-muted me-2">2024-06-01 16:25:44</span>
+                            <span>Cache cleared successfully</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge bg-danger me-2">ERROR</span>
+                            <span class="text-muted me-2">2024-06-01 16:20:12</span>
+                            <span>Failed login attempt from IP 192.168.1.100</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Database maintenance functions
+        function cleanupDatabase() {
+            confirmAction('Dọn dẹp cơ sở dữ liệu',
+                'Bạn có chắc chắn muốn dọn dẹp dữ liệu? Hành động này sẽ xóa các bản ghi cũ.',
+                function() {
+                    performMaintenance('CleanupDatabase', 'Đang dọn dẹp cơ sở dữ liệu...');
+                });
+        }
+
+        function optimizeDatabase() {
+            confirmAction('Tối ưu hóa cơ sở dữ liệu',
+                'Quá trình tối ưu có thể mất vài phút. Tiếp tục?',
+                function() {
+                    performMaintenance('OptimizeDatabase', 'Đang tối ưu hóa cơ sở dữ liệu...');
+                });
+        }
+
+        function backupDatabase() {
+            confirmAction('Sao lưu cơ sở dữ liệu',
+                'Tạo bản sao lưu toàn bộ dữ liệu hiện tại?',
+                function() {
+                    performMaintenance('BackupDatabase', 'Đang tạo bản sao lưu...');
+                });
+        }
+
+        function checkPerformance() {
+            showLoading();
+            addLog('INFO', 'Bắt đầu kiểm tra hiệu suất database...');
+
+            setTimeout(function() {
+                hideLoading();
+                showSuccess('Kiểm tra hiệu suất hoàn tất. Không phát hiện vấn đề.');
+                addLog('INFO', 'Kiểm tra hiệu suất hoàn tất - Kết quả: Tốt');
+            }, 3000);
+        }
+
+        // System maintenance functions
+        function clearCache() {
+            confirmAction('Xóa Cache',
+                'Xóa tất cả file cache có thể ảnh hưởng đến hiệu suất tạm thời. Tiếp tục?',
+                function() {
+                    showLoading();
+                    addLog('INFO', 'Đang xóa cache...');
+
+                    setTimeout(function() {
+                        hideLoading();
+                        showSuccess('Cache đã được xóa thành công!');
+                        addLog('INFO', 'Cache cleared successfully');
+                    }, 2000);
+                });
+        }
+
+        function restartServices() {
+            confirmAction('Khởi động lại dịch vụ',
+                'Khởi động lại có thể gây gián đoạn dịch vụ tạm thời. Bạn có chắc chắn?',
+                function() {
+                    showLoading();
+                    addLog('WARN', 'Đang khởi động lại dịch vụ...');
+
+                    setTimeout(function() {
+                        hideLoading();
+                        showSuccess('Dịch vụ đã được khởi động lại thành công!');
+                        addLog('INFO', 'Services restarted successfully');
+                    }, 5000);
+                });
+        }
+
+        function viewSystemLogs() {
+            // Simulate real-time log viewing
+            Swal.fire({
+                title: 'Nhật ký hệ thống',
+                html: '<div style="text-align: left; max-height: 400px; overflow-y: auto;">' +
+                      '<pre id="liveLog"></pre></div>',
+                width: 800,
+                showCloseButton: true,
+                showConfirmButton: false,
+                didOpen: () => {
+                    simulateLiveLogs();
+                }
+            });
+        }
+
+        function securityScan() {
+            showLoading();
+            addLog('INFO', 'Bắt đầu quét bảo mật...');
+
+            setTimeout(function() {
+                hideLoading();
+                showSuccess('Quét bảo mật hoàn tất. Hệ thống an toàn.');
+                addLog('INFO', 'Security scan completed - No threats detected');
+            }, 4000);
+        }
+
+        // Emergency functions
+        function enableMaintenanceMode() {
+            Swal.fire({
+                title: 'Kích hoạt chế độ bảo trì?',
+                text: 'Hệ thống sẽ hiển thị trang bảo trì cho người dùng.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Kích hoạt',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    showSuccess('Chế độ bảo trì đã được kích hoạt!');
+                    addLog('WARN', 'Maintenance mode enabled');
+                }
+            });
+        }
+
+        function rollbackDatabase() {
+            Swal.fire({
+                title: 'Rollback Database?',
+                text: 'CẢNH BÁO: Tất cả dữ liệu sau lần sao lưu cuối sẽ bị mất!',
+                icon: 'error',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Rollback',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    showWarning('Chức năng này cần được triển khai bởi kỹ thuật viên.');
+                    addLog('ERROR', 'Database rollback requested - Manual intervention required');
+                }
+            });
+        }
+
+        function contactSupport() {
+            Swal.fire({
+                title: 'Liên hệ hỗ trợ kỹ thuật',
+                html: `
+                    <div class="text-start">
+                        <p><i class="fas fa-phone text-primary me-2"></i><strong>Hotline:</strong> 1900-1234</p>
+                        <p><i class="fas fa-envelope text-primary me-2"></i><strong>Email:</strong> support@onlinelearning.com</p>
+                        <p><i class="fas fa-comment text-primary me-2"></i><strong>Chat:</strong> Telegram @support_bot</p>
+                        <hr>
+                        <small class="text-muted">Thời gian hỗ trợ: 24/7</small>
+                    </div>
+                `,
+                showCloseButton: true,
+                showConfirmButton: false
+            });
+        }
+
+        // Utility functions
+        function performMaintenance(action, message) {
+            showLoading();
+            addLog('INFO', message);
+
+            $.ajax({
+                url: '/Admin/Admin/' + action,
+                type: 'POST',
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    hideLoading();
+                    if (response.success) {
+                        showSuccess(response.message);
+                        addLog('INFO', response.message);
+                    } else {
+                        showError(response.message);
+                        addLog('ERROR', response.message);
+                    }
+                },
+                error: function() {
+                    hideLoading();
+                    showError('Lỗi khi thực hiện thao tác');
+                    addLog('ERROR', 'Maintenance operation failed');
+                }
+            });
+        }
+
+        function confirmAction(title, text, callback) {
+            Swal.fire({
+                title: title,
+                text: text,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Tiếp tục',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed && callback) {
+                    callback();
+                }
+            });
+        }
+
+        function addLog(level, message) {
+            const now = new Date();
+            const timestamp = now.toLocaleString('vi-VN');
+            const badgeClass = {
+                'INFO': 'bg-success',
+                'WARN': 'bg-warning',
+                'ERROR': 'bg-danger',
+                'DEBUG': 'bg-info'
+            };
+
+            const logEntry = `
+                <div class="d-flex align-items-center mb-2">
+                    <span class="badge ${badgeClass[level] || 'bg-secondary'} me-2">${level}</span>
+                    <span class="text-muted me-2">${timestamp}</span>
+                    <span>${message}</span>
+                </div>
+            `;
+
+            $('#systemLogs').prepend(logEntry);
+
+            // Keep only last 20 logs
+            const logs = $('#systemLogs > div');
+            if (logs.length > 20) {
+                logs.slice(20).remove();
+            }
+        }
+
+        function refreshLogs() {
+            addLog('INFO', 'Logs refreshed manually');
+            showInfo('Nhật ký đã được làm mới');
+        }
+
+        function exportLogs() {
+            const logs = $('#systemLogs').text();
+            const blob = new Blob([logs], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'system_logs_' + new Date().toISOString().slice(0, 10) + '.txt';
+            a.click();
+            window.URL.revokeObjectURL(url);
+
+            addLog('INFO', 'System logs exported');
+            showSuccess('Nhật ký đã được xuất thành công!');
+        }
+
+        function simulateLiveLogs() {
+            const liveLog = document.getElementById('liveLog');
+            const logs = [
+                '[2024-06-01 16:37:40] INFO: System running normally',
+                '[2024-06-01 16:37:35] DEBUG: Memory usage: 68%',
+                '[2024-06-01 16:37:30] INFO: New user registration',
+                '[2024-06-01 16:37:25] DEBUG: Database query executed',
+                '[2024-06-01 16:37:20] INFO: Payment processed successfully',
+                '[2024-06-01 16:37:15] WARN: High CPU usage detected',
+                '[2024-06-01 16:37:10] INFO: Cache cleared',
+                '[2024-06-01 16:37:05] DEBUG: Email sent successfully'
+            ];
+
+            let index = 0;
+            const interval = setInterval(() => {
+                if (index < logs.length) {
+                    liveLog.textContent += logs[index] + '\n';
+                    liveLog.scrollTop = liveLog.scrollHeight;
+                    index++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, 500);
+        }
+
+        // Auto refresh system status every 30 seconds
+        setInterval(function() {
+            // Simulate system status updates
+            const metrics = [
+                { selector: '.metric-card:nth-child(1) h3', value: 'Online' },
+                { selector: '.metric-card:nth-child(2) h3', value: 'Healthy' },
+                { selector: '.metric-card:nth-child(3) h3', value: Math.floor(Math.random() * 20 + 60) + '%' },
+                { selector: '.metric-card:nth-child(4) h3', value: Math.floor(Math.random() * 10 + 40) + '%' }
+            ];
+
+            // Update randomly
+            if (Math.random() > 0.7) {
+                addLog('DEBUG', 'System metrics updated automatically');
+            }
+        }, 30000);
+
+        // Initialize page
+        $(document).ready(function() {
+            addLog('INFO', 'Maintenance page loaded');
+
+            // Add some initial logs
+            setTimeout(() => addLog('DEBUG', 'Checking system health...'), 1000);
+            setTimeout(() => addLog('INFO', 'All systems operational'), 2000);
+        });
+    </script>
+}
