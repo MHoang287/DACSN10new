@@ -1,0 +1,848 @@
+﻿@{
+    ViewData["Title"] = "Tình trạng hệ thống";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item active">Tình trạng hệ thống</li>
+}
+
+@section Styles {
+    <link href="~/css/SystemHealth.css" rel="stylesheet" />
+}
+
+<!-- System Status Overview -->
+<div class="row mb-4" data-aos="fade-up">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="health-card text-center">
+            <div class="mb-3">
+                <svg class="progress-ring">
+                    <circle class="progress-ring-circle"></circle>
+                    <circle class="progress-ring-progress" id="systemHealth"></circle>
+                </svg>
+            </div>
+            <h5 class="mb-2">Tình trạng hệ thống</h5>
+            <div class="status-indicator status-healthy">
+                <div class="status-dot healthy"></div>
+                Hoạt động tốt
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="health-card text-center">
+            <div class="mb-3">
+                <svg class="progress-ring">
+                    <circle class="progress-ring-circle"></circle>
+                    <circle class="progress-ring-progress" id="serverPerformance"></circle>
+                </svg>
+            </div>
+            <h5 class="mb-2">Hiệu suất máy chủ</h5>
+            <div class="status-indicator status-healthy">
+                <div class="status-dot healthy"></div>
+                85% CPU
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="health-card text-center">
+            <div class="mb-3">
+                <svg class="progress-ring">
+                    <circle class="progress-ring-circle"></circle>
+                    <circle class="progress-ring-progress" id="databaseHealth"></circle>
+                </svg>
+            </div>
+            <h5 class="mb-2">Cơ sở dữ liệu</h5>
+            <div class="status-indicator status-warning">
+                <div class="status-dot warning"></div>
+                Cần tối ưu
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="health-card text-center">
+            <div class="mb-3">
+                <svg class="progress-ring">
+                    <circle class="progress-ring-circle"></circle>
+                    <circle class="progress-ring-progress" id="securityStatus"></circle>
+                </svg>
+            </div>
+            <h5 class="mb-2">Bảo mật</h5>
+            <div class="status-indicator status-healthy">
+                <div class="status-dot healthy"></div>
+                An toàn
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed System Information -->
+<div class="row mb-4">
+    <!-- System Metrics -->
+    <div class="col-xl-6 col-lg-6 mb-4">
+        <div class="health-card" data-aos="fade-up" data-aos-delay="100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-server me-2"></i>Thông số hệ thống
+                </h5>
+                <button class="btn btn-sm btn-outline-primary" onclick="refreshMetrics()">
+                    <i class="fas fa-sync-alt me-1"></i>Làm mới
+                </button>
+            </div>
+
+            <div class="metric-row">
+                <span class="metric-label">Thời gian hoạt động</span>
+                <span class="metric-value" id="uptime">15 ngày 8 giờ 42 phút</span>
+            </div>
+
+            <div class="metric-row">
+                <span class="metric-label">Sử dụng CPU</span>
+                <span class="metric-value" id="cpuUsage">45.2%</span>
+            </div>
+
+            <div class="metric-row">
+                <span class="metric-label">Sử dụng RAM</span>
+                <span class="metric-value" id="memoryUsage">6.8GB / 16GB (42.5%)</span>
+            </div>
+
+            <div class="metric-row">
+                <span class="metric-label">Dung lượng ổ đĩa</span>
+                <span class="metric-value" id="diskUsage">285GB / 500GB (57%)</span>
+            </div>
+
+            <div class="metric-row">
+                <span class="metric-label">Kết nối mạng</span>
+                <span class="metric-value" id="networkStatus">Ổn định (↑ 125 Mbps ↓ 98 Mbps)</span>
+            </div>
+
+            <div class="metric-row">
+                <span class="metric-label">Kết nối đồng thời</span>
+                <span class="metric-value" id="activeConnections">1,247 người dùng</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Services Status -->
+    <div class="col-xl-6 col-lg-6 mb-4">
+        <div class="health-card" data-aos="fade-up" data-aos-delay="200">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-cogs me-2"></i>Trạng thái dịch vụ
+                </h5>
+                <button class="btn btn-sm btn-outline-success" onclick="restartAllServices()">
+                    <i class="fas fa-play me-1"></i>Khởi động lại
+                </button>
+            </div>
+
+            <div class="service-item">
+                <div class="service-info">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold">Web Server</div>
+                        <small class="text-muted">IIS 10.0</small>
+                    </div>
+                </div>
+                <div class="status-indicator status-healthy">
+                    <div class="status-dot healthy"></div>
+                    Hoạt động
+                </div>
+            </div>
+
+            <div class="service-item">
+                <div class="service-info">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold">Database Server</div>
+                        <small class="text-muted">SQL Server 2019</small>
+                    </div>
+                </div>
+                <div class="status-indicator status-healthy">
+                    <div class="status-dot healthy"></div>
+                    Hoạt động
+                </div>
+            </div>
+
+            <div class="service-item">
+                <div class="service-info">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold">Email Service</div>
+                        <small class="text-muted">SMTP</small>
+                    </div>
+                </div>
+                <div class="status-indicator status-warning">
+                    <div class="status-dot warning"></div>
+                    Chậm
+                </div>
+            </div>
+
+            <div class="service-item">
+                <div class="service-info">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold">Security Service</div>
+                        <small class="text-muted">Firewall & SSL</small>
+                    </div>
+                </div>
+                <div class="status-indicator status-healthy">
+                    <div class="status-dot healthy"></div>
+                    Bảo vệ
+                </div>
+            </div>
+
+            <div class="service-item">
+                <div class="service-info">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);">
+                        <i class="fas fa-hdd"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold">Backup Service</div>
+                        <small class="text-muted">Tự động hàng ngày</small>
+                    </div>
+                </div>
+                <div class="status-indicator status-healthy">
+                    <div class="status-dot healthy"></div>
+                    Hoạt động
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Database & Backup Status -->
+<div class="row mb-4">
+    <!-- Database Status -->
+    <div class="col-xl-6 col-lg-6 mb-4">
+        <div class="health-card" data-aos="fade-up" data-aos-delay="300">
+            <h5 class="mb-3">
+                <i class="fas fa-database me-2"></i>Tình trạng cơ sở dữ liệu
+            </h5>
+
+            <div class="metric-row">
+                <span class="metric-label">Kích thước database</span>
+                <span class="metric-value">2.4 GB</span>
+            </div>
+
+            <div class="metric-row">
+                <span class="metric-label">Số lượng bảng</span>
+                <span class="metric-value">28 bảng</span>
+            </div>
+
+            <div class="metric-row">
+                <span class="metric-label">Tổng số records</span>
+                <span class="metric-value">1,247,356 bản ghi</span>
+            </div>
+
+            <div class="metric-row">
+                <span class="metric-label">Thời gian phản hồi</span>
+                <span class="metric-value">25ms (trung bình)</span>
+            </div>
+
+            <div class="metric-row">
+                <span class="metric-label">Kết nối đang sử dụng</span>
+                <span class="metric-value">48 / 100</span>
+            </div>
+
+            <div class="mt-3">
+                <button class="btn btn-admin-warning btn-sm me-2" onclick="optimizeDatabase()">
+                    <i class="fas fa-tools me-1"></i>Tối ưu hóa
+                </button>
+                <button class="btn btn-outline-info btn-sm" onclick="viewDatabaseDetails()">
+                    <i class="fas fa-eye me-1"></i>Chi tiết
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backup Status -->
+    <div class="col-xl-6 col-lg-6 mb-4">
+        <div class="health-card" data-aos="fade-up" data-aos-delay="400">
+            <h5 class="mb-3">
+                <i class="fas fa-save me-2"></i>Tình trạng sao lưu
+            </h5>
+
+            <div class="backup-status">
+                <div class="backup-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div>
+                    <div class="fw-semibold">Sao lưu cuối cùng</div>
+                    <small class="text-muted">Hôm nay, 02:00 AM - Thành công</small>
+                </div>
+            </div>
+
+            <div class="metric-row">
+                <span class="metric-label">Kích thước backup</span>
+                <span class="metric-value">1.8 GB</span>
+            </div>
+
+            <div class="metric-row">
+                <span class="metric-label">Vị trí lưu trữ</span>
+                <span class="metric-value">Cloud Storage + Local</span>
+            </div>
+
+            <div class="metric-row">
+                <span class="metric-label">Tần suất sao lưu</span>
+                <span class="metric-value">Hàng ngày lúc 02:00</span>
+            </div>
+
+            <div class="metric-row">
+                <span class="metric-label">Số backup lưu trữ</span>
+                <span class="metric-value">30 bản (30 ngày gần đây)</span>
+            </div>
+
+            <div class="mt-3">
+                <button class="btn btn-admin-primary btn-sm me-2" onclick="createBackup()">
+                    <i class="fas fa-save me-1"></i>Sao lưu ngay
+                </button>
+                <button class="btn btn-outline-warning btn-sm me-2" onclick="restoreBackup()">
+                    <i class="fas fa-undo me-1"></i>Khôi phục
+                </button>
+                <button class="btn btn-outline-info btn-sm" onclick="backupSettings()">
+                    <i class="fas fa-cog me-1"></i>Cài đặt
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Logs -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="health-card" data-aos="fade-up" data-aos-delay="500">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-list-alt me-2"></i>Nhật ký hệ thống
+                </h5>
+                <div class="d-flex gap-2">
+                    <select class="form-select form-select-sm" id="logLevel" onchange="filterLogs()">
+                        <option value="all">Tất cả</option>
+                        <option value="info">Info</option>
+                        <option value="warning">Warning</option>
+                        <option value="error">Error</option>
+                    </select>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="clearLogs()">
+                        <i class="fas fa-trash me-1"></i>Xóa log
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="downloadLogs()">
+                        <i class="fas fa-download me-1"></i>Tải về
+                    </button>
+                </div>
+            </div>
+
+            <div class="system-logs" id="systemLogs">
+                <div class="log-entry">
+                    <span class="log-timestamp">[2024-01-15 14:32:15]</span>
+                    <span class="log-level-info">[INFO]</span>
+                    <span>System health check completed - All services running normally</span>
+                </div>
+                <div class="log-entry">
+                    <span class="log-timestamp">[2024-01-15 14:30:42]</span>
+                    <span class="log-level-info">[INFO]</span>
+                    <span>User 'admin@onlinelearning.com' logged in successfully</span>
+                </div>
+                <div class="log-entry">
+                    <span class="log-timestamp">[2024-01-15 14:28:33]</span>
+                    <span class="log-level-warning">[WARNING]</span>
+                    <span>Email service response time increased to 3.2s (threshold: 2s)</span>
+                </div>
+                <div class="log-entry">
+                    <span class="log-timestamp">[2024-01-15 14:25:17]</span>
+                    <span class="log-level-info">[INFO]</span>
+                    <span>Database optimization completed - Performance improved by 15%</span>
+                </div>
+                <div class="log-entry">
+                    <span class="log-timestamp">[2024-01-15 14:20:05]</span>
+                    <span class="log-level-info">[INFO]</span>
+                    <span>New course 'Advanced React Development' created by teacher ID: 42</span>
+                </div>
+                <div class="log-entry">
+                    <span class="log-timestamp">[2024-01-15 14:15:28]</span>
+                    <span class="log-level-warning">[WARNING]</span>
+                    <span>High CPU usage detected - 87% for 5 minutes</span>
+                </div>
+                <div class="log-entry">
+                    <span class="log-timestamp">[2024-01-15 14:10:11]</span>
+                    <span class="log-level-info">[INFO]</span>
+                    <span>Payment processed successfully - Transaction ID: TXN789456123</span>
+                </div>
+                <div class="log-entry">
+                    <span class="log-timestamp">[2024-01-15 14:05:44]</span>
+                    <span class="log-level-error">[ERROR]</span>
+                    <span>Failed to send email notification - SMTP timeout</span>
+                </div>
+                <div class="log-entry">
+                    <span class="log-timestamp">[2024-01-15 14:00:00]</span>
+                    <span class="log-level-info">[INFO]</span>
+                    <span>Hourly system statistics collected and stored</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions Panel -->
+<div class="row">
+    <div class="col-12">
+        <div class="health-card" data-aos="fade-up" data-aos-delay="600">
+            <h5 class="mb-3">
+                <i class="fas fa-tools me-2"></i>Thao tác hệ thống
+            </h5>
+
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <button class="btn btn-admin-warning w-100" onclick="restartSystem()">
+                        <i class="fas fa-redo me-2"></i>
+                        <div>Khởi động lại hệ thống</div>
+                        <small class="d-block text-light">Restart toàn bộ dịch vụ</small>
+                    </button>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <button class="btn btn-admin-info w-100" onclick="clearCache()">
+                        <i class="fas fa-broom me-2"></i>
+                        <div>Xóa cache</div>
+                        <small class="d-block text-light">Làm sạch bộ nhớ đệm</small>
+                    </button>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <button class="btn btn-admin-success w-100" onclick="runDiagnostics()">
+                        <i class="fas fa-stethoscope me-2"></i>
+                        <div>Chẩn đoán hệ thống</div>
+                        <small class="d-block text-light">Kiểm tra toàn diện</small>
+                    </button>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <button class="btn btn-admin-primary w-100" onclick="generateReport()">
+                        <i class="fas fa-file-alt me-2"></i>
+                        <div>Tạo báo cáo</div>
+                        <small class="d-block text-light">Xuất báo cáo tình trạng</small>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Maintenance Modal -->
+<div class="modal fade" id="maintenanceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-tools me-2"></i>Bảo trì hệ thống
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Cảnh báo:</strong> Thao tác này có thể ảnh hưởng đến hoạt động của hệ thống.
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Loại bảo trì</label>
+                    <select class="form-select" id="maintenanceType">
+                        <option value="restart">Khởi động lại hệ thống</option>
+                        <option value="cache">Xóa cache</option>
+                        <option value="optimize">Tối ưu hóa database</option>
+                        <option value="backup">Sao lưu khẩn cấp</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Thông báo cho người dùng</label>
+                    <textarea class="form-control" id="maintenanceMessage" rows="3"
+                              placeholder="Hệ thống đang được bảo trì, vui lòng thử lại sau..."></textarea>
+                </div>
+
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="scheduleMaintenance">
+                    <label class="form-check-label" for="scheduleMaintenance">
+                        Lên lịch bảo trì (thực hiện vào lúc ít người dùng)
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-admin-warning" onclick="performMaintenance()">
+                    <i class="fas fa-tools me-1"></i>Thực hiện bảo trì
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            initializeProgressRings();
+            startRealTimeMonitoring();
+            loadSystemStatus();
+        });
+
+        function initializeProgressRings() {
+            // Set progress ring values
+            setProgressRing('systemHealth', 92);
+            setProgressRing('serverPerformance', 85);
+            setProgressRing('databaseHealth', 76);
+            setProgressRing('securityStatus', 98);
+        }
+
+        function setProgressRing(id, percentage) {
+            const circle = document.getElementById(id);
+            const circumference = 2 * Math.PI * 30; // r = 30
+            const offset = circumference - (percentage / 100) * circumference;
+
+            circle.style.strokeDashoffset = offset;
+
+            // Change color based on percentage
+            if (percentage >= 80) {
+                circle.style.stroke = '#10b981'; // Green
+            } else if (percentage >= 60) {
+                circle.style.stroke = '#f59e0b'; // Yellow
+            } else {
+                circle.style.stroke = '#ef4444'; // Red
+            }
+        }
+
+        function startRealTimeMonitoring() {
+            // Update system metrics every 30 seconds
+            setInterval(updateMetrics, 30000);
+
+            // Update logs every 10 seconds
+            setInterval(updateLogs, 10000);
+        }
+
+        function updateMetrics() {
+            // Simulate real-time metric updates
+            const metrics = {
+                cpuUsage: (Math.random() * 20 + 40).toFixed(1) + '%',
+                memoryUsage: (Math.random() * 2 + 6).toFixed(1) + 'GB / 16GB',
+                activeConnections: Math.floor(Math.random() * 200 + 1200) + ' người dùng'
+            };
+
+            $('#cpuUsage').text(metrics.cpuUsage);
+            $('#memoryUsage').text(metrics.memoryUsage);
+            $('#activeConnections').text(metrics.activeConnections);
+        }
+
+        function updateLogs() {
+            // Add new log entry (simulate)
+            const logTypes = ['INFO', 'WARNING', 'ERROR'];
+            const messages = [
+                'User authentication successful',
+                'Database query completed',
+                'Cache refreshed',
+                'Payment processed',
+                'Email sent successfully',
+                'File upload completed',
+                'System backup started'
+            ];
+
+            const now = new Date();
+            const timestamp = now.toISOString().slice(0, 19).replace('T', ' ');
+            const logType = logTypes[Math.floor(Math.random() * logTypes.length)];
+            const message = messages[Math.floor(Math.random() * messages.length)];
+            const cssClass = `log-level-${logType.toLowerCase()}`;
+
+            const newLog = `
+                <div class="log-entry">
+                    <span class="log-timestamp">[${timestamp}]</span>
+                    <span class="${cssClass}">[${logType}]</span>
+                    <span>${message}</span>
+                </div>
+            `;
+
+            const logsContainer = $('#systemLogs');
+            logsContainer.prepend(newLog);
+
+            // Keep only last 50 entries
+            const entries = logsContainer.find('.log-entry');
+            if (entries.length > 50) {
+                entries.slice(50).remove();
+            }
+        }
+
+        function loadSystemStatus() {
+            showInfo('Hệ thống đang hoạt động bình thường');
+        }
+
+        function refreshMetrics() {
+            showLoading();
+
+            setTimeout(() => {
+                hideLoading();
+                updateMetrics();
+                showSuccess('Đã cập nhật thông số hệ thống!');
+            }, 1000);
+        }
+
+        function optimizeDatabase() {
+            Swal.fire({
+                title: 'Tối ưu hóa cơ sở dữ liệu?',
+                text: 'Quá trình này có thể mất vài phút và tạm thời làm chậm hệ thống.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Tối ưu hóa',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    showLoading();
+
+                    setTimeout(() => {
+                        hideLoading();
+                        showSuccess('Tối ưu hóa cơ sở dữ liệu thành công! Hiệu suất cải thiện 18%.');
+                        setProgressRing('databaseHealth', 94);
+                    }, 3000);
+                }
+            });
+        }
+
+        function createBackup() {
+            showLoading();
+
+            setTimeout(() => {
+                hideLoading();
+                showSuccess('Sao lưu dữ liệu thành công! Kích thước: 1.9GB');
+            }, 2000);
+        }
+
+        function restoreBackup() {
+            Swal.fire({
+                title: 'Khôi phục dữ liệu',
+                html: `
+                    <div class="text-start">
+                        <div class="mb-3">
+                            <label class="form-label">Chọn bản sao lưu</label>
+                            <select class="form-select" id="backupVersion">
+                                <option value="latest">Hôm nay - 02:00 AM (1.8GB)</option>
+                                <option value="yesterday">Hôm qua - 02:00 AM (1.7GB)</option>
+                                <option value="3days">3 ngày trước - 02:00 AM (1.6GB)</option>
+                                <option value="week">1 tuần trước - 02:00 AM (1.5GB)</option>
+                            </select>
+                        </div>
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Cảnh báo:</strong> Dữ liệu hiện tại sẽ bị ghi đè!
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Khôi phục',
+                cancelButtonText: 'Hủy',
+                confirmButtonColor: '#f59e0b'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    showLoading();
+
+                    setTimeout(() => {
+                        hideLoading();
+                        showSuccess('Khôi phục dữ liệu thành công!');
+                    }, 4000);
+                }
+            });
+        }
+
+        function restartSystem() {
+            $('#maintenanceModal').modal('show');
+            $('#maintenanceType').val('restart');
+        }
+
+        function clearCache() {
+            showLoading();
+
+            setTimeout(() => {
+                hideLoading();
+                showSuccess('Đã xóa cache thành công! Hệ thống hoạt động nhanh hơn.');
+            }, 1500);
+        }
+
+        function runDiagnostics() {
+            showLoading();
+
+            setTimeout(() => {
+                hideLoading();
+                Swal.fire({
+                    title: 'Kết quả chẩn đoán hệ thống',
+                    html: `
+                        <div class="text-start">
+                            <h6 class="text-success"><i class="fas fa-check me-2"></i>Hoạt động tốt:</h6>
+                            <ul class="mb-3">
+                                <li>Web server phản hồi nhanh</li>
+                                <li>Database kết nối ổn định</li>
+                                <li>Bảo mật hoạt động tốt</li>
+                                <li>Backup service bình thường</li>
+                            </ul>
+
+                            <h6 class="text-warning"><i class="fas fa-exclamation-triangle me-2"></i>Cần chú ý:</h6>
+                            <ul class="mb-3">
+                                <li>Email service phản hồi chậm</li>
+                                <li>Disk usage cao (57%)</li>
+                            </ul>
+
+                            <h6 class="text-primary"><i class="fas fa-lightbulb me-2"></i>Khuyến nghị:</h6>
+                            <ul>
+                                <li>Tối ưu hóa cơ sở dữ liệu</li>
+                                <li>Dọn dẹp file log cũ</li>
+                                <li>Kiểm tra cấu hình email</li>
+                            </ul>
+                        </div>
+                    `,
+                    confirmButtonText: 'Đóng'
+                });
+            }, 2000);
+        }
+
+        function generateReport() {
+            showLoading();
+
+            setTimeout(() => {
+                hideLoading();
+                showSuccess('Đã tạo báo cáo tình trạng hệ thống thành công!');
+                console.log('System health report generated');
+            }, 1500);
+        }
+
+        function performMaintenance() {
+            const type = $('#maintenanceType').val();
+            const message = $('#maintenanceMessage').val();
+            const scheduled = $('#scheduleMaintenance').prop('checked');
+
+            $('#maintenanceModal').modal('hide');
+            showLoading();
+
+            setTimeout(() => {
+                hideLoading();
+                showSuccess(`Bảo trì ${type} ${scheduled ? 'đã được lên lịch' : 'hoàn thành'} thành công!`);
+            }, 2000);
+        }
+
+        function filterLogs() {
+            const level = $('#logLevel').val();
+            const entries = $('.log-entry');
+
+            if (level === 'all') {
+                entries.show();
+            } else {
+                entries.hide();
+                $(`.log-level-${level}`).parent().show();
+            }
+        }
+
+        function clearLogs() {
+            confirmDelete('Xóa nhật ký hệ thống?',
+                'Bạn có chắc chắn muốn xóa tất cả nhật ký? Hành động này không thể hoàn tác!',
+                function() {
+                    $('#systemLogs').empty();
+                    showSuccess('Đã xóa nhật ký hệ thống!');
+                }
+            );
+        }
+
+        function downloadLogs() {
+            showLoading();
+
+            setTimeout(() => {
+                hideLoading();
+                showSuccess('Đã tải xuống file nhật ký hệ thống!');
+            }, 1000);
+        }
+
+        function restartAllServices() {
+            Swal.fire({
+                title: 'Khởi động lại tất cả dịch vụ?',
+                text: 'Tất cả người dùng sẽ bị ngắt kết nối tạm thời.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Khởi động lại',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    showLoading();
+
+                    setTimeout(() => {
+                        hideLoading();
+                        showSuccess('Đã khởi động lại tất cả dịch vụ thành công!');
+                    }, 3000);
+                }
+            });
+        }
+
+        function viewDatabaseDetails() {
+            Swal.fire({
+                title: 'Chi tiết cơ sở dữ liệu',
+                html: `
+                    <div class="text-start">
+                        <h6>Thông tin chung:</h6>
+                        <ul>
+                            <li>Version: SQL Server 2019 Express</li>
+                            <li>Collation: SQL_Latin1_General_CP1_CI_AS</li>
+                            <li>Page Size: 8KB</li>
+                            <li>Auto Growth: 10%</li>
+                        </ul>
+
+                        <h6>Top 5 bảng lớn nhất:</h6>
+                        <ul>
+                            <li>AspNetUsers: 245MB (1,247 records)</li>
+                            <li>Courses: 156MB (2,341 records)</li>
+                            <li>Enrollments: 89MB (15,678 records)</li>
+                            <li>Payments: 67MB (8,934 records)</li>
+                            <li>QuizResults: 45MB (23,456 records)</li>
+                        </ul>
+                    </div>
+                `,
+                confirmButtonText: 'Đóng'
+            });
+        }
+
+        function backupSettings() {
+            Swal.fire({
+                title: 'Cài đặt sao lưu',
+                html: `
+                    <div class="text-start">
+                        <div class="mb-3">
+                            <label class="form-label">Tần suất sao lưu</label>
+                            <select class="form-select">
+                                <option>Hàng ngày</option>
+                                <option>Hàng tuần</option>
+                                <option>Hàng tháng</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Thời gian thực hiện</label>
+                            <input type="time" class="form-control" value="02:00">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Số bản lưu trữ</label>
+                            <input type="number" class="form-control" value="30" min="1" max="90">
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" checked>
+                            <label class="form-check-label">Sao lưu lên cloud</label>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Lưu cài đặt',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    showSuccess('Đã cập nhật cài đặt sao lưu!');
+                }
+            });
+        }
+    </script>
+}

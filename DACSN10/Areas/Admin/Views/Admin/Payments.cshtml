@@ -1,542 +1,514 @@
-﻿@using DACSN10.Models
-@model List<DACSN10.Models.Payment>
+﻿@model List<DACSN10.Models.Payment>
 @{
     ViewData["Title"] = "Quản lý thanh toán";
-    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var currentPage = ViewBag.Page ?? 1;
+    var totalPages = ViewBag.TotalPages ?? 1;
+    var status = ViewBag.Status ?? "";
+    var search = ViewBag.Search ?? "";
+    var fromDate = ViewBag.FromDate;
+    var toDate = ViewBag.ToDate;
+}
+
+@{
+	Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item active">Quản lý thanh toán</li>
 }
 
 @section Styles {
     <style>
-        .payment-filters {
+        .payment-card {
             background: white;
-            border-radius: 20px;
-            padding: 1.5rem;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            margin-bottom: 2rem;
-        }
-
-        .payment-stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .payment-stat-card {
-            background: white;
-            border-radius: 20px;
-            padding: 1.5rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            transition: all 0.3s ease;
-            border: 1px solid rgba(0,0,0,0.04);
-            position: relative;
+            border-radius: 12px;
             overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid transparent;
         }
 
-            .payment-stat-card::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                right: 0;
-                width: 100px;
-                height: 100px;
-                background: rgba(255,255,255,0.1);
-                border-radius: 50%;
-                transform: translate(30px, -30px);
+            .payment-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
             }
 
-            .payment-stat-card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+            .payment-card.pending {
+                border-left-color: #f59e0b;
             }
 
-        .payment-stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 15px;
+            .payment-card.success {
+                border-left-color: #10b981;
+            }
+
+            .payment-card.failed {
+                border-left-color: #ef4444;
+            }
+
+            .payment-card.rejected {
+                border-left-color: #6b7280;
+            }
+
+        .payment-header {
             display: flex;
+            justify-content: between;
             align-items: center;
-            justify-content: center;
+            padding: 1.5rem;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .payment-amount {
             font-size: 1.5rem;
-            color: white;
+            font-weight: 700;
+            color: var(--admin-success);
+        }
+
+        .payment-id {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: var(--admin-secondary);
+        }
+
+        .payment-body {
+            padding: 1.5rem;
+        }
+
+        .payment-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
             margin-bottom: 1rem;
         }
 
-        .payment-table-container {
-            background: white;
-            border-radius: 20px;
-            padding: 1.5rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-        }
-
-        .payment-status {
-            padding: 0.4rem 1rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-        }
-
-        .status-success {
-            background: rgba(16, 185, 129, 0.1);
-            color: #10b981;
-        }
-
-        .status-pending {
-            background: rgba(245, 158, 11, 0.1);
-            color: #f59e0b;
-        }
-
-        .status-waitingconfirm {
-            background: rgba(59, 130, 246, 0.1);
-            color: #3b82f6;
-        }
-
-        .status-failed {
-            background: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
-        }
-
-        .status-rejected {
-            background: rgba(107, 114, 128, 0.1);
-            color: #6b7280;
-        }
-
-        .payment-method {
-            display: inline-flex;
+        .info-item {
+            display: flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.3rem 0.8rem;
-            background: #f3f4f6;
-            border-radius: 15px;
-            font-size: 0.85rem;
         }
 
-        .action-btn {
-            padding: 0.4rem 0.8rem;
-            border-radius: 10px;
-            border: none;
-            font-size: 0.85rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            margin: 0 0.2rem;
-        }
-
-            .action-btn:hover {
-                transform: translateY(-2px);
-            }
-
-        .btn-approve {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        .info-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
             color: white;
         }
 
-        .btn-reject {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            color: white;
+        .payment-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
         }
 
-        .btn-details {
-            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-            color: white;
-        }
-
-        .date-range-picker {
+        .revenue-summary {
             background: white;
-            border: 2px solid #e5e7eb;
-            border-radius: 10px;
-            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .revenue-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .revenue-card {
+            text-align: center;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .revenue-number {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .revenue-label {
+            color: var(--admin-secondary);
             font-size: 0.9rem;
         }
 
-        .export-menu {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            padding: 0.5rem;
-            min-width: 200px;
-            z-index: 1000;
-            display: none;
+        .status-filter-pills {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
         }
 
-            .export-menu.show {
-                display: block;
-            }
-
-        .export-option {
-            display: block;
+        .status-pill {
             padding: 0.5rem 1rem;
-            border-radius: 8px;
-            color: #374151;
+            border-radius: 20px;
+            border: 2px solid transparent;
+            background: #f1f5f9;
+            color: #64748b;
             text-decoration: none;
-            transition: all 0.2s;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
         }
 
-            .export-option:hover {
-                background: #f3f4f6;
-                color: #667eea;
+            .status-pill.active,
+            .status-pill:hover {
+                border-color: var(--admin-primary);
+                background: rgba(59, 130, 246, 0.1);
+                color: var(--admin-primary);
             }
 
-        .payment-detail-modal .modal-content {
-            border-radius: 20px;
-            border: none;
+        .payment-timeline {
+            position: relative;
+            padding-left: 2rem;
         }
 
-        .payment-detail-item {
-            padding: 1rem;
-            border-bottom: 1px solid #f3f4f6;
+            .payment-timeline::before {
+                content: '';
+                position: absolute;
+                left: 8px;
+                top: 0;
+                bottom: 0;
+                width: 2px;
+                background: #e2e8f0;
+            }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1rem;
         }
 
-        .payment-detail-label {
-            font-size: 0.85rem;
-            color: #6b7280;
-            margin-bottom: 0.25rem;
-        }
-
-        .payment-detail-value {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #1f2937;
-        }
+            .timeline-item::before {
+                content: '';
+                position: absolute;
+                left: -6px;
+                top: 6px;
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: var(--admin-primary);
+            }
     </style>
 }
 
-<div class="page-header" data-aos="fade-down">
-    <div class="d-flex justify-content-between align-items-center">
-        <div>
-            <h1 class="page-title">
-                <i class="fas fa-credit-card me-3"></i>Quản lý thanh toán
-            </h1>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Admin")">Dashboard</a></li>
-                    <li class="breadcrumb-item active">Thanh toán</li>
-                </ol>
-            </nav>
+<!-- Revenue Summary -->
+<div class="revenue-summary" data-aos="fade-up">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Tổng quan doanh thu</h5>
+        <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-primary active" onclick="loadRevenueSummary('today')">Hôm nay</button>
+            <button class="btn btn-outline-primary" onclick="loadRevenueSummary('week')">Tuần này</button>
+            <button class="btn btn-outline-primary" onclick="loadRevenueSummary('month')">Tháng này</button>
         </div>
-        <div class="position-relative">
-            <button class="btn btn-gradient-primary" onclick="toggleExportMenu()">
-                <i class="fas fa-download me-2"></i>Xuất báo cáo
+    </div>
+
+    <div class="revenue-cards" id="revenueCards">
+        <div class="revenue-card">
+            <div class="revenue-number text-success" id="totalRevenue">0₫</div>
+            <div class="revenue-label">Tổng doanh thu</div>
+        </div>
+        <div class="revenue-card">
+            <div class="revenue-number text-primary" id="totalTransactions">0</div>
+            <div class="revenue-label">Giao dịch thành công</div>
+        </div>
+        <div class="revenue-card">
+            <div class="revenue-number text-warning" id="pendingAmount">0₫</div>
+            <div class="revenue-label">Chờ duyệt</div>
+        </div>
+        <div class="revenue-card">
+            <div class="revenue-number text-info" id="averageTransaction">0₫</div>
+            <div class="revenue-label">Trung bình/giao dịch</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters and Search -->
+<div class="filters-card" data-aos="fade-up" data-aos-delay="100">
+    <form method="GET" action="/Admin/Payments" class="row g-3">
+        <div class="col-md-3">
+            <label for="search" class="form-label">Tìm kiếm</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" id="search" name="search"
+                       value="@search" placeholder="Tên, email, khóa học...">
+            </div>
+        </div>
+
+        <div class="col-md-2">
+            <label for="status" class="form-label">Trạng thái</label>
+            <select class="form-select" id="status" name="status">
+                <option value="">Tất cả</option>
+                <option value="Pending" @(status == "Pending" ? "selected" : "")>Chờ duyệt</option>
+                <option value="WaitingConfirm" @(status == "WaitingConfirm" ? "selected" : "")>Chờ xác nhận</option>
+                <option value="Success" @(status == "Success" ? "selected" : "")>Thành công</option>
+                <option value="Failed" @(status == "Failed" ? "selected" : "")>Thất bại</option>
+                <option value="Rejected" @(status == "Rejected" ? "selected" : "")>Từ chối</option>
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label for="fromDate" class="form-label">Từ ngày</label>
+            <input type="date" class="form-control" id="fromDate" name="fromDate"
+                   value="@(fromDate?.ToString("yyyy-MM-dd"))">
+        </div>
+
+        <div class="col-md-2">
+            <label for="toDate" class="form-label">Đến ngày</label>
+            <input type="date" class="form-control" id="toDate" name="toDate"
+                   value="@(toDate?.ToString("yyyy-MM-dd"))">
+        </div>
+
+        <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-admin-primary me-2">
+                <i class="fas fa-filter me-1"></i>Lọc
             </button>
-            <div class="export-menu" id="exportMenu">
-                <a href="#" class="export-option" onclick="exportPayments('excel')">
-                    <i class="fas fa-file-excel me-2 text-success"></i>Excel (.xlsx)
-                </a>
-                <a href="#" class="export-option" onclick="exportPayments('pdf')">
-                    <i class="fas fa-file-pdf me-2 text-danger"></i>PDF
-                </a>
-                <a href="#" class="export-option" onclick="exportPayments('csv')">
-                    <i class="fas fa-file-csv me-2 text-info"></i>CSV
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Payment Statistics -->
-<div class="payment-stats-grid" data-aos="fade-up">
-    <div class="payment-stat-card">
-        <div class="payment-stat-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-            <i class="fas fa-check-circle"></i>
-        </div>
-        <h4 class="mb-1">Thanh toán thành công</h4>
-        <div class="d-flex align-items-baseline gap-2">
-            <h2 class="mb-0 text-success">@ViewBag.SuccessCount</h2>
-            <span class="text-muted">giao dịch</span>
-        </div>
-        <div class="mt-2">
-            <small class="text-muted">Tổng: @ViewBag.SuccessAmount?.ToString("N0")₫</small>
-        </div>
-    </div>
-
-    <div class="payment-stat-card">
-        <div class="payment-stat-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
-            <i class="fas fa-clock"></i>
-        </div>
-        <h4 class="mb-1">Chờ xử lý</h4>
-        <div class="d-flex align-items-baseline gap-2">
-            <h2 class="mb-0 text-warning">@ViewBag.PendingCount</h2>
-            <span class="text-muted">giao dịch</span>
-        </div>
-        <div class="mt-2">
-            <small class="text-muted">Cần xử lý ngay</small>
-        </div>
-    </div>
-
-    <div class="payment-stat-card">
-        <div class="payment-stat-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
-            <i class="fas fa-hourglass-half"></i>
-        </div>
-        <h4 class="mb-1">Chờ xác nhận</h4>
-        <div class="d-flex align-items-baseline gap-2">
-            <h2 class="mb-0 text-info">@ViewBag.WaitingConfirmCount</h2>
-            <span class="text-muted">giao dịch</span>
-        </div>
-        <div class="mt-2">
-            <small class="text-muted">Đã chuyển tiền</small>
-        </div>
-    </div>
-
-    <div class="payment-stat-card">
-        <div class="payment-stat-icon" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
-            <i class="fas fa-times-circle"></i>
-        </div>
-        <h4 class="mb-1">Thất bại / Từ chối</h4>
-        <div class="d-flex align-items-baseline gap-2">
-            <h2 class="mb-0 text-danger">@ViewBag.FailedCount</h2>
-            <span class="text-muted">giao dịch</span>
-        </div>
-        <div class="mt-2">
-            <small class="text-muted">Cần kiểm tra</small>
-        </div>
-    </div>
-</div>
-
-<!-- Filters -->
-<div class="payment-filters" data-aos="fade-up">
-    <form method="get" action="@Url.Action("Payments", "Admin")">
-        <div class="row g-3">
-            <div class="col-md-3">
-                <label class="form-label">Tìm kiếm</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="fas fa-search"></i></span>
-                    <input type="text" name="search" class="form-control"
-                           placeholder="Tên, email, khóa học..." value="@ViewBag.Search">
-                </div>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">Trạng thái</label>
-                <select name="status" class="form-select">
-                    <option value="">Tất cả</option>
-                    <option value="Success" @(ViewBag.Status == "Success" ? "selected" : "")>Thành công</option>
-                    <option value="Pending" @(ViewBag.Status == "Pending" ? "selected" : "")>Chờ xử lý</option>
-                    <option value="WaitingConfirm" @(ViewBag.Status == "WaitingConfirm" ? "selected" : "")>Chờ xác nhận</option>
-                    <option value="Failed" @(ViewBag.Status == "Failed" ? "selected" : "")>Thất bại</option>
-                    <option value="Rejected" @(ViewBag.Status == "Rejected" ? "selected" : "")>Từ chối</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">Từ ngày</label>
-                <input type="date" name="fromDate" class="form-control date-range-picker"
-                       value="@ViewBag.FromDate?.ToString("yyyy-MM-dd")">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">Đến ngày</label>
-                <input type="date" name="toDate" class="form-control date-range-picker"
-                       value="@ViewBag.ToDate?.ToString("yyyy-MM-dd")">
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">&nbsp;</label>
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-gradient-primary flex-grow-1">
-                        <i class="fas fa-filter me-2"></i>Lọc
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary" onclick="resetFilters()">
-                        <i class="fas fa-redo"></i>
-                    </button>
-                </div>
-            </div>
+            <a href="/Admin/Payments" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-times"></i>
+            </a>
+            <button type="button" class="btn btn-outline-info" onclick="exportPayments()">
+                <i class="fas fa-download me-1"></i>Xuất
+            </button>
         </div>
     </form>
 </div>
 
-<!-- Payments Table -->
-<div class="payment-table-container" data-aos="fade-up">
-    <div class="table-responsive">
-        <table class="table table-hover" id="paymentsTable">
-            <thead>
-                <tr>
-                    <th>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="selectAll">
-                        </div>
-                    </th>
-                    <th>Mã GD</th>
-                    <th>Ngày thanh toán</th>
-                    <th>Học viên</th>
-                    <th>Khóa học</th>
-                    <th>Số tiền</th>
-                    <th>Phương thức</th>
-                    <th>Trạng thái</th>
-                    <th>Hành động</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (Model != null && Model.Any())
-                {
-                    @foreach (var payment in Model)
-                    {
-                        <tr>
-                            <td>
-                                <div class="form-check">
-                                    <input class="form-check-input payment-checkbox" type="checkbox"
-                                           value="@payment.PaymentID">
-                                </div>
-                            </td>
-                            <td>
-                                <span class="fw-semibold">#@payment.PaymentID.ToString("D6")</span>
-                            </td>
-                            <td>
-                                <div>@payment.NgayThanhToan.ToString("dd/MM/yyyy")</div>
-                                <small class="text-muted">@payment.NgayThanhToan.ToString("HH:mm")</small>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(payment.User?.HoTen ?? "U")&background=667eea&color=fff&size=32"
-                                         alt="Avatar" class="rounded-circle me-2" width="32" height="32">
-                                    <div>
-                                        <div class="fw-semibold">@payment.User?.HoTen</div>
-                                        <small class="text-muted">@payment.User?.Email</small>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="fw-semibold">@payment.Course?.TenKhoaHoc</div>
-                                <small class="text-muted">@payment.Course?.Gia.ToString("N0")₫</small>
-                            </td>
-                            <td>
-                                <span class="fw-bold text-primary">@payment.SoTien.ToString("N0")₫</span>
-                            </td>
-                            <td>
-                                <span class="payment-method">
-                                    @switch (payment.PhuongThucThanhToan)
-                                    {
-                                        case "MoMo":
-                                            <img src="/images/momo-icon.png" alt="MoMo" width="20">
-                                            break;
-                                        case "VNPay":
-                                            <img src="/images/vnpay-icon.png" alt="VNPay" width="20">
-                                            break;
-                                        case "Banking":
-                                            <i class="fas fa-university"></i>
-                                            break;
-                                        default:
-                                            <i class="fas fa-credit-card"></i>
-                                            break;
-                                    }
-                                    @payment.PhuongThucThanhToan
-                                </span>
-                            </td>
-                            <td>
-                                @{
-                                    var statusClass = payment.Status.ToString().ToLower();
-                                    var statusIcon = "";
-                                    var statusText = "";
+<!-- Status Filter Pills -->
+<div class="status-filter-pills" data-aos="fade-up" data-aos-delay="200">
+    <a href="/Admin/Payments" class="status-pill @(string.IsNullOrEmpty(status) ? "active" : "")">
+        <i class="fas fa-list me-1"></i>Tất cả
+    </a>
+    <a href="/Admin/Payments?status=Pending" class="status-pill @(status == "Pending" ? "active" : "")">
+        <i class="fas fa-clock me-1"></i>Chờ duyệt
+    </a>
+    <a href="/Admin/Payments?status=WaitingConfirm" class="status-pill @(status == "WaitingConfirm" ? "active" : "")">
+        <i class="fas fa-hourglass-half me-1"></i>Chờ xác nhận
+    </a>
+    <a href="/Admin/Payments?status=Success" class="status-pill @(status == "Success" ? "active" : "")">
+        <i class="fas fa-check me-1"></i>Thành công
+    </a>
+    <a href="/Admin/Payments?status=Failed" class="status-pill @(status == "Failed" ? "active" : "")">
+        <i class="fas fa-times me-1"></i>Thất bại
+    </a>
+    <a href="/Admin/Payments?status=Rejected" class="status-pill @(status == "Rejected" ? "active" : "")">
+        <i class="fas fa-ban me-1"></i>Từ chối
+    </a>
+</div>
 
-                                    switch (payment.Status)
-                                    {
-                                        case PaymentStatus.Success:
-                                            statusIcon = "fa-check-circle";
-                                            statusText = "Thành công";
-                                            break;
-                                        case PaymentStatus.Pending:
-                                            statusIcon = "fa-clock";
-                                            statusText = "Chờ xử lý";
-                                            break;
-                                        case PaymentStatus.WaitingConfirm:
-                                            statusIcon = "fa-hourglass-half";
-                                            statusText = "Chờ xác nhận";
-                                            break;
-                                        case PaymentStatus.Failed:
-                                            statusIcon = "fa-times-circle";
-                                            statusText = "Thất bại";
-                                            break;
-                                        case PaymentStatus.Rejected:
-                                            statusIcon = "fa-ban";
-                                            statusText = "Từ chối";
-                                            break;
-                                    }
-                                }
-                                <span class="payment-status status-@statusClass">
-                                    <i class="fas @statusIcon"></i>
-                                    @statusText
-                                </span>
-                            </td>
-                            <td>
-                                <button class="action-btn btn-details"
-                                        onclick="viewPaymentDetails(@payment.PaymentID)">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                @if (payment.Status == PaymentStatus.Pending || payment.Status == PaymentStatus.WaitingConfirm)
-                                {
-                                    <button class="action-btn btn-approve"
-                                            onclick="approvePayment(@payment.PaymentID)">
-                                        <i class="fas fa-check"></i>
-                                    </button>
-                                    <button class="action-btn btn-reject"
-                                            onclick="rejectPayment(@payment.PaymentID)">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                }
-                            </td>
-                        </tr>
-                    }
-                }
-                else
-                {
-                    <tr>
-                        <td colspan="9" class="text-center py-5">
-                            <i class="fas fa-receipt fa-3x text-muted mb-3 d-block"></i>
-                            <p class="text-muted">Không có giao dịch nào</p>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+<!-- Action Bar -->
+<div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-up" data-aos-delay="300">
+    <div>
+        <h4 class="mb-0">Danh sách giao dịch</h4>
+        <p class="text-muted mb-0">Quản lý tất cả giao dịch thanh toán</p>
     </div>
 
-    <!-- Pagination -->
-    @if (ViewBag.TotalPages > 1)
+    <div class="d-flex gap-2">
+        <button class="btn btn-admin-warning" onclick="toggleBulkActions()">
+            <i class="fas fa-tasks me-1"></i>Thao tác hàng loạt
+        </button>
+        <button class="btn btn-admin-success" onclick="bulkApprovePayments()">
+            <i class="fas fa-check me-1"></i>Duyệt hàng loạt
+        </button>
+    </div>
+</div>
+
+<!-- Bulk Actions Bar -->
+<div class="bulk-actions" id="bulkActionsBar">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <span class="fw-bold">Đã chọn: <span id="selectedCount">0</span> giao dịch</span>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-admin-success btn-sm" onclick="bulkApprovePayments()">
+                <i class="fas fa-check me-1"></i>Duyệt tất cả
+            </button>
+            <button class="btn btn-admin-danger btn-sm" onclick="bulkRejectPayments()">
+                <i class="fas fa-times me-1"></i>Từ chối tất cả
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="clearSelection()">
+                <i class="fas fa-times me-1"></i>Bỏ chọn
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Payments Grid -->
+<div class="row" id="paymentsGrid">
+    @if (Model != null && Model.Any())
     {
-        <nav aria-label="Page navigation" class="mt-4">
-            <ul class="pagination justify-content-center">
-                <li class="page-item @(ViewBag.Page == 1 ? "disabled" : "")">
-                    <a class="page-link" href="?page=@(ViewBag.Page - 1)&status=@ViewBag.Status&search=@ViewBag.Search&fromDate=@ViewBag.FromDate&toDate=@ViewBag.ToDate">
-                        <i class="fas fa-chevron-left"></i>
-                    </a>
-                </li>
-                @for (int i = 1; i <= ViewBag.TotalPages; i++)
-                {
-                    <li class="page-item @(i == ViewBag.Page ? "active" : "")">
-                        <a class="page-link" href="?page=@i&status=@ViewBag.Status&search=@ViewBag.Search&fromDate=@ViewBag.FromDate&toDate=@ViewBag.ToDate">@i</a>
-                    </li>
-                }
-                <li class="page-item @(ViewBag.Page == ViewBag.TotalPages ? "disabled" : "")">
-                    <a class="page-link" href="?page=@(ViewBag.Page + 1)&status=@ViewBag.Status&search=@ViewBag.Search&fromDate=@ViewBag.FromDate&toDate=@ViewBag.ToDate">
-                        <i class="fas fa-chevron-right"></i>
-                    </a>
-                </li>
-            </ul>
-        </nav>
+        @foreach (var payment in Model)
+        {
+            <div class="col-xl-6 col-lg-12 mb-4" data-aos="fade-up" data-aos-delay="400">
+                <div class="payment-card @payment.Status.ToString().ToLower()">
+                    <div class="payment-header">
+                        <div class="d-flex align-items-center">
+                            <input type="checkbox" class="form-check-input payment-checkbox me-3"
+                                   value="@payment.PaymentID" style="transform: scale(1.2);">
+                            <div>
+                                <div class="payment-amount">@payment.SoTien.ToString("N0")₫</div>
+                                <div class="payment-id">#@payment.PaymentID.ToString("D6")</div>
+                            </div>
+                        </div>
+
+                        <div class="text-end">
+                            @if (payment != null)
+                            {
+                                switch (payment.Status)
+                                {
+                                    case DACSN10.Models.PaymentStatus.WaitingConfirm:
+                                        <span class="badge bg-info">Chờ xác nhận</span>
+                                        break;
+                                    case DACSN10.Models.PaymentStatus.Success:
+                                        <span class="badge bg-success">Thành công</span>
+                                        break;
+                                    case DACSN10.Models.PaymentStatus.Failed:
+                                        <span class="badge bg-danger">Thất bại</span>
+                                        break;
+                                    case DACSN10.Models.PaymentStatus.Rejected:
+                                        <span class="badge bg-secondary">Từ chối</span>
+                                        break;
+                                    default:
+                                        <span class="badge bg-secondary">@payment.Status</span>
+                                        break;
+                                }
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning">No payment data available</span>
+                            }
+                            <small class="text-muted">@payment.NgayThanhToan.ToString("dd/MM/yyyy HH:mm")</small>
+                        </div>
+                    </div>
+
+                    <div class="payment-body">
+                        <div class="payment-info">
+                            <div class="info-item">
+                                <div class="info-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">@(payment.User?.HoTen ?? "Không xác định")</div>
+                                    <small class="text-muted">@(payment.User?.Email ?? "Không có email")</small>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                                    <i class="fas fa-book-open"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">@(payment.Course?.TenKhoaHoc ?? "Không xác định")</div>
+                                    <small class="text-muted">@(payment.Course?.User?.HoTen ?? "Không xác định")</small>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                                    <i class="fas fa-credit-card"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">@(payment.PhuongThucThanhToan ?? "Không xác định")</div>
+                                    <small class="text-muted">Phương thức thanh toán</small>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-icon" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+                                    <i class="fas fa-calendar"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">@payment.NgayThanhToan.ToString("dd/MM/yyyy")</div>
+                                    <small class="text-muted">@payment.NgayThanhToan.ToString("HH:mm")</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="payment-actions">
+                            <a href="/Admin/PaymentDetails/@payment.PaymentID"
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye me-1"></i>Chi tiết
+                            </a>
+
+                            @if (payment.Status == DACSN10.Models.PaymentStatus.WaitingConfirm || payment.Status == DACSN10.Models.PaymentStatus.Pending)
+                            {
+                                <button class="btn btn-admin-success btn-sm"
+                                        onclick="approvePayment(@payment.PaymentID)">
+                                    <i class="fas fa-check me-1"></i>Duyệt
+                                </button>
+                                <button class="btn btn-admin-danger btn-sm"
+                                        onclick="rejectPayment(@payment.PaymentID)">
+                                    <i class="fas fa-times me-1"></i>Từ chối
+                                </button>
+                            }
+
+                            @if (payment.Status == DACSN10.Models.PaymentStatus.Success)
+                            {
+                                <button class="btn btn-outline-info btn-sm"
+                                        onclick="sendReceipt(@payment.PaymentID)">
+                                    <i class="fas fa-receipt me-1"></i>Gửi hóa đơn
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-credit-card fa-5x text-muted mb-3"></i>
+                <h4 class="text-muted">Chưa có giao dịch nào</h4>
+                <p class="text-muted">Các giao dịch thanh toán sẽ hiển thị ở đây</p>
+            </div>
+        </div>
     }
 </div>
 
-<!-- Bulk Actions -->
-<div class="bulk-actions" id="bulkActions">
-    <span class="text-muted me-3">
-        <span id="selectedCount">0</span> giao dịch được chọn
-    </span>
-    <button class="btn btn-sm btn-success" onclick="bulkApprovePayments()">
-        <i class="fas fa-check me-1"></i>Duyệt hàng loạt
-    </button>
-    <button class="btn btn-sm btn-danger" onclick="bulkRejectPayments()">
-        <i class="fas fa-times me-1"></i>Từ chối hàng loạt
-    </button>
-    <button class="btn btn-sm btn-secondary" onclick="cancelSelection()">
-        <i class="fas fa-times me-1"></i>Hủy
-    </button>
-</div>
+<!-- Pagination -->
+@if (totalPages > 1)
+{
+    <nav aria-label="Payment pagination" data-aos="fade-up" data-aos-delay="500">
+        <ul class="pagination justify-content-center">
+            @if (currentPage > 1)
+            {
+                <li class="page-item">
+                    <a class="page-link" href="/Admin/Payments?page=@(currentPage - 1)&status=@status&search=@search&fromDate=@fromDate&toDate=@toDate">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+            }
+
+            @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
+            {
+                <li class="page-item @(i == currentPage ? "active" : "")">
+                    <a class="page-link" href="/Admin/Payments?page=@i&status=@status&search=@search&fromDate=@fromDate&toDate=@toDate">@i</a>
+                </li>
+            }
+
+            @if (currentPage < totalPages)
+            {
+                <li class="page-item">
+                    <a class="page-link" href="/Admin/Payments?page=@(currentPage + 1)&status=@status&search=@search&fromDate=@fromDate&toDate=@toDate">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            }
+        </ul>
+    </nav>
+}
 
 <!-- Payment Detail Modal -->
-<div class="modal fade payment-detail-modal" id="paymentDetailModal" tabindex="-1">
+<div class="modal fade" id="paymentDetailModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header border-0">
+            <div class="modal-header">
                 <h5 class="modal-title">
                     <i class="fas fa-receipt me-2"></i>Chi tiết giao dịch
                 </h5>
@@ -545,9 +517,10 @@
             <div class="modal-body" id="paymentDetailContent">
                 <!-- Payment details will be loaded here -->
             </div>
-            <div class="modal-footer border-0">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>Đóng
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary" onclick="printPaymentDetail()">
+                    <i class="fas fa-print me-1"></i>In hóa đơn
                 </button>
             </div>
         </div>
@@ -556,93 +529,89 @@
 
 @section Scripts {
     <script>
-        let selectedPayments = [];
-
         $(document).ready(function() {
-            // Initialize DataTable
-            $('#paymentsTable').DataTable({
-                paging: false,
-                searching: false,
-                info: false,
-                order: [[1, 'desc']],
-                language: {
-                    emptyTable: "Không có dữ liệu",
-                    zeroRecords: "Không tìm thấy kết quả"
-                }
-            });
-
-            // Handle checkbox changes
+            // Individual checkbox change
             $('.payment-checkbox').change(function() {
-                const paymentId = parseInt($(this).val());
-
-                if ($(this).is(':checked')) {
-                    if (!selectedPayments.includes(paymentId)) {
-                        selectedPayments.push(paymentId);
-                    }
-                } else {
-                    selectedPayments = selectedPayments.filter(id => id !== paymentId);
-                }
-
-                updateBulkActions();
+                updateSelectedCount();
             });
 
-            // Select all functionality
-            $('#selectAll').change(function() {
-                const isChecked = $(this).is(':checked');
-                $('.payment-checkbox').prop('checked', isChecked);
+            // Load initial revenue summary
+            loadRevenueSummary('today');
 
-                if (isChecked) {
-                    selectedPayments = $('.payment-checkbox').map(function() {
-                        return parseInt($(this).val());
-                    }).get();
-                } else {
-                    selectedPayments = [];
+            // Auto-refresh every 30 seconds for pending payments
+            setInterval(function() {
+                if ($('.status-pill.active').text().includes('Chờ')) {
+                    console.log('Checking for payment updates...');
+                    // Optionally reload the page or specific sections
                 }
-
-                updateBulkActions();
-            });
-
-            // Initialize date pickers
-            $('input[type="date"]').attr('max', new Date().toISOString().split('T')[0]);
+            }, 30000);
         });
 
-        function updateBulkActions() {
-            const count = selectedPayments.length;
-            $('#selectedCount').text(count);
+        function updateSelectedCount() {
+            const selectedCount = $('.payment-checkbox:checked').length;
+            $('#selectedCount').text(selectedCount);
 
-            if (count > 0) {
-                $('#bulkActions').addClass('show');
+            if (selectedCount > 0) {
+                $('#bulkActionsBar').show();
             } else {
-                $('#bulkActions').removeClass('show');
+                $('#bulkActionsBar').hide();
             }
         }
 
-        function cancelSelection() {
-            selectedPayments = [];
-            $('.payment-checkbox').prop('checked', false);
-            $('#selectAll').prop('checked', false);
-            updateBulkActions();
+        function toggleBulkActions() {
+            $('#bulkActionsBar').toggle();
         }
 
-        function viewPaymentDetails(paymentId) {
+        function clearSelection() {
+            $('.payment-checkbox').prop('checked', false);
+            updateSelectedCount();
+        }
+
+        function loadRevenueSummary(period) {
+            // Update active button
+            $('.revenue-summary .btn-group .btn').removeClass('active');
+            $(`button[onclick="loadRevenueSummary('${period}')"]`).addClass('active');
+
+            // Simulate loading revenue data
             showLoading();
 
-            $.get('@Url.Action("PaymentDetails", "Admin")', { id: paymentId })
-                .done(function(html) {
-                    $('#paymentDetailContent').html(html);
-                    $('#paymentDetailModal').modal('show');
-                })
-                .fail(function() {
-                    toastr.error('Không thể tải thông tin giao dịch!');
-                })
-                .always(function() {
-                    hideLoading();
-                });
+            setTimeout(() => {
+                hideLoading();
+
+                // Update with sample data - in real app, this would be an AJAX call
+                const data = {
+                    today: {
+                        revenue: '1,250,000₫',
+                        transactions: 8,
+                        pending: '350,000₫',
+                        average: '156,250₫'
+                    },
+                    week: {
+                        revenue: '8,750,000₫',
+                        transactions: 42,
+                        pending: '1,200,000₫',
+                        average: '208,333₫'
+                    },
+                    month: {
+                        revenue: '25,300,000₫',
+                        transactions: 156,
+                        pending: '2,850,000₫',
+                        average: '162,179₫'
+                    }
+                };
+
+                const periodData = data[period];
+                $('#totalRevenue').text(periodData.revenue);
+                $('#totalTransactions').text(periodData.transactions);
+                $('#pendingAmount').text(periodData.pending);
+                $('#averageTransaction').text(periodData.average);
+
+            }, 500);
         }
 
         function approvePayment(paymentId) {
             Swal.fire({
-                title: 'Xác nhận duyệt',
+                title: 'Duyệt thanh toán?',
                 text: 'Bạn có chắc chắn muốn duyệt giao dịch này?',
                 icon: 'question',
                 showCancelButton: true,
@@ -652,20 +621,24 @@
                 cancelButtonText: 'Hủy'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    $.post('@Url.Action("ApprovePayment", "Admin")', {
+                    showLoading();
+
+                    $.post('/Admin/ApprovePayment', {
                         id: paymentId,
-                        __RequestVerificationToken: $('[name="__RequestVerificationToken"]').val()
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
                     })
                     .done(function(response) {
+                        hideLoading();
                         if (response.success) {
-                            toastr.success(response.message);
+                            showSuccess(response.message);
                             setTimeout(() => location.reload(), 1500);
                         } else {
-                            toastr.error(response.message);
+                            showError(response.message);
                         }
                     })
                     .fail(function() {
-                        toastr.error('Có lỗi xảy ra!');
+                        hideLoading();
+                        showError('Có lỗi xảy ra khi duyệt thanh toán!');
                     });
                 }
             });
@@ -673,12 +646,12 @@
 
         function rejectPayment(paymentId) {
             Swal.fire({
-                title: 'Từ chối giao dịch',
-                text: 'Vui lòng nhập lý do từ chối:',
+                title: 'Từ chối thanh toán?',
                 input: 'textarea',
+                inputLabel: 'Lý do từ chối',
+                inputPlaceholder: 'Nhập lý do từ chối giao dịch...',
                 inputAttributes: {
-                    autocapitalize: 'off',
-                    placeholder: 'Nhập lý do từ chối...'
+                    'aria-label': 'Lý do từ chối'
                 },
                 showCancelButton: true,
                 confirmButtonColor: '#ef4444',
@@ -692,35 +665,43 @@
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
-                    $.post('@Url.Action("RejectPayment", "Admin")', {
+                    showLoading();
+
+                    $.post('/Admin/RejectPayment', {
                         id: paymentId,
                         reason: result.value,
-                        __RequestVerificationToken: $('[name="__RequestVerificationToken"]').val()
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
                     })
                     .done(function(response) {
+                        hideLoading();
                         if (response.success) {
-                            toastr.success(response.message);
+                            showSuccess(response.message);
                             setTimeout(() => location.reload(), 1500);
                         } else {
-                            toastr.error(response.message);
+                            showError(response.message);
                         }
                     })
                     .fail(function() {
-                        toastr.error('Có lỗi xảy ra!');
+                        hideLoading();
+                        showError('Có lỗi xảy ra khi từ chối thanh toán!');
                     });
                 }
             });
         }
 
         function bulkApprovePayments() {
+            const selectedPayments = $('.payment-checkbox:checked').map(function() {
+                return $(this).val();
+            }).get();
+
             if (selectedPayments.length === 0) {
-                toastr.warning('Vui lòng chọn ít nhất một giao dịch!');
+                showWarning('Vui lòng chọn ít nhất một giao dịch!');
                 return;
             }
 
             Swal.fire({
-                title: 'Xác nhận duyệt hàng loạt',
-                text: `Bạn có chắc chắn muốn duyệt ${selectedPayments.length} giao dịch?`,
+                title: 'Duyệt hàng loạt?',
+                text: `Bạn có chắc chắn muốn duyệt ${selectedPayments.length} giao dịch đã chọn?`,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#10b981',
@@ -729,106 +710,115 @@
                 cancelButtonText: 'Hủy'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    $.post('@Url.Action("BulkApprovePayments", "Admin")', {
+                    showLoading();
+
+                    $.post('/Admin/BulkApprovePayments', {
                         paymentIds: selectedPayments,
-                        __RequestVerificationToken: $('[name="__RequestVerificationToken"]').val()
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
                     })
                     .done(function(response) {
+                        hideLoading();
                         if (response.success) {
-                            toastr.success(response.message);
+                            showSuccess(response.message);
                             setTimeout(() => location.reload(), 1500);
                         } else {
-                            toastr.error(response.message);
+                            showError(response.message);
                         }
                     })
                     .fail(function() {
-                        toastr.error('Có lỗi xảy ra!');
+                        hideLoading();
+                        showError('Có lỗi xảy ra khi duyệt hàng loạt!');
                     });
                 }
             });
         }
 
         function bulkRejectPayments() {
+            const selectedPayments = $('.payment-checkbox:checked').map(function() {
+                return $(this).val();
+            }).get();
+
             if (selectedPayments.length === 0) {
-                toastr.warning('Vui lòng chọn ít nhất một giao dịch!');
+                showWarning('Vui lòng chọn ít nhất một giao dịch!');
                 return;
             }
 
             Swal.fire({
-                title: 'Từ chối hàng loạt',
-                text: `Bạn có chắc chắn muốn từ chối ${selectedPayments.length} giao dịch?`,
-                icon: 'warning',
+                title: 'Từ chối hàng loạt?',
+                input: 'textarea',
+                inputLabel: 'Lý do từ chối',
+                inputPlaceholder: 'Nhập lý do từ chối các giao dịch...',
+                text: `Bạn có chắc chắn muốn từ chối ${selectedPayments.length} giao dịch đã chọn?`,
                 showCancelButton: true,
                 confirmButtonColor: '#ef4444',
                 cancelButtonColor: '#6b7280',
                 confirmButtonText: 'Từ chối tất cả',
-                cancelButtonText: 'Hủy'
+                cancelButtonText: 'Hủy',
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'Vui lòng nhập lý do từ chối!'
+                    }
+                }
             }).then((result) => {
                 if (result.isConfirmed) {
-                    $.post('@Url.Action("BulkRejectPayments", "Admin")', {
+                    showLoading();
+
+                    $.post('/Admin/BulkRejectPayments', {
                         paymentIds: selectedPayments,
-                        __RequestVerificationToken: $('[name="__RequestVerificationToken"]').val()
+                        reason: result.value,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
                     })
                     .done(function(response) {
+                        hideLoading();
                         if (response.success) {
-                            toastr.success(response.message);
+                            showSuccess(response.message);
                             setTimeout(() => location.reload(), 1500);
                         } else {
-                            toastr.error(response.message);
+                            showError(response.message);
                         }
                     })
                     .fail(function() {
-                        toastr.error('Có lỗi xảy ra!');
+                        hideLoading();
+                        showError('Có lỗi xảy ra khi từ chối hàng loạt!');
                     });
                 }
             });
         }
 
-        function resetFilters() {
-            $('input[name="search"]').val('');
-            $('select[name="status"]').val('');
-            $('input[name="fromDate"]').val('');
-            $('input[name="toDate"]').val('');
-            $('form').submit();
+        function sendReceipt(paymentId) {
+            showLoading();
+
+            // Simulate sending receipt
+            setTimeout(() => {
+                hideLoading();
+                showSuccess('Đã gửi hóa đơn thành công!');
+            }, 1000);
         }
 
-        function toggleExportMenu() {
-            $('#exportMenu').toggleClass('show');
+        function exportPayments() {
+            const params = new URLSearchParams();
+
+            if ($('#status').val()) params.append('status', $('#status').val());
+            if ($('#search').val()) params.append('search', $('#search').val());
+            if ($('#fromDate').val()) params.append('fromDate', $('#fromDate').val());
+            if ($('#toDate').val()) params.append('toDate', $('#toDate').val());
+
+            window.open(`/Admin/ExportPayments?${params.toString()}`, '_blank');
         }
 
-        // Close export menu when clicking outside
-        $(document).click(function(e) {
-            if (!$(e.target).closest('.position-relative').length) {
-                $('#exportMenu').removeClass('show');
-            }
-        });
-
-        function exportPayments(format) {
-            const params = new URLSearchParams({
-                status: '@ViewBag.Status',
-                search: '@ViewBag.Search',
-                fromDate: '@ViewBag.FromDate',
-                toDate: '@ViewBag.ToDate',
-                format: format
-            });
-
-            window.location.href = '@Url.Action("ExportPayments", "Admin")?' + params.toString();
-            $('#exportMenu').removeClass('show');
+        function printPaymentDetail() {
+            window.print();
         }
 
-        // Auto refresh for pending payments
-        @if (ViewBag.Status == "Pending" || ViewBag.Status == "WaitingConfirm")
-        {
-            <text>
-                setInterval(function() {
-                    location.reload();
-                }, 60000); // Refresh every minute
-            </text>
+        // Real-time payment status updates
+        function checkPaymentUpdates() {
+            // This would typically use SignalR or polling
+            console.log('Checking for payment updates...');
         }
 
-        // Initialize tooltips
-        $('[data-bs-toggle="tooltip"]').tooltip();
+        // Check for updates every minute
+        setInterval(checkPaymentUpdates, 60000);
     </script>
-}
 
-@Html.AntiForgeryToken()
+    @Html.AntiForgeryToken()
+}

@@ -1,267 +1,564 @@
 ﻿@model List<DACSN10.Models.Course>
 @{
     ViewData["Title"] = "Quản lý khóa học";
-    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+    var currentPage = ViewBag.Page ?? 1;
+    var totalPages = ViewBag.TotalPages ?? 1;
+    var status = ViewBag.Status ?? "";
+    var search = ViewBag.Search ?? "";
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item active">Quản lý khóa học</li>
 }
 
 @section Styles {
-    <link href="~/css/admin-courses.css" rel="stylesheet" />
+    <link href="https://cdn.datatables.net/1.13.0/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/responsive/2.4.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
+    <style>
+        .course-image {
+            width: 60px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .course-actions {
+            white-space: nowrap;
+        }
+
+            .course-actions .btn {
+                margin: 0 2px;
+                padding: 0.375rem 0.75rem;
+            }
+
+        .bulk-actions {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .filters-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .course-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+
+            .course-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            }
+
+        .course-thumbnail {
+            height: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+        }
+
+        .course-content {
+            padding: 1.5rem;
+        }
+
+        .course-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.75rem;
+        }
+
+        .course-stats {
+            display: flex;
+            justify-content: space-between;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--admin-primary);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--admin-secondary);
+        }
+    </style>
 }
 
-<div class="page-header" data-aos="fade-down">
-    <div class="d-flex justify-content-between align-items-center">
-        <div>
-            <h1 class="page-title">
-                <i class="fas fa-book me-3"></i>Quản lý khóa học
-            </h1>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Admin")">Dashboard</a></li>
-                    <li class="breadcrumb-item active">Khóa học</li>
-                </ol>
-            </nav>
+<!-- Filters and Search -->
+<div class="filters-card" data-aos="fade-up">
+    <form method="GET" action="/Admin/Admin/Courses" class="row g-3">
+        <div class="col-md-4">
+            <label for="search" class="form-label">Tìm kiếm</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" id="search" name="search"
+                       value="@search" placeholder="Tên khóa học, giảng viên...">
+            </div>
         </div>
-        <div>
-            <a href="@Url.Action("CreateCourse", "Admin")" class="btn btn-gradient-primary">
-                <i class="fas fa-plus-circle me-2"></i>Tạo khóa học mới
-            </a>
-        </div>
-    </div>
-</div>
 
-<!-- Filters -->
-<div class="course-filters" data-aos="fade-up">
-    <form method="get" action="@Url.Action("Courses", "Admin")">
-        <div class="row g-3">
-            <div class="col-md-4">
-                <div class="form-group">
-                    <label class="form-label">Tìm kiếm</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        <input type="text" name="search" class="form-control" placeholder="Tên khóa học, giảng viên..."
-                               value="@ViewBag.Search">
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="form-group">
-                    <label class="form-label">Trạng thái</label>
-                    <select name="status" class="form-select">
-                        <option value="">Tất cả</option>
-                        <option value="Active" @(ViewBag.Status == "Active" ? "selected" : "")>Đang hoạt động</option>
-                        <option value="Pending" @(ViewBag.Status == "Pending" ? "selected" : "")>Chờ duyệt</option>
-                        <option value="Inactive" @(ViewBag.Status == "Inactive" ? "selected" : "")>Tạm dừng</option>
-                        <option value="Rejected" @(ViewBag.Status == "Rejected" ? "selected" : "")>Từ chối</option>
-                    </select>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="form-group">
-                    <label class="form-label">Sắp xếp</label>
-                    <select name="sort" class="form-select">
-                        <option value="newest">Mới nhất</option>
-                        <option value="oldest">Cũ nhất</option>
-                        <option value="name">Tên A-Z</option>
-                        <option value="price">Giá thấp đến cao</option>
-                    </select>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">&nbsp;</label>
-                <button type="submit" class="btn btn-gradient-primary w-100">
-                    <i class="fas fa-filter me-2"></i>Lọc
-                </button>
-            </div>
+        <div class="col-md-3">
+            <label for="status" class="form-label">Trạng thái</label>
+            <select class="form-select" id="status" name="status">
+                <option value="">Tất cả</option>
+                <option value="Active" @(status == "Active" ? "selected" : "")>Hoạt động</option>
+                <option value="Pending" @(status == "Pending" ? "selected" : "")>Chờ duyệt</option>
+                <option value="Inactive" @(status == "Inactive" ? "selected" : "")>Tạm dừng</option>
+                <option value="Rejected" @(status == "Rejected" ? "selected" : "")>Từ chối</option>
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label for="teacher" class="form-label">Giảng viên</label>
+            <select class="form-select" id="teacher" name="teacher">
+                <option value="">Tất cả giảng viên</option>
+                <!-- Load teachers dynamically -->
+            </select>
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-admin-primary me-2">
+                <i class="fas fa-filter me-1"></i>Lọc
+            </button>
+            <a href="/Admin/Admin/Courses" class="btn btn-outline-secondary">
+                <i class="fas fa-times"></i>
+            </a>
         </div>
     </form>
 </div>
 
-<!-- Course List -->
-@if (Model != null && Model.Any())
-{
-    <div class="row" id="courseList">
+<!-- Action Bar -->
+<div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-up" data-aos-delay="100">
+    <div>
+        <h4 class="mb-0">Danh sách khóa học</h4>
+        <p class="text-muted mb-0">Quản lý tất cả khóa học trong hệ thống</p>
+    </div>
+
+    <div class="d-flex gap-2">
+        <div class="dropdown">
+            <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-download me-1"></i>Xuất dữ liệu
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="/Admin/Admin/ExportCourses"><i class="fas fa-file-excel me-2"></i>Excel</a></li>
+                <li><a class="dropdown-item" href="#" onclick="printCourses()"><i class="fas fa-print me-2"></i>In danh sách</a></li>
+            </ul>
+        </div>
+
+        <button class="btn btn-admin-warning" onclick="toggleBulkActions()">
+            <i class="fas fa-tasks me-1"></i>Thao tác hàng loạt
+        </button>
+
+        <a href="/Admin/Admin/CreateCourse" class="btn btn-admin-primary">
+            <i class="fas fa-plus me-1"></i>Thêm khóa học
+        </a>
+    </div>
+</div>
+
+<!-- Bulk Actions Bar -->
+<div class="bulk-actions" id="bulkActionsBar">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <span class="fw-bold">Đã chọn: <span id="selectedCount">0</span> khóa học</span>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-admin-success btn-sm" onclick="bulkApproveCourses()">
+                <i class="fas fa-check me-1"></i>Duyệt tất cả
+            </button>
+            <button class="btn btn-admin-danger btn-sm" onclick="bulkDeleteCourses()">
+                <i class="fas fa-trash me-1"></i>Xóa tất cả
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="clearSelection()">
+                <i class="fas fa-times me-1"></i>Bỏ chọn
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Courses Grid/Table -->
+<div class="view-toggle mb-3" data-aos="fade-up" data-aos-delay="200">
+    <div class="btn-group" role="group">
+        <input type="radio" class="btn-check" name="viewMode" id="gridView" checked>
+        <label class="btn btn-outline-primary" for="gridView">
+            <i class="fas fa-th"></i> Lưới
+        </label>
+
+        <input type="radio" class="btn-check" name="viewMode" id="tableView">
+        <label class="btn btn-outline-primary" for="tableView">
+            <i class="fas fa-list"></i> Bảng
+        </label>
+    </div>
+</div>
+
+<!-- Grid View -->
+<div id="coursesGrid" class="row">
+    @if (Model != null && Model.Any())
+    {
         @foreach (var course in Model)
         {
-            <div class="col-lg-4 col-md-6" data-aos="fade-up">
-                <div class="course-card-admin">
-                    <div class="course-image-admin">
-                        <i class="fas fa-graduation-cap"></i>
-                        <span class="course-status-badge status-@course.TrangThai.ToLower()">
+            <div class="col-xl-4 col-lg-6 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="300">
+                <div class="course-card">
+                    <div class="position-relative">
+                        <div class="course-thumbnail">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+
+                        <div class="position-absolute top-0 end-0 p-2">
+                            <input type="checkbox" class="form-check-input course-checkbox"
+                                   value="@course.CourseID" style="transform: scale(1.2);">
+                        </div>
+
+                        <div class="position-absolute top-0 start-0 p-2">
                             @switch (course.TrangThai)
                             {
                                 case "Active":
-                                    <i class="fas fa-check-circle me-1">Đang hoạt động</i>
-                            break;
+                                    <span class="badge bg-success">Hoạt động</span>
+                                    break;
                                 case "Pending":
-                                    <i class="fas fa-clock me-1">Chờ duyệt</i>
-                            break;
+                                    <span class="badge bg-warning">Chờ duyệt</span>
+                                    break;
                                 case "Inactive":
-                                    <i class="fas fa-pause-circle me-1">Tạm dừng</i>
-                            break;
+                                    <span class="badge bg-secondary">Tạm dừng</span>
+                                    break;
                                 case "Rejected":
-                                    <i class="fas fa-times-circle me-1">Từ chối</i>
-                            break;
+                                    <span class="badge bg-danger">Từ chối</span>
+                                    break;
+                                default:
+                                    <span class="badge bg-secondary">@course.TrangThai</span>
+                                    break;
                             }
-                        </span>
-                        <div class="form-check position-absolute top-0 start-0 m-3">
-                            <input class="form-check-input course-checkbox" type="checkbox"
-                                   value="@course.CourseID" id="course-@course.CourseID">
                         </div>
                     </div>
 
-                    <div class="course-content-admin">
-                        <h5 class="mb-2">@course.TenKhoaHoc</h5>
-                        <p class="text-muted mb-2">
-                            <i class="fas fa-user me-2"></i>@(course.User?.HoTen ?? "Chưa có giảng viên")
-                        </p>
+                    <div class="course-content">
+                        <h5 class="course-title">@course.TenKhoaHoc</h5>
+
+                        <div class="d-flex align-items-center mb-2">
+                            <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(course.User?.HoTen ?? "Teacher")&background=667eea&color=fff&bold=true&size=32"
+                                 alt="@course.User?.HoTen" class="rounded-circle me-2" width="32" height="32">
+                            <span class="text-muted">@(course.User?.HoTen ?? "Chưa có thông tin")</span>
+                        </div>
+
                         <p class="text-muted small mb-3">
                             @(course.MoTa?.Length > 100 ? course.MoTa.Substring(0, 100) + "..." : course.MoTa)
                         </p>
 
                         <div class="course-stats">
                             <div class="stat-item">
-                                <div class="stat-value">@course.Gia.ToString("N0")₫</div>
-                                <div class="stat-label">Giá</div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-value">@(course.Enrollments?.Count ?? 0)</div>
+                                <div class="stat-number">@(course.Enrollments?.Count ?? 0)</div>
                                 <div class="stat-label">Học viên</div>
                             </div>
                             <div class="stat-item">
-                                <div class="stat-value">@(course.Lessons?.Count ?? 0)</div>
+                                <div class="stat-number">@(course.Lessons?.Count ?? 0)</div>
                                 <div class="stat-label">Bài học</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">@course.Gia.ToString("N0")₫</div>
+                                <div class="stat-label">Giá</div>
                             </div>
                         </div>
 
-                        <div class="action-buttons">
-                            <a href="@Url.Action("CourseDetails", "Admin", new { id = course.CourseID })"
-                               class="btn-action btn-view">
-                                <i class="fas fa-eye"></i>Chi tiết
-                            </a>
-                            <a href="@Url.Action("EditCourse", "Admin", new { id = course.CourseID })"
-                               class="btn-action btn-edit">
-                                <i class="fas fa-edit"></i>Sửa
-                            </a>
-                            @if (course.TrangThai == "Pending")
-                            {
-                                <button onclick="approveCourse(@course.CourseID)" class="btn-action btn-approve">
-                                    <i class="fas fa-check"></i>Duyệt
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>@course.NgayTao.ToString("dd/MM/yyyy")
+                            </small>
+
+                            <div class="btn-group">
+                                <a href="/Admin/Admin/CourseDetails/@course.CourseID"
+                                   class="btn btn-outline-primary btn-sm" title="Xem chi tiết">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="/Admin/Admin/EditCourse/@course.CourseID"
+                                   class="btn btn-outline-warning btn-sm" title="Chỉnh sửa">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                @if (course.TrangThai == "Pending")
+                                {
+                                    <button class="btn btn-outline-success btn-sm"
+                                            onclick="approveCourse(@course.CourseID)" title="Duyệt">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                }
+                                <button class="btn btn-outline-danger btn-sm"
+                                        onclick="deleteCourse(@course.CourseID)" title="Xóa">
+                                    <i class="fas fa-trash"></i>
                                 </button>
-                            }
-                            <button onclick="confirmDelete('@Url.Action("DeleteCourse", "Admin", new { id = course.CourseID })')"
-                                    class="btn-action btn-delete">
-                                <i class="fas fa-trash"></i>Xóa
-                            </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         }
-    </div>
-
-    <!-- Pagination -->
-    @if (ViewBag.TotalPages > 1)
-    {
-        <nav aria-label="Page navigation" class="mt-4">
-            <ul class="pagination justify-content-center">
-                @for (int i = 1; i <= ViewBag.TotalPages; i++)
-                {
-                    <li class="page-item @(i == ViewBag.Page ? "active" : "")">
-                        <a class="page-link" href="?page=@i&status=@ViewBag.Status&search=@ViewBag.Search">@i</a>
-                    </li>
-                }
-            </ul>
-        </nav>
     }
-}
-else
-{
-    <div class="empty-state" data-aos="fade-up">
-        <i class="fas fa-book-open empty-icon"></i>
-        <h3 class="text-muted">Chưa có khóa học nào</h3>
-        <p class="text-muted">Bắt đầu bằng cách tạo khóa học đầu tiên</p>
-        <a href="@Url.Action("CreateCourse", "Admin")" class="btn btn-gradient-primary mt-3">
-            <i class="fas fa-plus-circle me-2"></i>Tạo khóa học mới
-        </a>
-    </div>
-}
-
-<!-- Bulk Actions -->
-<div class="bulk-actions" id="bulkActions">
-    <span class="text-muted me-3">
-        <span id="selectedCount">0</span> khóa học được chọn
-    </span>
-    <button class="btn btn-sm btn-success" onclick="bulkApprove()">
-        <i class="fas fa-check me-1"></i>Duyệt hàng loạt
-    </button>
-    <button class="btn btn-sm btn-danger" onclick="bulkDelete()">
-        <i class="fas fa-trash me-1"></i>Xóa hàng loạt
-    </button>
-    <button class="btn btn-sm btn-secondary" onclick="cancelSelection()">
-        <i class="fas fa-times me-1"></i>Hủy
-    </button>
+    else
+    {
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-book-open fa-5x text-muted mb-3"></i>
+                <h4 class="text-muted">Chưa có khóa học nào</h4>
+                <p class="text-muted">Bắt đầu bằng cách tạo khóa học mới</p>
+                <a href="/Admin/Admin/CreateCourse" class="btn btn-admin-primary">
+                    <i class="fas fa-plus me-2"></i>Tạo khóa học đầu tiên
+                </a>
+            </div>
+        </div>
+    }
 </div>
 
-@section Scripts {
-    <script>
-        let selectedCourses = [];
-
-        $(document).ready(function() {
-            // Initialize tooltips
-            $('[data-bs-toggle="tooltip"]').tooltip();
-
-            // Handle checkbox changes
-            $('.course-checkbox').change(function() {
-                const courseId = parseInt($(this).val());
-
-                if ($(this).is(':checked')) {
-                    if (!selectedCourses.includes(courseId)) {
-                        selectedCourses.push(courseId);
-                    }
-                } else {
-                    selectedCourses = selectedCourses.filter(id => id !== courseId);
+<!-- Table View (Hidden by default) -->
+<div id="coursesTable" class="admin-table" style="display: none;" data-aos="fade-up" data-aos-delay="400">
+    <table class="table table-hover" id="coursesDataTable">
+        <thead>
+            <tr>
+                <th width="40px">
+                    <input type="checkbox" class="form-check-input" id="selectAll">
+                </th>
+                <th>Khóa học</th>
+                <th>Giảng viên</th>
+                <th>Trạng thái</th>
+                <th>Học viên</th>
+                <th>Giá</th>
+                <th>Ngày tạo</th>
+                <th width="120px">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                @foreach (var course in Model)
+                {
+                    <tr>
+                        <td>
+                            <input type="checkbox" class="form-check-input course-checkbox" value="@course.CourseID">
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="course-image me-3"
+                                     style="width: 50px; height: 35px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                            border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white;">
+                                    <i class="fas fa-graduation-cap"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">@course.TenKhoaHoc</div>
+                                    <small class="text-muted">
+                                        @(course.MoTa?.Length > 50 ? course.MoTa.Substring(0, 50) + "..." : course.MoTa)
+                                    </small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(course.User?.HoTen ?? "Teacher")&background=667eea&color=fff&bold=true&size=32"
+                                     alt="@course.User?.HoTen" class="rounded-circle me-2" width="32" height="32">
+                                <span>@(course.User?.HoTen ?? "Chưa có thông tin")</span>
+                            </div>
+                        </td>
+                        <td>
+                            @switch (course.TrangThai)
+                            {
+                                case "Active":
+                                    <span class="status-badge status-active">Hoạt động</span>
+                                    break;
+                                case "Pending":
+                                    <span class="status-badge status-pending">Chờ duyệt</span>
+                                    break;
+                                case "Inactive":
+                                    <span class="status-badge status-inactive">Tạm dừng</span>
+                                    break;
+                                case "Rejected":
+                                    <span class="status-badge status-inactive">Từ chối</span>
+                                    break;
+                                default:
+                                    <span class="status-badge">@course.TrangThai</span>
+                                    break;
+                            }
+                        </td>
+                        <td>
+                            <span class="fw-semibold">@(course.Enrollments?.Count ?? 0)</span>
+                        </td>
+                        <td>
+                            <span class="fw-semibold text-success">@course.Gia.ToString("N0")₫</span>
+                        </td>
+                        <td>
+                            @course.NgayTao.ToString("dd/MM/yyyy")
+                        </td>
+                        <td>
+                            <div class="course-actions">
+                                <a href="/Admin/Admin/CourseDetails/@course.CourseID"
+                                   class="btn btn-outline-primary btn-sm" title="Xem chi tiết">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="/Admin/Admin/EditCourse/@course.CourseID"
+                                   class="btn btn-outline-warning btn-sm" title="Chỉnh sửa">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                @if (course.TrangThai == "Pending")
+                                {
+                                    <button class="btn btn-outline-success btn-sm"
+                                            onclick="approveCourse(@course.CourseID)" title="Duyệt">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                }
+                                <button class="btn btn-outline-danger btn-sm"
+                                        onclick="deleteCourse(@course.CourseID)" title="Xóa">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
                 }
+            }
+        </tbody>
+    </table>
+</div>
 
-                updateBulkActions();
+<!-- Pagination -->
+@if (totalPages > 1)
+{
+    <nav aria-label="Course pagination" data-aos="fade-up" data-aos-delay="500">
+        <ul class="pagination justify-content-center">
+            @if (currentPage > 1)
+            {
+                <li class="page-item">
+                    <a class="page-link" href="/Admin/Admin/Courses?page=@(currentPage - 1)&status=@status&search=@search">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+            }
+
+            @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
+            {
+                <li class="page-item @(i == currentPage ? "active" : "")">
+                    <a class="page-link" href="/Admin/Admin/Courses?page=@i&status=@status&search=@search">@i</a>
+                </li>
+            }
+
+            @if (currentPage < totalPages)
+            {
+                <li class="page-item">
+                    <a class="page-link" href="/Admin/Admin/Courses?page=@(currentPage + 1)&status=@status&search=@search">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            }
+        </ul>
+    </nav>
+}
+
+@section Scripts {
+    <script src="https://cdn.datatables.net/1.13.0/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.0/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.4.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.4.0/js/responsive.bootstrap5.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Initialize DataTable for table view
+            $('#coursesDataTable').DataTable({
+                responsive: true,
+                pageLength: 25,
+                order: [[6, 'desc']], // Sort by created date
+                columnDefs: [
+                    { orderable: false, targets: [0, 7] } // Disable sorting for checkbox and actions
+                ],
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.0/i18n/vi.json'
+                }
+            });
+
+            // View toggle functionality
+            $('input[name="viewMode"]').change(function() {
+                if ($(this).attr('id') === 'gridView') {
+                    $('#coursesGrid').show();
+                    $('#coursesTable').hide();
+                } else {
+                    $('#coursesGrid').hide();
+                    $('#coursesTable').show();
+                }
             });
 
             // Select all functionality
             $('#selectAll').change(function() {
-                const isChecked = $(this).is(':checked');
-                $('.course-checkbox').prop('checked', isChecked);
-
-                if (isChecked) {
-                    selectedCourses = $('.course-checkbox').map(function() {
-                        return parseInt($(this).val());
-                    }).get();
-                } else {
-                    selectedCourses = [];
-                }
-
-                updateBulkActions();
+                $('.course-checkbox').prop('checked', $(this).prop('checked'));
+                updateSelectedCount();
             });
+
+            // Individual checkbox change
+            $('.course-checkbox').change(function() {
+                updateSelectedCount();
+
+                // Update select all checkbox
+                const totalCheckboxes = $('.course-checkbox').length;
+                const checkedCheckboxes = $('.course-checkbox:checked').length;
+                $('#selectAll').prop('checked', totalCheckboxes === checkedCheckboxes);
+            });
+
+            // Load teachers for filter
+            loadTeachersFilter();
         });
 
-        function updateBulkActions() {
-            const count = selectedCourses.length;
-            $('#selectedCount').text(count);
+        function updateSelectedCount() {
+            const selectedCount = $('.course-checkbox:checked').length;
+            $('#selectedCount').text(selectedCount);
 
-            if (count > 0) {
-                $('#bulkActions').addClass('show');
+            if (selectedCount > 0) {
+                $('#bulkActionsBar').show();
             } else {
-                $('#bulkActions').removeClass('show');
+                $('#bulkActionsBar').hide();
             }
         }
 
-        function cancelSelection() {
-            selectedCourses = [];
+        function toggleBulkActions() {
+            $('#bulkActionsBar').toggle();
+        }
+
+        function clearSelection() {
             $('.course-checkbox').prop('checked', false);
-            updateBulkActions();
+            $('#selectAll').prop('checked', false);
+            updateSelectedCount();
+        }
+
+        function loadTeachersFilter() {
+            $.get('/Admin/Admin/GetTeachers', function(data) {
+                const teacherSelect = $('#teacher');
+                teacherSelect.empty().append('<option value="">Tất cả giảng viên</option>');
+
+                data.forEach(function(teacher) {
+                    teacherSelect.append(`<option value="${teacher.id}">${teacher.name}</option>`);
+                });
+            }).fail(function() {
+                console.error('Failed to load teachers');
+            });
         }
 
         function approveCourse(courseId) {
             Swal.fire({
-                title: 'Xác nhận duyệt',
+                title: 'Duyệt khóa học?',
                 text: 'Bạn có chắc chắn muốn duyệt khóa học này?',
                 icon: 'question',
                 showCancelButton: true,
@@ -271,34 +568,66 @@ else
                 cancelButtonText: 'Hủy'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    $.post('@Url.Action("ApproveCourse", "Admin")', {
+                    showLoading();
+
+                    $.post('/Admin/Admin/ApproveCourse', {
                         id: courseId,
-                        __RequestVerificationToken: $('[name="__RequestVerificationToken"]').val()
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
                     })
                     .done(function(response) {
+                        hideLoading();
                         if (response.success) {
-                            toastr.success(response.message);
+                            showSuccess(response.message);
                             setTimeout(() => location.reload(), 1500);
                         } else {
-                            toastr.error(response.message);
+                            showError(response.message);
                         }
                     })
                     .fail(function() {
-                        toastr.error('Có lỗi xảy ra!');
+                        hideLoading();
+                        showError('Có lỗi xảy ra khi duyệt khóa học!');
                     });
                 }
             });
         }
 
-        function bulkApprove() {
+        function deleteCourse(courseId) {
+            confirmDelete('Xóa khóa học?', 'Bạn có chắc chắn muốn xóa khóa học này? Hành động này không thể hoàn tác!', function() {
+                showLoading();
+
+                $.post('/Admin/Admin/DeleteCourse', {
+                    id: courseId,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                })
+                .done(function(response) {
+                    hideLoading();
+                    if (response.success) {
+                        showSuccess(response.message);
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showError(response.message);
+                    }
+                })
+                .fail(function() {
+                    hideLoading();
+                    showError('Có lỗi xảy ra khi xóa khóa học!');
+                });
+            });
+        }
+
+        function bulkApproveCourses() {
+            const selectedCourses = $('.course-checkbox:checked').map(function() {
+                return $(this).val();
+            }).get();
+
             if (selectedCourses.length === 0) {
-                toastr.warning('Vui lòng chọn ít nhất một khóa học!');
+                showWarning('Vui lòng chọn ít nhất một khóa học!');
                 return;
             }
 
             Swal.fire({
-                title: 'Xác nhận duyệt hàng loạt',
-                text: `Bạn có chắc chắn muốn duyệt ${selectedCourses.length} khóa học?`,
+                title: 'Duyệt hàng loạt?',
+                text: `Bạn có chắc chắn muốn duyệt ${selectedCourses.length} khóa học đã chọn?`,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#10b981',
@@ -307,100 +636,85 @@ else
                 cancelButtonText: 'Hủy'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    $.post('@Url.Action("BulkApproveCourses", "Admin")', {
+                    showLoading();
+
+                    $.post('/Admin/Admin/BulkApproveCourses', {
                         courseIds: selectedCourses,
-                        __RequestVerificationToken: $('[name="__RequestVerificationToken"]').val()
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
                     })
                     .done(function(response) {
+                        hideLoading();
                         if (response.success) {
-                            toastr.success(response.message);
+                            showSuccess(response.message);
                             setTimeout(() => location.reload(), 1500);
                         } else {
-                            toastr.error(response.message);
+                            showError(response.message);
                         }
                     })
                     .fail(function() {
-                        toastr.error('Có lỗi xảy ra!');
+                        hideLoading();
+                        showError('Có lỗi xảy ra khi duyệt hàng loạt!');
                     });
                 }
             });
         }
 
-        function bulkDelete() {
+        function bulkDeleteCourses() {
+            const selectedCourses = $('.course-checkbox:checked').map(function() {
+                return $(this).val();
+            }).get();
+
             if (selectedCourses.length === 0) {
-                toastr.warning('Vui lòng chọn ít nhất một khóa học!');
+                showWarning('Vui lòng chọn ít nhất một khóa học!');
                 return;
             }
 
-            Swal.fire({
-                title: 'Xác nhận xóa hàng loạt',
-                text: `Bạn có chắc chắn muốn xóa ${selectedCourses.length} khóa học? Hành động này không thể hoàn tác!`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Xóa tất cả',
-                cancelButtonText: 'Hủy'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.post('@Url.Action("BulkDeleteCourses", "Admin")', {
+            confirmDelete('Xóa hàng loạt?',
+                `Bạn có chắc chắn muốn xóa ${selectedCourses.length} khóa học đã chọn? Hành động này không thể hoàn tác!`,
+                function() {
+                    showLoading();
+
+                    $.post('/Admin/Admin/BulkDeleteCourses', {
                         courseIds: selectedCourses,
-                        __RequestVerificationToken: $('[name="__RequestVerificationToken"]').val()
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
                     })
                     .done(function(response) {
+                        hideLoading();
                         if (response.success) {
-                            toastr.success(response.message);
+                            showSuccess(response.message);
                             setTimeout(() => location.reload(), 1500);
                         } else {
-                            toastr.error(response.message);
+                            showError(response.message);
                         }
                     })
                     .fail(function() {
-                        toastr.error('Có lỗi xảy ra!');
+                        hideLoading();
+                        showError('Có lỗi xảy ra khi xóa hàng loạt!');
                     });
                 }
-            });
+            );
         }
 
-        // Advanced search
-        $('#advancedSearchToggle').click(function() {
-            $('#advancedSearchForm').slideToggle();
-            $(this).find('i').toggleClass('fa-chevron-down fa-chevron-up');
-        });
-
-        // Export functionality
-        function exportCourses(format) {
-            const params = new URLSearchParams({
-                status: '@ViewBag.Status',
-                search: '@ViewBag.Search',
-                format: format
-            });
-
-            window.location.href = '@Url.Action("ExportCourses", "Admin")?' + params.toString();
+        function printCourses() {
+            window.print();
         }
 
-        // Live search
-        let searchTimeout;
-        $('#searchInput').on('input', function() {
-            clearTimeout(searchTimeout);
-            const query = $(this).val();
+        // Auto-refresh every 2 minutes
+        setInterval(function() {
+            // Check for new courses or updates
+            console.log('Checking for updates...');
+        }, 120000);
 
-            searchTimeout = setTimeout(() => {
-                if (query.length >= 2 || query.length === 0) {
-                    $('form').submit();
+        // Add CSRF token
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (settings.type === 'POST') {
+                    xhr.setRequestHeader("RequestVerificationToken",
+                        $('input[name="__RequestVerificationToken"]').val());
                 }
-            }, 500);
-        });
-
-        // Filter tags
-        function removeFilter(type) {
-            if (type === 'status') {
-                $('select[name="status"]').val('').closest('form').submit();
-            } else if (type === 'search') {
-                $('input[name="search"]').val('').closest('form').submit();
             }
-        }
+        });
     </script>
-}
 
-@Html.AntiForgeryToken()
+    @Html.AntiForgeryToken()
+}

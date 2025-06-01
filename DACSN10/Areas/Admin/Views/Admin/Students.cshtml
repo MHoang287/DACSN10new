@@ -1,879 +1,694 @@
 ﻿@model List<DACSN10.Models.User>
 @{
     ViewData["Title"] = "Quản lý học viên";
-    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+    var currentPage = ViewBag.Page ?? 1;
+    var totalPages = ViewBag.TotalPages ?? 1;
+    var status = ViewBag.Status ?? "";
+    var search = ViewBag.Search ?? "";
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item active">Quản lý học viên</li>
 }
 
 @section Styles {
     <style>
-        .student-filters {
-            background: white;
-            border-radius: 20px;
-            padding: 1.5rem;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            margin-bottom: 2rem;
+        .student-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
         }
 
         .student-card {
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            transition: all 0.3s ease;
+            border-radius: 12px;
             overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
             margin-bottom: 1.5rem;
-            border: 1px solid rgba(0,0,0,0.04);
         }
 
             .student-card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+                transform: translateY(-2px);
+                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
             }
 
-        .student-avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .student-header {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
             color: white;
-            font-size: 2rem;
-            font-weight: 600;
-            margin: 0 auto 1rem;
-        }
-
-        .student-info {
             padding: 1.5rem;
             text-align: center;
         }
 
+        .student-avatar-large {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 1rem;
+        }
+
+        .student-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .student-email {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .student-body {
+            padding: 1.5rem;
+        }
+
         .student-stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
+            display: flex;
+            justify-content: space-around;
+            margin: 1rem 0;
             padding: 1rem;
-            background: #f8f9fa;
-            border-radius: 0 0 20px 20px;
+            background: #f8fafc;
+            border-radius: 8px;
         }
 
         .stat-item {
             text-align: center;
-            padding: 0.5rem;
         }
 
-        .stat-value {
-            font-size: 1.25rem;
+        .stat-number {
+            font-size: 1.5rem;
             font-weight: 700;
-            color: #667eea;
-            margin-bottom: 0.25rem;
+            color: var(--admin-primary);
         }
 
         .stat-label {
             font-size: 0.8rem;
-            color: #6c757d;
+            color: var(--admin-secondary);
         }
 
-        .status-badge {
-            padding: 0.4rem 1rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
+        .activity-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
         }
 
-        .status-active {
-            background: rgba(16, 185, 129, 0.1);
-            color: #10b981;
+        .activity-online {
+            background: #10b981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
         }
 
-        .status-locked {
-            background: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
+        .activity-offline {
+            background: #6b7280;
         }
 
-        .action-buttons {
-            display: flex;
-            gap: 0.5rem;
-            justify-content: center;
-            margin-top: 1rem;
-        }
-
-        .btn-action {
-            padding: 0.5rem 1rem;
-            border-radius: 15px;
-            border: none;
-            font-size: 0.85rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            color: white;
-        }
-
-            .btn-action:hover {
-                transform: translateY(-2px);
-                color: white;
-            }
-
-        .btn-view {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .btn-edit {
-            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-        }
-
-        .btn-lock {
-            background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
-        }
-
-        .btn-unlock {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-
-        .btn-promote {
-            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-        }
-
-        .table-view-toggle {
+        .enrollment-badge {
             position: absolute;
-            top: 1rem;
-            right: 1rem;
-        }
-
-        .view-mode-btn {
-            padding: 0.5rem 1rem;
-            border: 2px solid #e5e7eb;
-            background: white;
-            color: #6b7280;
-            transition: all 0.3s ease;
-        }
-
-            .view-mode-btn.active {
-                background: #667eea;
-                color: white;
-                border-color: #667eea;
-            }
-
-            .view-mode-btn:first-child {
-                border-radius: 10px 0 0 10px;
-            }
-
-            .view-mode-btn:last-child {
-                border-radius: 0 10px 10px 0;
-            }
-
-        .student-table-container {
-            background: white;
-            border-radius: 20px;
-            padding: 1.5rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-        }
-
-        .registration-date {
-            font-size: 0.85rem;
-            color: #6b7280;
-        }
-
-        .email-verified {
-            color: #10b981;
-            font-size: 0.9rem;
-        }
-
-        .email-unverified {
-            color: #f59e0b;
-            font-size: 0.9rem;
-        }
-
-        .quick-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .quick-stat-card {
-            background: white;
-            border-radius: 15px;
-            padding: 1.5rem;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-            .quick-stat-card:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-            }
-
-        .quick-stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
+            top: -8px;
+            right: -8px;
+            background: var(--admin-primary);
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 0.75rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 1rem;
-            font-size: 1.5rem;
-            color: white;
+            font-weight: 600;
         }
     </style>
 }
 
-<div class="page-header" data-aos="fade-down">
-    <div class="d-flex justify-content-between align-items-center">
-        <div>
-            <h1 class="page-title">
-                <i class="fas fa-user-graduate me-3"></i>Quản lý học viên
-            </h1>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Admin")">Dashboard</a></li>
-                    <li class="breadcrumb-item active">Học viên</li>
-                </ol>
-            </nav>
+<!-- Filters and Search -->
+<div class="filters-card" data-aos="fade-up">
+    <form method="GET" action="/Admin/Admin/Students" class="row g-3">
+        <div class="col-md-4">
+            <label for="search" class="form-label">Tìm kiếm</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" id="search" name="search"
+                       value="@search" placeholder="Tên, email, số điện thoại...">
+            </div>
         </div>
-        <div>
-            <a href="@Url.Action("CreateStudent", "Admin")" class="btn btn-gradient-primary">
-                <i class="fas fa-user-plus me-2"></i>Thêm học viên mới
+
+        <div class="col-md-3">
+            <label for="status" class="form-label">Trạng thái</label>
+            <select class="form-select" id="status" name="status">
+                <option value="">Tất cả</option>
+                <option value="Active" @(status == "Active" ? "selected" : "")>Hoạt động</option>
+                <option value="Locked" @(status == "Locked" ? "selected" : "")>Bị khóa</option>
+                <option value="Pending" @(status == "Pending" ? "selected" : "")>Chờ xác thực</option>
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label for="joinDate" class="form-label">Ngày tham gia</label>
+            <select class="form-select" id="joinDate" name="joinDate">
+                <option value="">Tất cả</option>
+                <option value="today">Hôm nay</option>
+                <option value="week">Tuần này</option>
+                <option value="month">Tháng này</option>
+                <option value="year">Năm này</option>
+            </select>
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-admin-primary me-2">
+                <i class="fas fa-filter me-1"></i>Lọc
+            </button>
+            <a href="/Admin/Admin/Students" class="btn btn-outline-secondary">
+                <i class="fas fa-times"></i>
             </a>
         </div>
+    </form>
+</div>
+
+<!-- Action Bar -->
+<div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-up" data-aos-delay="100">
+    <div>
+        <h4 class="mb-0">Danh sách học viên</h4>
+        <p class="text-muted mb-0">Quản lý tất cả học viên trong hệ thống</p>
+    </div>
+
+    <div class="d-flex gap-2">
+        <div class="dropdown">
+            <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-download me-1"></i>Xuất dữ liệu
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="/Admin/Admin/ExportUsers?userType=User"><i class="fas fa-file-excel me-2"></i>Excel</a></li>
+                <li><a class="dropdown-item" href="#" onclick="printStudents()"><i class="fas fa-print me-2"></i>In danh sách</a></li>
+            </ul>
+        </div>
+
+        <button class="btn btn-admin-warning" onclick="toggleBulkActions()">
+            <i class="fas fa-tasks me-1"></i>Thao tác hàng loạt
+        </button>
+
+        <a href="/Admin/Admin/CreateStudent" class="btn btn-admin-primary">
+            <i class="fas fa-user-plus me-1"></i>Thêm học viên
+        </a>
     </div>
 </div>
 
-<!-- Quick Stats -->
-<div class="quick-stats" data-aos="fade-up">
-    <div class="quick-stat-card">
-        <div class="quick-stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-            <i class="fas fa-users"></i>
+<!-- Bulk Actions Bar -->
+<div class="bulk-actions" id="bulkActionsBar">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <span class="fw-bold">Đã chọn: <span id="selectedCount">0</span> học viên</span>
         </div>
-        <h3 class="mb-1">@ViewBag.TotalStudents</h3>
-        <p class="text-muted mb-0">Tổng học viên</p>
-    </div>
-    <div class="quick-stat-card">
-        <div class="quick-stat-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-            <i class="fas fa-user-check"></i>
+        <div class="d-flex gap-2">
+            <button class="btn btn-admin-success btn-sm" onclick="bulkPromoteToTeacher()">
+                <i class="fas fa-chalkboard-teacher me-1"></i>Cấp quyền giảng viên
+            </button>
+            <button class="btn btn-admin-warning btn-sm" onclick="bulkLockStudents()">
+                <i class="fas fa-lock me-1"></i>Khóa tài khoản
+            </button>
+            <button class="btn btn-admin-danger btn-sm" onclick="bulkDeleteStudents()">
+                <i class="fas fa-trash me-1"></i>Xóa tài khoản
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="clearSelection()">
+                <i class="fas fa-times me-1"></i>Bỏ chọn
+            </button>
         </div>
-        <h3 class="mb-1">@ViewBag.ActiveStudents</h3>
-        <p class="text-muted mb-0">Đang hoạt động</p>
-    </div>
-    <div class="quick-stat-card">
-        <div class="quick-stat-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
-            <i class="fas fa-calendar-plus"></i>
-        </div>
-        <h3 class="mb-1">@ViewBag.NewStudentsThisMonth</h3>
-        <p class="text-muted mb-0">Mới tháng này</p>
-    </div>
-    <div class="quick-stat-card">
-        <div class="quick-stat-icon" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
-            <i class="fas fa-user-lock"></i>
-        </div>
-        <h3 class="mb-1">@ViewBag.LockedStudents</h3>
-        <p class="text-muted mb-0">Đã khóa</p>
     </div>
 </div>
 
-<!-- Filters -->
-<div class="student-filters" data-aos="fade-up">
-    <div class="position-relative">
-        <div class="table-view-toggle">
-            <div class="btn-group">
-                <button class="view-mode-btn active" onclick="switchView('grid')">
-                    <i class="fas fa-th"></i>
-                </button>
-                <button class="view-mode-btn" onclick="switchView('table')">
-                    <i class="fas fa-list"></i>
-                </button>
-            </div>
-        </div>
-
-        <form method="get" action="@Url.Action("Students", "Admin")">
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label">Tìm kiếm</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        <input type="text" name="search" class="form-control"
-                               placeholder="Tên, email, số điện thoại..." value="@ViewBag.Search">
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Trạng thái</label>
-                    <select name="status" class="form-select">
-                        <option value="">Tất cả</option>
-                        <option value="Active" @(ViewBag.Status == "Active" ? "selected" : "")>Đang hoạt động</option>
-                        <option value="Locked" @(ViewBag.Status == "Locked" ? "selected" : "")>Đã khóa</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Sắp xếp</label>
-                    <select name="sort" class="form-select">
-                        <option value="newest">Mới nhất</option>
-                        <option value="oldest">Cũ nhất</option>
-                        <option value="name">Tên A-Z</option>
-                        <option value="courses">Nhiều khóa học nhất</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">&nbsp;</label>
-                    <button type="submit" class="btn btn-gradient-primary w-100">
-                        <i class="fas fa-filter me-2"></i>Lọc
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Students Grid View -->
-<div id="gridView">
+<!-- Students Grid -->
+<div class="row" id="studentsGrid">
     @if (Model != null && Model.Any())
     {
-        <div class="row">
-            @foreach (var student in Model)
-            {
-                <div class="col-lg-3 col-md-4 col-sm-6" data-aos="zoom-in">
-                    <div class="student-card">
-                        <div class="form-check position-absolute top-0 end-0 m-3">
-                            <input class="form-check-input student-checkbox" type="checkbox"
-                                   value="@student.Id" id="student-@student.Id">
-                        </div>
-
-                        <div class="student-info">
-                            <div class="student-avatar">
-                                @(student.HoTen?.Substring(0, 1).ToUpper() ?? "S")
+        @foreach (var student in Model)
+        {
+            <div class="col-xl-4 col-lg-6 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="student-card">
+                    <div class="position-relative">
+                        <div class="student-header">
+                            <div class="position-absolute top-0 end-0 p-2">
+                                <input type="checkbox" class="form-check-input student-checkbox"
+                                       value="@student.Id" style="transform: scale(1.2);">
                             </div>
-                            <h5 class="mb-1">@student.HoTen</h5>
-                            <p class="text-muted small mb-2">@student.Email</p>
 
-                            <div class="status-badge status-@student.TrangThai.ToLower() mb-3">
-                                @if (student.TrangThai == "Active")
+                            <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(student.HoTen ?? "Student")&background=fff&color=3b82f6&bold=true&size=80"
+                                 alt="@student.HoTen" class="student-avatar-large">
+
+                            <div class="student-name">@student.HoTen</div>
+                            <div class="student-email">@student.Email</div>
+
+                            <div class="mt-2">
+                                @switch (student.TrangThai)
                                 {
-                                    <i class="fas fa-check-circle"></i>
-                                    <span>Hoạt động</span>
-                                }
-                                else
-                                {
-                                    <i class="fas fa-lock"></i>
-                                    <span>Đã khóa</span>
+                                    case "Active":
+                                        <span class="badge bg-success">
+                                            <span class="activity-indicator activity-online"></span>Hoạt động
+                                        </span>
+                                        break;
+                                    case "Locked":
+                                        <span class="badge bg-danger">
+                                            <span class="activity-indicator activity-offline"></span>Bị khóa
+                                        </span>
+                                        break;
+                                    default:
+                                        <span class="badge bg-secondary">
+                                            <span class="activity-indicator activity-offline"></span>@student.TrangThai
+                                        </span>
+                                        break;
                                 }
                             </div>
-
-                            <div class="registration-date mb-2">
-                                <i class="far fa-calendar me-1"></i>
-                                Tham gia: @student.NgayDangKy.ToString("dd/MM/yyyy")
-                            </div>
-
-                            @if (student.EmailConfirmed)
-                            {
-                                <div class="email-verified">
-                                    <i class="fas fa-shield-alt me-1"></i>Email đã xác thực
-                                </div>
-                            }
-                            else
-                            {
-                                <div class="email-unverified">
-                                    <i class="fas fa-exclamation-triangle me-1"></i>Chưa xác thực
-                                </div>
-                            }
                         </div>
+                    </div>
 
+                    <div class="student-body">
                         <div class="student-stats">
                             <div class="stat-item">
-                                <div class="stat-value">@(student.Enrollments?.Count ?? 0)</div>
+                                <div class="stat-number">@(student.Enrollments?.Count ?? 0)</div>
                                 <div class="stat-label">Khóa học</div>
                             </div>
                             <div class="stat-item">
-                                <div class="stat-value">@(student.QuizResults?.Count ?? 0)</div>
+                                <div class="stat-number">@(student.QuizResults?.Count ?? 0)</div>
                                 <div class="stat-label">Bài kiểm tra</div>
                             </div>
                             <div class="stat-item">
-                                <div class="stat-value">@(student.Payments?.Count ?? 0)</div>
-                                <div class="stat-label">Giao dịch</div>
+                                <div class="stat-number">
+                                    @{
+                                        var completedCourses = student.Enrollments?.Count(e => e.Progress >= 100) ?? 0;
+                                    }
+                                    @completedCourses
+                                </div>
+                                <div class="stat-label">Hoàn thành</div>
                             </div>
                         </div>
 
-                        <div class="action-buttons p-3">
-                            <a href="@Url.Action("StudentDetails", "Admin", new { id = student.Id })"
-                               class="btn-action btn-view">
-                                <i class="fas fa-eye"></i> Chi tiết
-                            </a>
-                            <a href="@Url.Action("EditStudent", "Admin", new { id = student.Id })"
-                               class="btn-action btn-edit">
-                                <i class="fas fa-edit"></i> Sửa
-                            </a>
-                            @if (student.TrangThai == "Active")
+                        <div class="mb-3">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>Tham gia: @student.NgayDangKy.ToString("dd/MM/yyyy")
+                            </small>
+                            @if (!string.IsNullOrEmpty(student.PhoneNumber))
                             {
-                                <button onclick="lockStudent('@student.Id')" class="btn-action btn-lock">
-                                    <i class="fas fa-lock"></i> Khóa
-                                </button>
+                                <br>
+                                <small class="text-muted">
+                                    <i class="fas fa-phone me-1"></i>@student.PhoneNumber
+                                </small>
                             }
-                            else
-                            {
-                                <button onclick="unlockStudent('@student.Id')" class="btn-action btn-unlock">
-                                    <i class="fas fa-unlock"></i> Mở
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <div class="btn-group" role="group">
+                                <a href="/Admin/Admin/StudentDetails/@student.Id"
+                                   class="btn btn-outline-primary btn-sm" title="Xem chi tiết">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="/Admin/Admin/EditStudent/@student.Id"
+                                   class="btn btn-outline-warning btn-sm" title="Chỉnh sửa">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn btn-outline-info btn-sm"
+                                        onclick="promoteToTeacher('@student.Id')" title="Cấp quyền giảng viên">
+                                    <i class="fas fa-chalkboard-teacher"></i>
                                 </button>
-                            }
-                            <button onclick="promoteToTeacher('@student.Id')" class="btn-action btn-promote"
-                                    title="Nâng cấp thành giảng viên">
-                                <i class="fas fa-graduation-cap"></i>
-                            </button>
+                            </div>
+
+                            <div class="btn-group" role="group">
+                                @if (student.TrangThai == "Active")
+                                {
+                                    <button class="btn btn-outline-warning btn-sm"
+                                            onclick="lockStudent('@student.Id')" title="Khóa tài khoản">
+                                        <i class="fas fa-lock"></i>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-outline-success btn-sm"
+                                            onclick="lockStudent('@student.Id')" title="Mở khóa tài khoản">
+                                        <i class="fas fa-unlock"></i>
+                                    </button>
+                                }
+                                <button class="btn btn-outline-danger btn-sm"
+                                        onclick="deleteStudent('@student.Id')" title="Xóa tài khoản">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            }
-        </div>
+            </div>
+        }
     }
     else
     {
-        <div class="text-center py-5">
-            <i class="fas fa-users fa-4x text-muted mb-3"></i>
-            <h4 class="text-muted">Chưa có học viên nào</h4>
-            <p class="text-muted">Bắt đầu bằng cách thêm học viên đầu tiên</p>
-            <a href="@Url.Action("CreateStudent", "Admin")" class="btn btn-gradient-primary mt-3">
-                <i class="fas fa-user-plus me-2"></i>Thêm học viên mới
-            </a>
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-user-graduate fa-5x text-muted mb-3"></i>
+                <h4 class="text-muted">Chưa có học viên nào</h4>
+                <p class="text-muted">Các học viên sẽ hiển thị ở đây khi họ đăng ký tài khoản</p>
+                <a href="/Admin/Admin/CreateStudent" class="btn btn-admin-primary">
+                    <i class="fas fa-user-plus me-2"></i>Thêm học viên mới
+                </a>
+            </div>
         </div>
     }
 </div>
 
-<!-- Students Table View (Hidden by default) -->
-<div id="tableView" style="display: none;">
-    <div class="student-table-container">
-        <div class="table-responsive">
-            <table class="table table-hover" id="studentsTable">
-                <thead>
-                    <tr>
-                        <th>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="selectAll">
-                            </div>
-                        </th>
-                        <th>Học viên</th>
-                        <th>Email</th>
-                        <th>Điện thoại</th>
-                        <th>Ngày tham gia</th>
-                        <th>Khóa học</th>
-                        <th>Trạng thái</th>
-                        <th>Hành động</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (Model != null && Model.Any())
-                    {
-                        @foreach (var student in Model)
-                        {
-                            <tr>
-                                <td>
-                                    <div class="form-check">
-                                        <input class="form-check-input student-checkbox-table" type="checkbox"
-                                               value="@student.Id">
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="student-avatar me-3" style="width: 40px; height: 40px; font-size: 1rem;">
-                                            @(student.HoTen?.Substring(0, 1).ToUpper() ?? "S")
-                                        </div>
-                                        <div>
-                                            <div class="fw-semibold">@student.HoTen</div>
-                                            <small class="text-muted">ID: @student.Id.Substring(0, 8)...</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div>@student.Email</div>
-                                    @if (student.EmailConfirmed)
-                                    {
-                                        <small class="text-success"><i class="fas fa-check-circle"></i> Đã xác thực</small>
-                                    }
-                                    else
-                                    {
-                                        <small class="text-warning"><i class="fas fa-exclamation-circle"></i> Chưa xác thực</small>
-                                    }
-                                </td>
-                                <td>@(student.PhoneNumber ?? "Chưa có")</td>
-                                <td>@student.NgayDangKy.ToString("dd/MM/yyyy")</td>
-                                <td>
-                                    <span class="badge bg-primary">@(student.Enrollments?.Count ?? 0)</span>
-                                </td>
-                                <td>
-                                    <span class="status-badge status-@student.TrangThai.ToLower()">
-                                        @if (student.TrangThai == "Active")
-                                        {
-                                            <i class="fas fa-check-circle"></i>
-                                            <span>Hoạt động</span>
-                                        }
-                                        else
-                                        {
-                                            <i class="fas fa-lock"></i>
-                                            <span>Đã khóa</span>
-                                        }
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <a href="@Url.Action("StudentDetails", "Admin", new { id = student.Id })"
-                                           class="btn btn-outline-primary" title="Chi tiết">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="@Url.Action("EditStudent", "Admin", new { id = student.Id })"
-                                           class="btn btn-outline-success" title="Chỉnh sửa">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        @if (student.TrangThai == "Active")
-                                        {
-                                            <button onclick="lockStudent('@student.Id')" class="btn btn-outline-danger" title="Khóa tài khoản">
-                                                <i class="fas fa-lock"></i>
-                                            </button>
-                                        }
-                                        else
-                                        {
-                                            <button onclick="unlockStudent('@student.Id')" class="btn btn-outline-info" title="Mở khóa">
-                                                <i class="fas fa-unlock"></i>
-                                            </button>
-                                        }
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
 <!-- Pagination -->
-@if (ViewBag.TotalPages > 1)
+@if (totalPages > 1)
 {
-    <nav aria-label="Page navigation" class="mt-4">
+    <nav aria-label="Student pagination" data-aos="fade-up" data-aos-delay="500">
         <ul class="pagination justify-content-center">
-            <li class="page-item @(ViewBag.Page == 1 ? "disabled" : "")">
-                <a class="page-link" href="?page=@(ViewBag.Page - 1)&status=@ViewBag.Status&search=@ViewBag.Search">
-                    <i class="fas fa-chevron-left"></i>
-                </a>
-            </li>
-            @for (int i = 1; i <= ViewBag.TotalPages; i++)
+            @if (currentPage > 1)
             {
-                <li class="page-item @(i == ViewBag.Page ? "active" : "")">
-                    <a class="page-link" href="?page=@i&status=@ViewBag.Status&search=@ViewBag.Search">@i</a>
+                <li class="page-item">
+                    <a class="page-link" href="/Admin/Admin/Students?page=@(currentPage - 1)&status=@status&search=@search">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
                 </li>
             }
-            <li class="page-item @(ViewBag.Page == ViewBag.TotalPages ? "disabled" : "")">
-                <a class="page-link" href="?page=@(ViewBag.Page + 1)&status=@ViewBag.Status&search=@ViewBag.Search">
-                    <i class="fas fa-chevron-right"></i>
-                </a>
-            </li>
+
+            @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
+            {
+                <li class="page-item @(i == currentPage ? "active" : "")">
+                    <a class="page-link" href="/Admin/Admin/Students?page=@i&status=@status&search=@search">@i</a>
+                </li>
+            }
+
+            @if (currentPage < totalPages)
+            {
+                <li class="page-item">
+                    <a class="page-link" href="/Admin/Admin/Students?page=@(currentPage + 1)&status=@status&search=@search">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            }
         </ul>
     </nav>
 }
 
-<!-- Bulk Actions -->
-<div class="bulk-actions" id="bulkActions">
-    <span class="text-muted me-3">
-        <span id="selectedCount">0</span> học viên được chọn
-    </span>
-    <button class="btn btn-sm btn-warning" onclick="bulkLock()">
-        <i class="fas fa-lock me-1"></i>Khóa hàng loạt
-    </button>
-    <button class="btn btn-sm btn-info" onclick="bulkUnlock()">
-        <i class="fas fa-unlock me-1"></i>Mở khóa hàng loạt
-    </button>
-    <button class="btn btn-sm btn-danger" onclick="bulkDelete()">
-        <i class="fas fa-trash me-1"></i>Xóa hàng loạt
-    </button>
-    <button class="btn btn-sm btn-secondary" onclick="cancelSelection()">
-        <i class="fas fa-times me-1"></i>Hủy
-    </button>
-</div>
-
 @section Scripts {
     <script>
-        let selectedStudents = [];
-        let currentView = 'grid';
-
         $(document).ready(function() {
-            // Initialize DataTable for table view
-            $('#studentsTable').DataTable({
-                paging: false,
-                searching: false,
-                info: false,
-                order: [[4, 'desc']],
-                language: {
-                    emptyTable: "Không có dữ liệu",
-                    zeroRecords: "Không tìm thấy kết quả"
-                }
+            // Individual checkbox change
+            $('.student-checkbox').change(function() {
+                updateSelectedCount();
             });
 
-            // Handle checkbox changes
-            $(document).on('change', '.student-checkbox, .student-checkbox-table', function() {
-                const studentId = $(this).val();
-
-                if ($(this).is(':checked')) {
-                    if (!selectedStudents.includes(studentId)) {
-                        selectedStudents.push(studentId);
-                    }
-                } else {
-                    selectedStudents = selectedStudents.filter(id => id !== studentId);
-                }
-
-                updateBulkActions();
-            });
-
-            // Select all functionality
-            $('#selectAll').change(function() {
-                const isChecked = $(this).is(':checked');
-                $('.student-checkbox-table').prop('checked', isChecked);
-
-                if (isChecked) {
-                    selectedStudents = $('.student-checkbox-table').map(function() {
-                        return $(this).val();
-                    }).get();
-                } else {
-                    selectedStudents = [];
-                }
-
-                updateBulkActions();
-            });
+            // Load statistics
+            loadStudentStatistics();
         });
 
-        function updateBulkActions() {
-            const count = selectedStudents.length;
-            $('#selectedCount').text(count);
+        function updateSelectedCount() {
+            const selectedCount = $('.student-checkbox:checked').length;
+            $('#selectedCount').text(selectedCount);
 
-            if (count > 0) {
-                $('#bulkActions').addClass('show');
+            if (selectedCount > 0) {
+                $('#bulkActionsBar').show();
             } else {
-                $('#bulkActions').removeClass('show');
+                $('#bulkActionsBar').hide();
             }
         }
 
-        function cancelSelection() {
-            selectedStudents = [];
-            $('.student-checkbox, .student-checkbox-table').prop('checked', false);
-            $('#selectAll').prop('checked', false);
-            updateBulkActions();
+        function toggleBulkActions() {
+            $('#bulkActionsBar').toggle();
         }
 
-        function switchView(view) {
-            currentView = view;
-            $('.view-mode-btn').removeClass('active');
-
-            if (view === 'grid') {
-                $('#gridView').show();
-                $('#tableView').hide();
-                $('.view-mode-btn:first-child').addClass('active');
-            } else {
-                $('#gridView').hide();
-                $('#tableView').show();
-                $('.view-mode-btn:last-child').addClass('active');
-            }
+        function clearSelection() {
+            $('.student-checkbox').prop('checked', false);
+            updateSelectedCount();
         }
 
-        function lockStudent(studentId) {
-            Swal.fire({
-                title: 'Khóa tài khoản',
-                text: 'Bạn có chắc chắn muốn khóa tài khoản học viên này?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Khóa',
-                cancelButtonText: 'Hủy'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.post('@Url.Action("LockStudent", "Admin")', {
-                        id: studentId,
-                        __RequestVerificationToken: $('[name="__RequestVerificationToken"]').val()
-                    })
-                    .done(function(response) {
-                        if (response.success) {
-                            toastr.success(response.message);
-                            setTimeout(() => location.reload(), 1500);
-                        } else {
-                            toastr.error(response.message);
-                        }
-                    })
-                    .fail(function() {
-                        toastr.error('Có lỗi xảy ra!');
-                    });
-                }
-            });
-        }
-
-        function unlockStudent(studentId) {
-            Swal.fire({
-                title: 'Mở khóa tài khoản',
-                text: 'Bạn có chắc chắn muốn mở khóa tài khoản học viên này?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#3b82f6',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Mở khóa',
-                cancelButtonText: 'Hủy'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.post('@Url.Action("LockStudent", "Admin")', {
-                        id: studentId,
-                        __RequestVerificationToken: $('[name="__RequestVerificationToken"]').val()
-                    })
-                    .done(function(response) {
-                        if (response.success) {
-                            toastr.success(response.message);
-                            setTimeout(() => location.reload(), 1500);
-                        } else {
-                            toastr.error(response.message);
-                        }
-                    })
-                    .fail(function() {
-                        toastr.error('Có lỗi xảy ra!');
-                    });
-                }
-            });
+        function loadStudentStatistics() {
+            // Load additional statistics if needed
+            console.log('Loading student statistics...');
         }
 
         function promoteToTeacher(studentId) {
             Swal.fire({
-                title: 'Nâng cấp thành giảng viên',
-                text: 'Bạn có chắc chắn muốn nâng cấp học viên này thành giảng viên?',
+                title: 'Cấp quyền giảng viên?',
+                text: 'Bạn có chắc chắn muốn cấp quyền giảng viên cho học viên này?',
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#10b981',
                 cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Nâng cấp',
+                confirmButtonText: 'Cấp quyền',
                 cancelButtonText: 'Hủy'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    $.post('@Url.Action("PromoteToTeacher", "Admin")', {
+                    showLoading();
+
+                    $.post('/Admin/Admin/PromoteToTeacher', {
                         id: studentId,
-                        __RequestVerificationToken: $('[name="__RequestVerificationToken"]').val()
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
                     })
                     .done(function(response) {
+                        hideLoading();
                         if (response.success) {
-                            toastr.success(response.message);
+                            showSuccess(response.message);
                             setTimeout(() => location.reload(), 1500);
                         } else {
-                            toastr.error(response.message);
+                            showError(response.message);
                         }
                     })
                     .fail(function() {
-                        toastr.error('Có lỗi xảy ra!');
+                        hideLoading();
+                        showError('Có lỗi xảy ra khi cấp quyền!');
                     });
                 }
             });
         }
 
-        function bulkLock() {
+        function lockStudent(studentId) {
+            Swal.fire({
+                title: 'Thay đổi trạng thái tài khoản?',
+                text: 'Bạn có chắc chắn muốn thay đổi trạng thái tài khoản này?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#f59e0b',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Thay đổi',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    showLoading();
+
+                    $.post('/Admin/Admin/LockStudent', {
+                        id: studentId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    })
+                    .done(function(response) {
+                        hideLoading();
+                        if (response.success) {
+                            showSuccess(response.message);
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            showError(response.message);
+                        }
+                    })
+                    .fail(function() {
+                        hideLoading();
+                        showError('Có lỗi xảy ra khi thay đổi trạng thái!');
+                    });
+                }
+            });
+        }
+
+        function deleteStudent(studentId) {
+            confirmDelete('Xóa tài khoản học viên?',
+                'Bạn có chắc chắn muốn xóa tài khoản này? Hành động này không thể hoàn tác!',
+                function() {
+                    showLoading();
+
+                    $.post('/Admin/Admin/DeleteStudent', {
+                        id: studentId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    })
+                    .done(function(response) {
+                        hideLoading();
+                        if (response.success) {
+                            showSuccess(response.message);
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            showError(response.message);
+                        }
+                    })
+                    .fail(function() {
+                        hideLoading();
+                        showError('Có lỗi xảy ra khi xóa tài khoản!');
+                    });
+                }
+            );
+        }
+
+        function bulkPromoteToTeacher() {
+            const selectedStudents = $('.student-checkbox:checked').map(function() {
+                return $(this).val();
+            }).get();
+
             if (selectedStudents.length === 0) {
-                toastr.warning('Vui lòng chọn ít nhất một học viên!');
+                showWarning('Vui lòng chọn ít nhất một học viên!');
                 return;
             }
 
             Swal.fire({
-                title: 'Khóa hàng loạt',
-                text: `Bạn có chắc chắn muốn khóa ${selectedStudents.length} tài khoản?`,
+                title: 'Cấp quyền giảng viên hàng loạt?',
+                text: `Bạn có chắc chắn muốn cấp quyền giảng viên cho ${selectedStudents.length} học viên đã chọn?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Cấp quyền tất cả',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    showLoading();
+
+                    // Process each student individually for promotion
+                    let completed = 0;
+                    let errors = 0;
+
+                    selectedStudents.forEach(function(studentId) {
+                        $.post('/Admin/Admin/PromoteToTeacher', {
+                            id: studentId,
+                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                        })
+                        .done(function(response) {
+                            completed++;
+                            if (!response.success) errors++;
+
+                            if (completed === selectedStudents.length) {
+                                hideLoading();
+                                if (errors === 0) {
+                                    showSuccess(`Đã cấp quyền thành công cho ${completed} học viên!`);
+                                } else {
+                                    showWarning(`Hoàn thành với ${errors} lỗi. ${completed - errors} thành công.`);
+                                }
+                                setTimeout(() => location.reload(), 1500);
+                            }
+                        })
+                        .fail(function() {
+                            completed++;
+                            errors++;
+
+                            if (completed === selectedStudents.length) {
+                                hideLoading();
+                                showError(`Có ${errors} lỗi xảy ra trong quá trình xử lý!`);
+                                setTimeout(() => location.reload(), 1500);
+                            }
+                        });
+                    });
+                }
+            });
+        }
+
+        function bulkLockStudents() {
+            const selectedStudents = $('.student-checkbox:checked').map(function() {
+                return $(this).val();
+            }).get();
+
+            if (selectedStudents.length === 0) {
+                showWarning('Vui lòng chọn ít nhất một học viên!');
+                return;
+            }
+
+            Swal.fire({
+                title: 'Khóa tài khoản hàng loạt?',
+                text: `Bạn có chắc chắn muốn khóa ${selectedStudents.length} tài khoản đã chọn?`,
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#ef4444',
+                confirmButtonColor: '#f59e0b',
                 cancelButtonColor: '#6b7280',
                 confirmButtonText: 'Khóa tất cả',
                 cancelButtonText: 'Hủy'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    $.post('@Url.Action("BulkLockUsers", "Admin")', {
+                    showLoading();
+
+                    $.post('/Admin/Admin/BulkLockUsers', {
                         userIds: selectedStudents,
                         lockStatus: true,
-                        __RequestVerificationToken: $('[name="__RequestVerificationToken"]').val()
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
                     })
                     .done(function(response) {
+                        hideLoading();
                         if (response.success) {
-                            toastr.success(response.message);
+                            showSuccess(response.message);
                             setTimeout(() => location.reload(), 1500);
                         } else {
-                            toastr.error(response.message);
+                            showError(response.message);
                         }
                     })
                     .fail(function() {
-                        toastr.error('Có lỗi xảy ra!');
+                        hideLoading();
+                        showError('Có lỗi xảy ra khi khóa tài khoản hàng loạt!');
                     });
                 }
             });
         }
 
-        function bulkUnlock() {
+        function bulkDeleteStudents() {
+            const selectedStudents = $('.student-checkbox:checked').map(function() {
+                return $(this).val();
+            }).get();
+
             if (selectedStudents.length === 0) {
-                toastr.warning('Vui lòng chọn ít nhất một học viên!');
+                showWarning('Vui lòng chọn ít nhất một học viên!');
                 return;
             }
 
-            Swal.fire({
-                title: 'Mở khóa hàng loạt',
-                text: `Bạn có chắc chắn muốn mở khóa ${selectedStudents.length} tài khoản?`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#3b82f6',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Mở khóa tất cả',
-                cancelButtonText: 'Hủy'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.post('@Url.Action("BulkLockUsers", "Admin")', {
-                        userIds: selectedStudents,
-                        lockStatus: false,
-                        __RequestVerificationToken: $('[name="__RequestVerificationToken"]').val()
-                    })
-                    .done(function(response) {
-                        if (response.success) {
-                            toastr.success(response.message);
-                            setTimeout(() => location.reload(), 1500);
-                        } else {
-                            toastr.error(response.message);
-                        }
-                    })
-                    .fail(function() {
-                        toastr.error('Có lỗi xảy ra!');
+            confirmDelete('Xóa hàng loạt?',
+                `Bạn có chắc chắn muốn xóa ${selectedStudents.length} tài khoản đã chọn? Hành động này không thể hoàn tác!`,
+                function() {
+                    showLoading();
+
+                    // Process deletions individually since bulk delete might not be implemented
+                    let completed = 0;
+                    let errors = 0;
+
+                    selectedStudents.forEach(function(studentId) {
+                        $.post('/Admin/Admin/DeleteStudent', {
+                            id: studentId,
+                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                        })
+                        .done(function(response) {
+                            completed++;
+                            if (!response.success) errors++;
+
+                            if (completed === selectedStudents.length) {
+                                hideLoading();
+                                if (errors === 0) {
+                                    showSuccess(`Đã xóa thành công ${completed} tài khoản!`);
+                                } else {
+                                    showWarning(`Hoàn thành với ${errors} lỗi. ${completed - errors} thành công.`);
+                                }
+                                setTimeout(() => location.reload(), 1500);
+                            }
+                        })
+                        .fail(function() {
+                            completed++;
+                            errors++;
+
+                            if (completed === selectedStudents.length) {
+                                hideLoading();
+                                showError(`Có ${errors} lỗi xảy ra trong quá trình xử lý!`);
+                                setTimeout(() => location.reload(), 1500);
+                            }
+                        });
                     });
                 }
-            });
+            );
         }
 
-        function bulkDelete() {
-            if (selectedStudents.length === 0) {
-                toastr.warning('Vui lòng chọn ít nhất một học viên!');
-                return;
-            }
-
-            Swal.fire({
-                title: 'Xóa hàng loạt',
-                text: `Bạn có chắc chắn muốn xóa ${selectedStudents.length} học viên? Hành động này không thể hoàn tác!`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Xóa tất cả',
-                cancelButtonText: 'Hủy'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Implement bulk delete if needed
-                    toastr.info('Tính năng đang phát triển');
-                }
-            });
+        function printStudents() {
+            window.print();
         }
 
-        // Export functionality
-        function exportStudents(format) {
-            const params = new URLSearchParams({
-                userType: 'User',
-                status: '@ViewBag.Status',
-                search: '@ViewBag.Search'
-            });
-
-            window.location.href = '@Url.Action("ExportUsers", "Admin")?' + params.toString();
-        }
+        // Auto-refresh every 3 minutes
+        setInterval(function() {
+            console.log('Checking for student updates...');
+        }, 180000);
     </script>
-}
 
-@Html.AntiForgeryToken()
+    @Html.AntiForgeryToken()
+}

@@ -1,0 +1,1365 @@
+﻿@{
+    ViewData["Title"] = "Cài đặt hệ thống";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item active">Cài đặt hệ thống</li>
+}
+
+@section Styles {
+    <style>
+        .settings-nav {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+            .settings-nav .nav-link {
+                color: var(--admin-secondary);
+                border-radius: 8px;
+                padding: 0.75rem 1rem;
+                transition: all 0.3s ease;
+                border: none;
+            }
+
+                .settings-nav .nav-link.active {
+                    background: var(--admin-primary);
+                    color: white;
+                }
+
+                .settings-nav .nav-link:hover:not(.active) {
+                    background: rgba(59, 130, 246, 0.1);
+                    color: var(--admin-primary);
+                }
+
+        .settings-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+            .setting-item:last-child {
+                border-bottom: none;
+            }
+
+        .setting-info {
+            flex: 1;
+        }
+
+        .setting-title {
+            font-weight: 600;
+            color: var(--admin-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .setting-description {
+            font-size: 0.9rem;
+            color: var(--admin-secondary);
+        }
+
+        .setting-control {
+            min-width: 200px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+            .toggle-switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 34px;
+        }
+
+            .toggle-slider:before {
+                position: absolute;
+                content: "";
+                height: 26px;
+                width: 26px;
+                left: 4px;
+                bottom: 4px;
+                background-color: white;
+                transition: 0.4s;
+                border-radius: 50%;
+            }
+
+        input:checked + .toggle-slider {
+            background-color: var(--admin-primary);
+        }
+
+            input:checked + .toggle-slider:before {
+                transform: translateX(26px);
+            }
+
+        .color-picker {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            cursor: pointer;
+        }
+
+        .theme-preview {
+            width: 100px;
+            height: 60px;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .theme-preview.active {
+                border-color: var(--admin-primary);
+            }
+
+        .maintenance-banner {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .api-key-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .api-key-info {
+            flex: 1;
+        }
+
+        .api-key-value {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: var(--admin-secondary);
+        }
+
+        .security-level {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .security-low {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+        }
+
+        .security-medium {
+            background: rgba(245, 158, 11, 0.1);
+            color: #d97706;
+        }
+
+        .security-high {
+            background: rgba(16, 185, 129, 0.1);
+            color: #059669;
+        }
+    </style>
+}
+
+<!-- Maintenance Banner -->
+<div class="maintenance-banner" id="maintenanceBanner">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <i class="fas fa-tools me-2"></i>
+            <strong>Chế độ bảo trì:</strong> Hệ thống đang trong chế độ bảo trì. Chỉ admin có thể truy cập.
+        </div>
+        <button class="btn btn-light btn-sm" onclick="toggleMaintenance(false)">
+            Tắt chế độ bảo trì
+        </button>
+    </div>
+</div>
+
+<!-- Settings Navigation -->
+<div class="settings-nav" data-aos="fade-up">
+    <ul class="nav nav-pills nav-fill">
+        <li class="nav-item">
+            <a class="nav-link active" data-bs-toggle="pill" href="#general">
+                <i class="fas fa-cog me-2"></i>Chung
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="pill" href="#appearance">
+                <i class="fas fa-palette me-2"></i>Giao diện
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="pill" href="#security">
+                <i class="fas fa-shield-alt me-2"></i>Bảo mật
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="pill" href="#notifications">
+                <i class="fas fa-bell me-2"></i>Thông báo
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="pill" href="#integrations">
+                <i class="fas fa-plug me-2"></i>Tích hợp
+            </a>
+        </li>
+    </ul>
+</div>
+
+<!-- Settings Content -->
+<div class="tab-content">
+    <!-- General Settings -->
+    <div class="tab-pane fade show active" id="general" data-aos="fade-up" data-aos-delay="100">
+        <div class="settings-card">
+            <h5 class="mb-4">
+                <i class="fas fa-cog me-2"></i>Cài đặt chung
+            </h5>
+
+            <form id="generalSettingsForm">
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Tên website</div>
+                        <div class="setting-description">Tên hiển thị của website trên trình duyệt</div>
+                    </div>
+                    <div class="setting-control">
+                        <input type="text" class="form-control" value="OnlineLearning - Nền tảng học trực tuyến">
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Mô tả website</div>
+                        <div class="setting-description">Mô tả ngắn về website cho SEO</div>
+                    </div>
+                    <div class="setting-control">
+                        <textarea class="form-control" rows="2">Nền tảng học trực tuyến hàng đầu Việt Nam với hàng ngàn khóa học chất lượng</textarea>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Email liên hệ</div>
+                        <div class="setting-description">Email chính để nhận liên hệ từ người dùng</div>
+                    </div>
+                    <div class="setting-control">
+                        <input type="email" class="form-control" value="admin@onlinelearning.com">
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Số điện thoại</div>
+                        <div class="setting-description">Số điện thoại hỗ trợ khách hàng</div>
+                    </div>
+                    <div class="setting-control">
+                        <input type="tel" class="form-control" value="1900-1234">
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Địa chỉ</div>
+                        <div class="setting-description">Địa chỉ trụ sở chính</div>
+                    </div>
+                    <div class="setting-control">
+                        <input type="text" class="form-control" value="123 Nguyễn Văn Cừ, Q.5, TP.HCM">
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Múi giờ</div>
+                        <div class="setting-description">Múi giờ mặc định của hệ thống</div>
+                    </div>
+                    <div class="setting-control">
+                        <select class="form-select">
+                            <option value="Asia/Ho_Chi_Minh" selected>GMT+7 (Việt Nam)</option>
+                            <option value="Asia/Bangkok">GMT+7 (Bangkok)</option>
+                            <option value="Asia/Singapore">GMT+8 (Singapore)</option>
+                            <option value="UTC">UTC</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Ngôn ngữ mặc định</div>
+                        <div class="setting-description">Ngôn ngữ hiển thị mặc định cho người dùng mới</div>
+                    </div>
+                    <div class="setting-control">
+                        <select class="form-select">
+                            <option value="vi" selected>Tiếng Việt</option>
+                            <option value="en">English</option>
+                            <option value="zh">中文</option>
+                            <option value="ja">日本語</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Chế độ bảo trì</div>
+                        <div class="setting-description">Kích hoạt chế độ bảo trì để ngăn người dùng truy cập</div>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="maintenanceMode" onchange="toggleMaintenance(this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Cho phép đăng ký mới</div>
+                        <div class="setting-description">Cho phép người dùng mới đăng ký tài khoản</div>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="text-end mt-4">
+                    <button type="button" class="btn btn-outline-secondary me-2" onclick="resetForm('generalSettingsForm')">
+                        <i class="fas fa-undo me-1"></i>Khôi phục
+                    </button>
+                    <button type="submit" class="btn btn-admin-primary">
+                        <i class="fas fa-save me-1"></i>Lưu cài đặt
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Appearance Settings -->
+    <div class="tab-pane fade" id="appearance" data-aos="fade-up" data-aos-delay="200">
+        <div class="settings-card">
+            <h5 class="mb-4">
+                <i class="fas fa-palette me-2"></i>Cài đặt giao diện
+            </h5>
+
+            <form id="appearanceSettingsForm">
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Logo website</div>
+                        <div class="setting-description">Logo hiển thị trên header và các trang</div>
+                    </div>
+                    <div class="setting-control">
+                        <div class="d-flex gap-2">
+                            <input type="file" class="form-control" accept="image/*">
+                            <button type="button" class="btn btn-outline-primary">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Favicon</div>
+                        <div class="setting-description">Icon nhỏ hiển thị trên tab trình duyệt</div>
+                    </div>
+                    <div class="setting-control">
+                        <input type="file" class="form-control" accept="image/x-icon,image/png">
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Theme chính</div>
+                        <div class="setting-description">Chọn theme màu sắc cho website</div>
+                    </div>
+                    <div class="setting-control">
+                        <div class="d-flex gap-2">
+                            <div class="theme-preview active" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)" onclick="selectTheme('blue')"></div>
+                            <div class="theme-preview" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%)" onclick="selectTheme('green')"></div>
+                            <div class="theme-preview" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%)" onclick="selectTheme('orange')"></div>
+                            <div class="theme-preview" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)" onclick="selectTheme('purple')"></div>
+                            <div class="theme-preview" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%)" onclick="selectTheme('red')"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Màu chủ đạo</div>
+                        <div class="setting-description">Màu chính của website (HEX)</div>
+                    </div>
+                    <div class="setting-control">
+                        <div class="d-flex gap-2 align-items-center">
+                            <input type="color" class="color-picker" value="#3b82f6">
+                            <input type="text" class="form-control" value="#3b82f6" style="width: 100px;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Font chữ</div>
+                        <div class="setting-description">Font chữ mặc định cho website</div>
+                    </div>
+                    <div class="setting-control">
+                        <select class="form-select">
+                            <option value="Inter" selected>Inter (Hiện tại)</option>
+                            <option value="Roboto">Roboto</option>
+                            <option value="Open Sans">Open Sans</option>
+                            <option value="Lato">Lato</option>
+                            <option value="Montserrat">Montserrat</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Chế độ tối</div>
+                        <div class="setting-description">Cho phép người dùng chuyển sang chế độ tối</div>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle-switch">
+                            <input type="checkbox">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Hiệu ứng animation</div>
+                        <div class="setting-description">Bật/tắt các hiệu ứng chuyển động trên website</div>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="text-end mt-4">
+                    <button type="button" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-eye me-1"></i>Xem trước
+                    </button>
+                    <button type="submit" class="btn btn-admin-primary">
+                        <i class="fas fa-save me-1"></i>Lưu giao diện
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Security Settings -->
+    <div class="tab-pane fade" id="security" data-aos="fade-up" data-aos-delay="300">
+        <div class="settings-card">
+            <h5 class="mb-4">
+                <i class="fas fa-shield-alt me-2"></i>Cài đặt bảo mật
+            </h5>
+
+            <div class="mb-4">
+                <h6 class="fw-bold mb-3">Mức độ bảo mật hiện tại</h6>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="security-level security-high">
+                        <i class="fas fa-shield-alt me-1"></i>CAO
+                    </div>
+                    <span class="text-success">Hệ thống được bảo vệ tốt</span>
+                </div>
+            </div>
+
+            <form id="securitySettingsForm">
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Xác thực 2 lớp (2FA)</div>
+                        <div class="setting-description">Bắt buộc admin sử dụng 2FA khi đăng nhập</div>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Mã hóa session</div>
+                        <div class="setting-description">Mã hóa dữ liệu session để tăng bảo mật</div>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Thời gian session</div>
+                        <div class="setting-description">Thời gian tự động đăng xuất khi không hoạt động</div>
+                    </div>
+                    <div class="setting-control">
+                        <select class="form-select">
+                            <option value="15">15 phút</option>
+                            <option value="30" selected>30 phút</option>
+                            <option value="60">1 giờ</option>
+                            <option value="120">2 giờ</option>
+                            <option value="480">8 giờ</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Độ phức tạp mật khẩu</div>
+                        <div class="setting-description">Yêu cầu mật khẩu phức tạp cho người dùng</div>
+                    </div>
+                    <div class="setting-control">
+                        <select class="form-select">
+                            <option value="low">Thấp (6+ ký tự)</option>
+                            <option value="medium" selected>Trung bình (8+ ký tự, số và chữ)</option>
+                            <option value="high">Cao (12+ ký tự, số, chữ và ký tự đặc biệt)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Số lần đăng nhập sai</div>
+                        <div class="setting-description">Số lần đăng nhập sai tối đa trước khi khóa tài khoản</div>
+                    </div>
+                    <div class="setting-control">
+                        <select class="form-select">
+                            <option value="3">3 lần</option>
+                            <option value="5" selected>5 lần</option>
+                            <option value="10">10 lần</option>
+                            <option value="unlimited">Không giới hạn</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Thời gian khóa tài khoản</div>
+                        <div class="setting-description">Thời gian khóa tài khoản sau khi đăng nhập sai quá nhiều</div>
+                    </div>
+                    <div class="setting-control">
+                        <select class="form-select">
+                            <option value="15">15 phút</option>
+                            <option value="30" selected>30 phút</option>
+                            <option value="60">1 giờ</option>
+                            <option value="1440">24 giờ</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">SSL/HTTPS</div>
+                        <div class="setting-description">Bắt buộc sử dụng HTTPS cho tất cả kết nối</div>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked disabled>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <h6 class="fw-bold mb-3">API Keys</h6>
+                    <div class="api-key-item">
+                        <div class="api-key-info">
+                            <div class="fw-semibold">Main API Key</div>
+                            <div class="api-key-value">sk_live_51K7***************************</div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="regenerateApiKey('main')">
+                                <i class="fas fa-sync"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="copyApiKey('main')">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="api-key-item">
+                        <div class="api-key-info">
+                            <div class="fw-semibold">Webhook API Key</div>
+                            <div class="api-key-value">wh_sec_***************************</div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="regenerateApiKey('webhook')">
+                                <i class="fas fa-sync"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="copyApiKey('webhook')">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-outline-success btn-sm mt-2" onclick="generateNewApiKey()">
+                        <i class="fas fa-plus me-1"></i>Tạo API Key mới
+                    </button>
+                </div>
+
+                <div class="text-end mt-4">
+                    <button type="button" class="btn btn-outline-warning me-2" onclick="runSecurityScan()">
+                        <i class="fas fa-search me-1"></i>Quét bảo mật
+                    </button>
+                    <button type="submit" class="btn btn-admin-primary">
+                        <i class="fas fa-save me-1"></i>Lưu bảo mật
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Settings -->
+    <div class="tab-pane fade" id="notifications" data-aos="fade-up" data-aos-delay="400">
+        <div class="settings-card">
+            <h5 class="mb-4">
+                <i class="fas fa-bell me-2"></i>Cài đặt thông báo
+            </h5>
+
+            <form id="notificationSettingsForm">
+                <h6 class="fw-bold mb-3">Email Notifications</h6>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Đăng ký mới</div>
+                        <div class="setting-description">Gửi email khi có người dùng mới đăng ký</div>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Thanh toán mới</div>
+                        <div class="setting-description">Gửi email khi có giao dịch thanh toán mới</div>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Khóa học mới</div>
+                        <div class="setting-description">Gửi email khi giảng viên tạo khóa học mới</div>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle-switch">
+                            <input type="checkbox">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Lỗi hệ thống</div>
+                        <div class="setting-description">Gửi email ngay lập tức khi có lỗi nghiêm trọng</div>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <h6 class="fw-bold mb-3">Push Notifications</h6>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Thông báo trình duyệt</div>
+                        <div class="setting-description">Hiển thị thông báo trên trình duyệt</div>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Âm thanh thông báo</div>
+                        <div class="setting-description">Phát âm thanh khi có thông báo mới</div>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle-switch">
+                            <input type="checkbox">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <h6 class="fw-bold mb-3">Cài đặt SMTP</h6>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">SMTP Server</div>
+                        <div class="setting-description">Máy chủ SMTP để gửi email</div>
+                    </div>
+                    <div class="setting-control">
+                        <input type="text" class="form-control" value="smtp.gmail.com">
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">SMTP Port</div>
+                        <div class="setting-description">Cổng kết nối SMTP</div>
+                    </div>
+                    <div class="setting-control">
+                        <input type="number" class="form-control" value="587">
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Email gửi</div>
+                        <div class="setting-description">Địa chỉ email gửi thông báo</div>
+                    </div>
+                    <div class="setting-control">
+                        <input type="email" class="form-control" value="noreply@onlinelearning.com">
+                    </div>
+                </div>
+
+                <div class="text-end mt-4">
+                    <button type="button" class="btn btn-outline-info me-2" onclick="testEmail()">
+                        <i class="fas fa-paper-plane me-1"></i>Test email
+                    </button>
+                    <button type="submit" class="btn btn-admin-primary">
+                        <i class="fas fa-save me-1"></i>Lưu thông báo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Integration Settings -->
+    <div class="tab-pane fade" id="integrations" data-aos="fade-up" data-aos-delay="500">
+        <div class="settings-card">
+            <h5 class="mb-4">
+                <i class="fas fa-plug me-2"></i>Tích hợp bên thứ 3
+            </h5>
+
+            <form id="integrationSettingsForm">
+                <h6 class="fw-bold mb-3">Payment Gateways</h6>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">MoMo Wallet</div>
+                        <div class="setting-description">Tích hợp thanh toán MoMo</div>
+                    </div>
+                    <div class="setting-control">
+                        <div class="d-flex gap-2">
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="configurePayment('momo')">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">VNPay</div>
+                        <div class="setting-description">Tích hợp thanh toán VNPay</div>
+                    </div>
+                    <div class="setting-control">
+                        <div class="d-flex gap-2">
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="configurePayment('vnpay')">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">ZaloPay</div>
+                        <div class="setting-description">Tích hợp thanh toán ZaloPay</div>
+                    </div>
+                    <div class="setting-control">
+                        <div class="d-flex gap-2">
+                            <label class="toggle-switch">
+                                <input type="checkbox">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="configurePayment('zalopay')">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <h6 class="fw-bold mb-3">Analytics & Tracking</h6>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Google Analytics</div>
+                        <div class="setting-description">Tracking ID cho Google Analytics</div>
+                    </div>
+                    <div class="setting-control">
+                        <div class="d-flex gap-2">
+                            <input type="text" class="form-control" placeholder="G-XXXXXXXXXX" value="G-ABC123DEF4">
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Facebook Pixel</div>
+                        <div class="setting-description">Pixel ID cho Facebook Ads</div>
+                    </div>
+                    <div class="setting-control">
+                        <div class="d-flex gap-2">
+                            <input type="text" class="form-control" placeholder="123456789012345">
+                            <label class="toggle-switch">
+                                <input type="checkbox">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Hotjar</div>
+                        <div class="setting-description">Site ID cho Hotjar heatmaps</div>
+                    </div>
+                    <div class="setting-control">
+                        <div class="d-flex gap-2">
+                            <input type="text" class="form-control" placeholder="1234567">
+                            <label class="toggle-switch">
+                                <input type="checkbox">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <h6 class="fw-bold mb-3">Cloud Storage</h6>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Amazon S3</div>
+                        <div class="setting-description">Lưu trữ file và video trên AWS S3</div>
+                    </div>
+                    <div class="setting-control">
+                        <div class="d-flex gap-2">
+                            <label class="toggle-switch">
+                                <input type="checkbox">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="configureStorage('s3')">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Google Cloud Storage</div>
+                        <div class="setting-description">Lưu trữ file trên Google Cloud</div>
+                    </div>
+                    <div class="setting-control">
+                        <div class="d-flex gap-2">
+                            <label class="toggle-switch">
+                                <input type="checkbox">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="configureStorage('gcs')">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <h6 class="fw-bold mb-3">Communication</h6>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Slack Notifications</div>
+                        <div class="setting-description">Gửi thông báo quan trọng vào Slack</div>
+                    </div>
+                    <div class="setting-control">
+                        <div class="d-flex gap-2">
+                            <label class="toggle-switch">
+                                <input type="checkbox">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="configureSlack()">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-title">Discord Webhook</div>
+                        <div class="setting-description">Gửi thông báo vào Discord server</div>
+                    </div>
+                    <div class="setting-control">
+                        <div class="d-flex gap-2">
+                            <label class="toggle-switch">
+                                <input type="checkbox">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="configureDiscord()">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-end mt-4">
+                    <button type="button" class="btn btn-outline-info me-2" onclick="testIntegrations()">
+                        <i class="fas fa-vial me-1"></i>Test tích hợp
+                    </button>
+                    <button type="submit" class="btn btn-admin-primary">
+                        <i class="fas fa-save me-1"></i>Lưu tích hợp
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Load current settings
+            loadCurrentSettings();
+
+            // Form submissions
+            $('#generalSettingsForm').on('submit', function(e) {
+                e.preventDefault();
+                saveSettings('general');
+            });
+
+            $('#appearanceSettingsForm').on('submit', function(e) {
+                e.preventDefault();
+                saveSettings('appearance');
+            });
+
+            $('#securitySettingsForm').on('submit', function(e) {
+                e.preventDefault();
+                saveSettings('security');
+            });
+
+            $('#notificationSettingsForm').on('submit', function(e) {
+                e.preventDefault();
+                saveSettings('notifications');
+            });
+
+            $('#integrationSettingsForm').on('submit', function(e) {
+                e.preventDefault();
+                saveSettings('integrations');
+            });
+        });
+
+        function loadCurrentSettings() {
+            // Simulate loading current settings from server
+            console.log('Loading current settings...');
+        }
+
+        function saveSettings(type) {
+            showLoading();
+
+            setTimeout(() => {
+                hideLoading();
+                showSuccess(`Đã lưu cài đặt ${getSettingsTypeName(type)} thành công!`);
+                console.log(`Settings saved: ${type}`);
+            }, 1000);
+        }
+
+        function getSettingsTypeName(type) {
+            const names = {
+                general: 'chung',
+                appearance: 'giao diện',
+                security: 'bảo mật',
+                notifications: 'thông báo',
+                integrations: 'tích hợp'
+            };
+            return names[type] || type;
+        }
+
+        function toggleMaintenance(enabled) {
+            const banner = $('#maintenanceBanner');
+            const checkbox = $('#maintenanceMode');
+
+            if (enabled) {
+                banner.slideDown();
+                checkbox.prop('checked', true);
+                showWarning('Chế độ bảo trì đã được kích hoạt!');
+            } else {
+                banner.slideUp();
+                checkbox.prop('checked', false);
+                showSuccess('Chế độ bảo trì đã được tắt!');
+            }
+        }
+
+        function selectTheme(theme) {
+            $('.theme-preview').removeClass('active');
+            $(`.theme-preview[onclick="selectTheme('${theme}')"]`).addClass('active');
+
+            // Update color picker based on theme
+            const colors = {
+                blue: '#3b82f6',
+                green: '#10b981',
+                orange: '#f59e0b',
+                purple: '#8b5cf6',
+                red: '#ef4444'
+            };
+
+            $('.color-picker').val(colors[theme]);
+            $('input[type="text"]').filter(function() {
+                return $(this).val().match(/^#[0-9a-fA-F]{6}$/);
+            }).val(colors[theme]);
+
+            showInfo(`Đã chọn theme ${theme}!`);
+        }
+
+        function resetForm(formId) {
+            Swal.fire({
+                title: 'Khôi phục cài đặt?',
+                text: 'Bạn có chắc chắn muốn khôi phục về cài đặt ban đầu?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Khôi phục',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById(formId).reset();
+                    showSuccess('Đã khôi phục cài đặt ban đầu!');
+                }
+            });
+        }
+
+        function regenerateApiKey(keyType) {
+            Swal.fire({
+                title: 'Tạo lại API Key?',
+                text: 'API Key cũ sẽ không còn hoạt động. Bạn có chắc chắn?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Tạo lại',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    showLoading();
+
+                    setTimeout(() => {
+                        hideLoading();
+                        const newKey = generateRandomKey();
+                        showSuccess('Đã tạo API Key mới thành công!');
+                        console.log(`New ${keyType} API key: ${newKey}`);
+                    }, 1500);
+                }
+            });
+        }
+
+        function copyApiKey(keyType) {
+            // Simulate copying to clipboard
+            navigator.clipboard.writeText('sk_live_51K7***************************').then(() => {
+                showSuccess('Đã copy API Key vào clipboard!');
+            });
+        }
+
+        function generateNewApiKey() {
+            Swal.fire({
+                title: 'Tạo API Key mới',
+                html: `
+                    <div class="text-start">
+                        <div class="mb-3">
+                            <label class="form-label">Tên API Key</label>
+                            <input type="text" class="form-control" id="apiKeyName" placeholder="Nhập tên cho API Key...">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Quyền hạn</label>
+                            <select class="form-select" id="apiKeyPermissions">
+                                <option value="read">Chỉ đọc</option>
+                                <option value="write">Đọc và ghi</option>
+                                <option value="admin">Toàn quyền</option>
+                            </select>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="apiKeyExpiry">
+                            <label class="form-check-label" for="apiKeyExpiry">
+                                Có thời hạn sử dụng
+                            </label>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Tạo API Key',
+                cancelButtonText: 'Hủy',
+                preConfirm: () => {
+                    const name = document.getElementById('apiKeyName').value;
+                    if (!name) {
+                        Swal.showValidationMessage('Vui lòng nhập tên API Key!');
+                        return false;
+                    }
+                    return {
+                        name: name,
+                        permissions: document.getElementById('apiKeyPermissions').value,
+                        hasExpiry: document.getElementById('apiKeyExpiry').checked
+                    };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    showLoading();
+
+                    setTimeout(() => {
+                        hideLoading();
+                        showSuccess('Đã tạo API Key mới thành công!');
+                        console.log('New API key created:', result.value);
+                    }, 1000);
+                }
+            });
+        }
+
+        function runSecurityScan() {
+            showLoading();
+
+            setTimeout(() => {
+                hideLoading();
+                Swal.fire({
+                    title: 'Kết quả quét bảo mật',
+                    html: `
+                        <div class="text-start">
+                            <div class="alert alert-success">
+                                <h6><i class="fas fa-check me-2"></i>Bảo mật tốt (8/10)</h6>
+                                <ul class="mb-0">
+                                    <li>SSL/HTTPS: Hoạt động</li>
+                                    <li>2FA: Đã bật</li>
+                                    <li>Mã hóa database: Hoạt động</li>
+                                    <li>Firewall: Bảo vệ tốt</li>
+                                </ul>
+                            </div>
+
+                            <div class="alert alert-warning">
+                                <h6><i class="fas fa-exclamation-triangle me-2"></i>Khuyến nghị cải thiện:</h6>
+                                <ul class="mb-0">
+                                    <li>Cập nhật mật khẩu admin (90 ngày)</li>
+                                    <li>Thêm IP whitelist cho admin</li>
+                                </ul>
+                            </div>
+                        </div>
+                    `,
+                    confirmButtonText: 'Đóng'
+                });
+            }, 2000);
+        }
+
+        function testEmail() {
+            showLoading();
+
+            setTimeout(() => {
+                hideLoading();
+                showSuccess('Email test đã được gửi thành công!');
+            }, 1500);
+        }
+
+        function configurePayment(gateway) {
+            const gateways = {
+                momo: 'MoMo',
+                vnpay: 'VNPay',
+                zalopay: 'ZaloPay'
+            };
+
+            Swal.fire({
+                title: `Cấu hình ${gateways[gateway]}`,
+                html: `
+                    <div class="text-start">
+                        <div class="mb-3">
+                            <label class="form-label">Partner Code</label>
+                            <input type="text" class="form-control" placeholder="Nhập partner code...">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Access Key</label>
+                            <input type="text" class="form-control" placeholder="Nhập access key...">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Secret Key</label>
+                            <input type="password" class="form-control" placeholder="Nhập secret key...">
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox">
+                            <label class="form-check-label">
+                                Chế độ sandbox (test)
+                            </label>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Lưu cấu hình',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    showSuccess(`Đã cấu hình ${gateways[gateway]} thành công!`);
+                }
+            });
+        }
+
+        function configureStorage(storage) {
+            const storages = {
+                s3: 'Amazon S3',
+                gcs: 'Google Cloud Storage'
+            };
+
+            showInfo(`Cấu hình ${storages[storage]} sẽ được phát triển trong phiên bản tiếp theo!`);
+        }
+
+        function configureSlack() {
+            Swal.fire({
+                title: 'Cấu hình Slack',
+                html: `
+                    <div class="text-start">
+                        <div class="mb-3">
+                            <label class="form-label">Webhook URL</label>
+                            <input type="url" class="form-control" placeholder="https://hooks.slack.com/services/...">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Channel</label>
+                            <input type="text" class="form-control" placeholder="#general" value="#general">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Bot Name</label>
+                            <input type="text" class="form-control" placeholder="OnlineLearning Bot" value="OnlineLearning Bot">
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Lưu cấu hình',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    showSuccess('Đã cấu hình Slack thành công!');
+                }
+            });
+        }
+
+        function configureDiscord() {
+            showInfo('Cấu hình Discord sẽ được phát triển trong phiên bản tiếp theo!');
+        }
+
+        function testIntegrations() {
+            showLoading();
+
+            setTimeout(() => {
+                hideLoading();
+                Swal.fire({
+                    title: 'Kết quả test tích hợp',
+                    html: `
+                        <div class="text-start">
+                            <h6>Kết quả test:</h6>
+                            <ul>
+                                <li class="text-success"><i class="fas fa-check me-2"></i>MoMo API: Hoạt động</li>
+                                <li class="text-success"><i class="fas fa-check me-2"></i>VNPay API: Hoạt động</li>
+                                <li class="text-warning"><i class="fas fa-exclamation-triangle me-2"></i>ZaloPay API: Chưa cấu hình</li>
+                                <li class="text-success"><i class="fas fa-check me-2"></i>Google Analytics: Hoạt động</li>
+                                <li class="text-secondary"><i class="fas fa-minus me-2"></i>Facebook Pixel: Chưa kích hoạt</li>
+                            </ul>
+                        </div>
+                    `,
+                    confirmButtonText: 'Đóng'
+                });
+            }, 2000);
+        }
+
+        function generateRandomKey() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let key = 'sk_live_';
+            for (let i = 0; i < 40; i++) {
+                key += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return key;
+        }
+
+        // Color picker sync
+        $('.color-picker').on('change', function() {
+            const color = $(this).val();
+            $(this).siblings('input[type="text"]').val(color);
+        });
+
+        $('input[type="text"]').filter(function() {
+            return $(this).val().match(/^#[0-9a-fA-F]{6}$/);
+        }).on('input', function() {
+            const color = $(this).val();
+            if (color.match(/^#[0-9a-fA-F]{6}$/)) {
+                $(this).siblings('.color-picker').val(color);
+            }
+        });
+    </script>
+}

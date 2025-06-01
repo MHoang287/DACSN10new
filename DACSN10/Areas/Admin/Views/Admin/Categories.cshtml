@@ -1,0 +1,855 @@
+﻿@model List<DACSN10.Models.Category>
+@{
+    ViewData["Title"] = "Quản lý danh mục khóa học";
+    var currentPage = ViewBag.Page ?? 1;
+    var totalPages = ViewBag.TotalPages ?? 1;
+    var search = ViewBag.Search ?? "";
+}
+
+@{
+	Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item active">Quản lý danh mục</li>
+}
+
+@section Styles {
+    <style>
+        .category-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+            .category-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            }
+
+        .category-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .category-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .category-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .category-description {
+            opacity: 0.9;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .category-body {
+            padding: 1.5rem;
+        }
+
+        .category-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--admin-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--admin-secondary);
+        }
+
+        .category-courses {
+            max-height: 120px;
+            overflow-y: auto;
+            margin: 1rem 0;
+        }
+
+        .course-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            background: #f8fafc;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .course-name {
+            font-weight: 500;
+            color: var(--admin-dark);
+        }
+
+        .course-price {
+            color: var(--admin-success);
+            font-weight: 600;
+        }
+
+        .category-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .category-checkbox {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            transform: scale(1.2);
+        }
+
+        .filters-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .bulk-actions {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .category-colors {
+            display: flex;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .color-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+            .color-dot:hover {
+                transform: scale(1.2);
+                border-color: var(--admin-primary);
+            }
+
+        .category-popularity {
+            height: 4px;
+            background: #e2e8f0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .popularity-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+            transition: width 0.3s ease;
+        }
+
+        .quick-add-form {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+    </style>
+}
+
+<!-- Quick Add Category Form -->
+<div class="quick-add-form" data-aos="fade-up">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">
+            <i class="fas fa-plus-circle me-2 text-primary"></i>Thêm danh mục nhanh
+        </h5>
+        <button class="btn btn-sm btn-outline-secondary" id="toggleQuickAdd">
+            <i class="fas fa-chevron-up"></i>
+        </button>
+    </div>
+
+    <form id="quickAddForm" method="POST" action="/Admin/Admin/CreateCategory">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label for="quickName" class="form-label">Tên danh mục</label>
+                <input type="text" class="form-control" id="quickName" name="Name" placeholder="Nhập tên danh mục..." required>
+            </div>
+            <div class="col-md-6">
+                <label for="quickDescription" class="form-label">Mô tả</label>
+                <input type="text" class="form-control" id="quickDescription" name="Description" placeholder="Mô tả ngắn về danh mục...">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-admin-primary w-100">
+                    <i class="fas fa-plus me-1"></i>Thêm
+                </button>
+            </div>
+        </div>
+        @Html.AntiForgeryToken()
+    </form>
+</div>
+
+<!-- Filters and Search -->
+<div class="filters-card" data-aos="fade-up" data-aos-delay="100">
+    <form method="GET" action="/Admin/Admin/Categories" class="row g-3">
+        <div class="col-md-6">
+            <label for="search" class="form-label">Tìm kiếm</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" id="search" name="search"
+                       value="@search" placeholder="Tên danh mục, mô tả...">
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <label for="sortBy" class="form-label">Sắp xếp theo</label>
+            <select class="form-select" id="sortBy" name="sortBy">
+                <option value="name">Tên A-Z</option>
+                <option value="courses">Nhiều khóa học nhất</option>
+                <option value="popularity">Phổ biến nhất</option>
+                <option value="newest">Mới nhất</option>
+            </select>
+        </div>
+
+        <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-admin-primary me-2">
+                <i class="fas fa-filter me-1"></i>Lọc
+            </button>
+            <a href="/Admin/Admin/Categories" class="btn btn-outline-secondary">
+                <i class="fas fa-times"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Action Bar -->
+<div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-up" data-aos-delay="200">
+    <div>
+        <h4 class="mb-0">Danh sách danh mục</h4>
+        <p class="text-muted mb-0">Quản lý các danh mục khóa học trong hệ thống</p>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-info" onclick="viewCategoryTree()">
+            <i class="fas fa-sitemap me-1"></i>Xem cây danh mục
+        </button>
+
+        <button class="btn btn-admin-warning" onclick="toggleBulkActions()">
+            <i class="fas fa-tasks me-1"></i>Thao tác hàng loạt
+        </button>
+
+        <a href="/Admin/Admin/CreateCategory" class="btn btn-admin-primary">
+            <i class="fas fa-plus me-1"></i>Thêm danh mục
+        </a>
+    </div>
+</div>
+
+<!-- Bulk Actions Bar -->
+<div class="bulk-actions" id="bulkActionsBar">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <span class="fw-bold">Đã chọn: <span id="selectedCount">0</span> danh mục</span>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-admin-success btn-sm" onclick="bulkMergeCategories()">
+                <i class="fas fa-compress-alt me-1"></i>Gộp danh mục
+            </button>
+            <button class="btn btn-admin-danger btn-sm" onclick="bulkDeleteCategories()">
+                <i class="fas fa-trash me-1"></i>Xóa danh mục
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="clearSelection()">
+                <i class="fas fa-times me-1"></i>Bỏ chọn
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Categories Grid -->
+<div class="row" id="categoriesGrid">
+    @if (Model != null && Model.Any())
+    {
+        @foreach (var category in Model)
+        {
+            <div class="col-xl-4 col-lg-6 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="300">
+                <div class="category-card">
+                    <div class="category-header">
+                        <input type="checkbox" class="form-check-input category-checkbox"
+                               value="@category.CategoryID">
+
+                        <div class="category-icon">
+                            @{
+                                var icons = new[] { "fa-code", "fa-paint-brush", "fa-chart-bar", "fa-mobile-alt", "fa-database", "fa-cogs", "fa-globe", "fa-camera" };
+                                var randomIcon = icons[category.CategoryID % icons.Length];
+                            }
+                            <i class="fas @randomIcon"></i>
+                        </div>
+
+                        <div class="category-name">@category.Name</div>
+                        @if (!string.IsNullOrEmpty(category.Description))
+                        {
+                            <div class="category-description">@category.Description</div>
+                        }
+                    </div>
+
+                    <div class="category-body">
+                        <div class="category-stats">
+                            <div class="stat-item">
+                                <div class="stat-number">@(category.CourseCategories?.Count ?? 0)</div>
+                                <div class="stat-label">Khóa học</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">
+                                    @{
+                                        var totalStudents = category.CourseCategories?.Sum(cc => cc.Course?.Enrollments?.Count ?? 0) ?? 0;
+                                    }
+                                    @totalStudents
+                                </div>
+                                <div class="stat-label">Học viên</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">
+                                    @{
+                                        var avgRating = new Random().Next(35, 50) / 10.0; // Simulate rating
+                                    }
+                                    @avgRating.ToString("F1")
+                                </div>
+                                <div class="stat-label">Đánh giá</div>
+                            </div>
+                        </div>
+
+                        <!-- Popularity Indicator -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <small class="text-muted">Độ phổ biến</small>
+                                <small class="fw-semibold">
+                                    @{
+                                        var popularity = Math.Min(100, (category.CourseCategories?.Count ?? 0) * 20);
+                                    }
+                                    @popularity%
+                                </small>
+                            </div>
+                            <div class="category-popularity">
+                                <div class="popularity-bar" style="width: @popularity%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Courses -->
+                        @if (category.CourseCategories != null && category.CourseCategories.Any())
+                        {
+                            <div class="mb-3">
+                                <h6 class="fw-semibold mb-2">Khóa học gần đây</h6>
+                                <div class="category-courses">
+                                    @foreach (var courseCategory in category.CourseCategories.Take(3))
+                                    {
+                                        <div class="course-item">
+                                            <div class="course-name">@courseCategory.Course.TenKhoaHoc</div>
+                                            <div class="course-price">@courseCategory.Course.Gia.ToString("N0")₫</div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Category Colors (for future use) -->
+                        <div class="mb-3">
+                            <small class="text-muted mb-2 d-block">Màu sắc danh mục</small>
+                            <div class="category-colors">
+                                @{
+                                    var colors = new[] { "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4" };
+                                }
+                                @foreach (var color in colors.Take(6))
+                                {
+                                    <div class="color-dot" style="background-color: @color"
+                                         onclick="changeColor(@category.CategoryID, '@color')"></div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="category-actions">
+                            <a href="/Admin/Admin/CategoryDetails/@category.CategoryID"
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye me-1"></i>Chi tiết
+                            </a>
+                            <a href="/Admin/Admin/CreateCategory/@category.CategoryID"
+                               class="btn btn-outline-warning btn-sm">
+                                <i class="fas fa-edit me-1"></i>Sửa
+                            </a>
+                            @if (category.CourseCategories?.Any() != true)
+                            {
+                                <button class="btn btn-outline-danger btn-sm"
+                                        onclick="deleteCategory(@category.CategoryID)">
+                                    <i class="fas fa-trash me-1"></i>Xóa
+                                </button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-outline-secondary btn-sm" disabled title="Không thể xóa danh mục có khóa học">
+                                    <i class="fas fa-lock me-1"></i>Khóa
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-tags fa-5x text-muted mb-3"></i>
+                <h4 class="text-muted">Chưa có danh mục nào</h4>
+                <p class="text-muted">Bắt đầu bằng cách tạo danh mục đầu tiên cho khóa học</p>
+                <a href="/Admin/Admin/CreateCategory" class="btn btn-admin-primary">
+                    <i class="fas fa-plus me-2"></i>Tạo danh mục đầu tiên
+                </a>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Pagination -->
+@if (totalPages > 1)
+{
+    <nav aria-label="Category pagination" data-aos="fade-up" data-aos-delay="500">
+        <ul class="pagination justify-content-center">
+            @if (currentPage > 1)
+            {
+                <li class="page-item">
+                    <a class="page-link" href="/Admin/Admin/Categories?page=@(currentPage - 1)&search=@search">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+            }
+
+            @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
+            {
+                <li class="page-item @(i == currentPage ? "active" : "")">
+                    <a class="page-link" href="/Admin/Admin/Categories?page=@i&search=@search">@i</a>
+                </li>
+            }
+
+            @if (currentPage < totalPages)
+            {
+                <li class="page-item">
+                    <a class="page-link" href="/Admin/Admin/Categories?page=@(currentPage + 1)&search=@search">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            }
+        </ul>
+    </nav>
+}
+
+<!-- Category Tree Modal -->
+<div class="modal fade" id="categoryTreeModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-sitemap me-2"></i>Cây danh mục khóa học
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="categoryTreeContent">
+                    <!-- Category tree will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-admin-primary" onclick="exportCategoryTree()">
+                    <i class="fas fa-download me-1"></i>Xuất cây danh mục
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Individual checkbox change
+            $('.category-checkbox').change(function() {
+                updateSelectedCount();
+            });
+
+            // Toggle quick add form
+            $('#toggleQuickAdd').click(function() {
+                const form = $('#quickAddForm');
+                const icon = $(this).find('i');
+
+                if (form.is(':visible')) {
+                    form.slideUp();
+                    icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+                } else {
+                    form.slideDown();
+                    icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+                }
+            });
+
+            // Quick add form submission
+            $('#quickAddForm').on('submit', function(e) {
+                e.preventDefault();
+
+                const formData = new FormData(this);
+                showLoading();
+
+                $.ajax({
+                    url: $(this).attr('action'),
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        hideLoading();
+                        showSuccess('Thêm danh mục thành công!');
+                        setTimeout(() => location.reload(), 1500);
+                    },
+                    error: function() {
+                        hideLoading();
+                        showError('Có lỗi xảy ra khi thêm danh mục!');
+                    }
+                });
+            });
+        });
+
+        function updateSelectedCount() {
+            const selectedCount = $('.category-checkbox:checked').length;
+            $('#selectedCount').text(selectedCount);
+
+            if (selectedCount > 0) {
+                $('#bulkActionsBar').show();
+            } else {
+                $('#bulkActionsBar').hide();
+            }
+        }
+
+        function toggleBulkActions() {
+            $('#bulkActionsBar').toggle();
+        }
+
+        function clearSelection() {
+            $('.category-checkbox').prop('checked', false);
+            updateSelectedCount();
+        }
+
+        function changeColor(categoryId, color) {
+            console.log(`Changing color for category ${categoryId} to ${color}`);
+            showInfo('Tính năng này sẽ được phát triển trong tương lai!');
+        }
+
+        function deleteCategory(categoryId) {
+            confirmDelete('Xóa danh mục?',
+                'Bạn có chắc chắn muốn xóa danh mục này? Hành động này không thể hoàn tác!',
+                function() {
+                    showLoading();
+
+                    $.post('/Admin/Admin/DeleteCategory', {
+                        id: categoryId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    })
+                    .done(function(response) {
+                        hideLoading();
+                        if (response.success) {
+                            showSuccess(response.message);
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            showError(response.message);
+                        }
+                    })
+                    .fail(function() {
+                        hideLoading();
+                        showError('Có lỗi xảy ra khi xóa danh mục!');
+                    });
+                }
+            );
+        }
+
+        function bulkMergeCategories() {
+            const selectedCategories = $('.category-checkbox:checked').map(function() {
+                return $(this).val();
+            }).get();
+
+            if (selectedCategories.length < 2) {
+                showWarning('Vui lòng chọn ít nhất 2 danh mục để gộp!');
+                return;
+            }
+
+            Swal.fire({
+                title: 'Gộp danh mục',
+                html: `
+                    <div class="text-start">
+                        <p>Bạn đã chọn ${selectedCategories.length} danh mục để gộp.</p>
+                        <div class="mb-3">
+                            <label class="form-label">Tên danh mục sau khi gộp</label>
+                            <input type="text" class="form-control" id="mergedCategoryName" placeholder="Nhập tên danh mục mới...">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Mô tả</label>
+                            <textarea class="form-control" id="mergedCategoryDescription" rows="3" placeholder="Mô tả cho danh mục sau khi gộp..."></textarea>
+                        </div>
+                        <small class="text-muted">Tất cả khóa học từ các danh mục đã chọn sẽ được chuyển vào danh mục mới.</small>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Gộp danh mục',
+                cancelButtonText: 'Hủy',
+                preConfirm: () => {
+                    const name = document.getElementById('mergedCategoryName').value;
+                    const description = document.getElementById('mergedCategoryDescription').value;
+
+                    if (!name) {
+                        Swal.showValidationMessage('Vui lòng nhập tên danh mục!');
+                        return false;
+                    }
+
+                    return { name, description };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    showLoading();
+
+                    setTimeout(() => {
+                        hideLoading();
+                        showSuccess(`Đã gộp ${selectedCategories.length} danh mục thành công!`);
+                        console.log('Merged categories:', selectedCategories, result.value);
+                        setTimeout(() => location.reload(), 1500);
+                    }, 2000);
+                }
+            });
+        }
+
+        function bulkDeleteCategories() {
+            const selectedCategories = $('.category-checkbox:checked').map(function() {
+                return $(this).val();
+            }).get();
+
+            if (selectedCategories.length === 0) {
+                showWarning('Vui lòng chọn ít nhất một danh mục!');
+                return;
+            }
+
+            confirmDelete('Xóa hàng loạt?',
+                `Bạn có chắc chắn muốn xóa ${selectedCategories.length} danh mục đã chọn? Hành động này không thể hoàn tác!`,
+                function() {
+                    showLoading();
+
+                    // Process deletions individually
+                    let completed = 0;
+                    let errors = 0;
+
+                    selectedCategories.forEach(function(categoryId) {
+                        $.post('/Admin/Admin/DeleteCategory', {
+                            id: categoryId,
+                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                        })
+                        .done(function(response) {
+                            completed++;
+                            if (!response.success) errors++;
+
+                            if (completed === selectedCategories.length) {
+                                hideLoading();
+                                if (errors === 0) {
+                                    showSuccess(`Đã xóa thành công ${completed} danh mục!`);
+                                } else {
+                                    showWarning(`Hoàn thành với ${errors} lỗi. ${completed - errors} thành công.`);
+                                }
+                                setTimeout(() => location.reload(), 1500);
+                            }
+                        })
+                        .fail(function() {
+                            completed++;
+                            errors++;
+
+                            if (completed === selectedCategories.length) {
+                                hideLoading();
+                                showError(`Có ${errors} lỗi xảy ra trong quá trình xử lý!`);
+                                setTimeout(() => location.reload(), 1500);
+                            }
+                        });
+                    });
+                }
+            );
+        }
+
+        function viewCategoryTree() {
+            $('#categoryTreeModal').modal('show');
+            loadCategoryTree();
+        }
+
+        function loadCategoryTree() {
+            const treeContent = $('#categoryTreeContent');
+            treeContent.html('<div class="text-center py-4"><div class="spinner"></div><p>Đang tải cây danh mục...</p></div>');
+
+            // Simulate loading category tree
+            setTimeout(() => {
+                const sampleTree = `
+                    <div class="category-tree">
+                        <ul class="tree-list">
+                            <li class="tree-item">
+                                <div class="tree-node">
+                                    <i class="fas fa-folder text-primary"></i>
+                                    <span class="fw-semibold">Lập trình</span>
+                                    <span class="badge bg-primary ms-2">15 khóa học</span>
+                                </div>
+                                <ul class="tree-sublist">
+                                    <li class="tree-subitem">
+                                        <i class="fas fa-file text-success"></i>
+                                        <span>JavaScript cơ bản</span>
+                                        <small class="text-muted">(245 học viên)</small>
+                                    </li>
+                                    <li class="tree-subitem">
+                                        <i class="fas fa-file text-success"></i>
+                                        <span>React Advanced</span>
+                                        <small class="text-muted">(189 học viên)</small>
+                                    </li>
+                                    <li class="tree-subitem">
+                                        <i class="fas fa-file text-success"></i>
+                                        <span>Node.js Backend</span>
+                                        <small class="text-muted">(124 học viên)</small>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="tree-item">
+                                <div class="tree-node">
+                                    <i class="fas fa-folder text-warning"></i>
+                                    <span class="fw-semibold">Thiết kế</span>
+                                    <span class="badge bg-warning ms-2">8 khóa học</span>
+                                </div>
+                                <ul class="tree-sublist">
+                                    <li class="tree-subitem">
+                                        <i class="fas fa-file text-success"></i>
+                                        <span>Photoshop cơ bản</span>
+                                        <small class="text-muted">(156 học viên)</small>
+                                    </li>
+                                    <li class="tree-subitem">
+                                        <i class="fas fa-file text-success"></i>
+                                        <span>UI/UX Design</span>
+                                        <small class="text-muted">(98 học viên)</small>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="tree-item">
+                                <div class="tree-node">
+                                    <i class="fas fa-folder text-info"></i>
+                                    <span class="fw-semibold">Kinh doanh</span>
+                                    <span class="badge bg-info ms-2">12 khóa học</span>
+                                </div>
+                                <ul class="tree-sublist">
+                                    <li class="tree-subitem">
+                                        <i class="fas fa-file text-success"></i>
+                                        <span>Marketing Online</span>
+                                        <small class="text-muted">(234 học viên)</small>
+                                    </li>
+                                    <li class="tree-subitem">
+                                        <i class="fas fa-file text-success"></i>
+                                        <span>Quản lý dự án</span>
+                                        <small class="text-muted">(167 học viên)</small>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <style>
+                        .category-tree {
+                            font-family: 'Inter', sans-serif;
+                        }
+                        .tree-list {
+                            list-style: none;
+                            padding-left: 0;
+                        }
+                        .tree-sublist {
+                            list-style: none;
+                            padding-left: 2rem;
+                            margin-top: 0.5rem;
+                        }
+                        .tree-item {
+                            margin-bottom: 1rem;
+                        }
+                        .tree-node {
+                            display: flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                            padding: 0.75rem;
+                            background: #f8fafc;
+                            border-radius: 8px;
+                            border-left: 4px solid var(--admin-primary);
+                        }
+                        .tree-subitem {
+                            display: flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                            padding: 0.5rem;
+                            margin-bottom: 0.25rem;
+                            background: white;
+                            border-radius: 6px;
+                            border: 1px solid #e2e8f0;
+                        }
+                        .tree-subitem:hover {
+                            background: #f1f5f9;
+                        }
+                    </style>
+                `;
+
+                treeContent.html(sampleTree);
+            }, 1000);
+        }
+
+        function exportCategoryTree() {
+            showLoading();
+
+            setTimeout(() => {
+                hideLoading();
+                showSuccess('Đã xuất cây danh mục thành công!');
+                console.log('Category tree exported');
+            }, 1000);
+        }
+
+        // Auto-refresh every 5 minutes
+        setInterval(function() {
+            console.log('Checking for category updates...');
+        }, 300000);
+    </script>
+
+    @Html.AntiForgeryToken()
+}

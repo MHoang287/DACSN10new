@@ -1,0 +1,374 @@
+﻿@model DACSN10.Models.Category
+@{
+    ViewData["Title"] = Model?.CategoryID > 0 ? "Chỉnh sửa danh mục" : "Tạo danh mục mới";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+    var isEdit = Model?.CategoryID > 0;
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item"><a href="/Admin/Admin/Categories">Quản lý danh mục</a></li>
+    <li class="breadcrumb-item active">@(isEdit ? "Chỉnh sửa danh mục" : "Tạo danh mục mới")</li>
+}
+
+@section Styles {
+    <style>
+        .category-form-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .icon-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .icon-option {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.5rem;
+            color: var(--admin-secondary);
+        }
+
+            .icon-option:hover {
+                border-color: var(--admin-primary);
+                color: var(--admin-primary);
+                transform: scale(1.05);
+            }
+
+            .icon-option.selected {
+                border-color: var(--admin-primary);
+                background: rgba(59, 130, 246, 0.1);
+                color: var(--admin-primary);
+            }
+
+        .color-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+            .color-option:hover {
+                transform: scale(1.1);
+                border-color: rgba(255, 255, 255, 0.8);
+            }
+
+            .color-option.selected {
+                border-color: white;
+                box-shadow: 0 0 0 2px var(--admin-primary);
+                transform: scale(1.1);
+            }
+
+            .color-option::after {
+                content: '\f00c';
+                font-family: 'Font Awesome 5 Free';
+                font-weight: 900;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: white;
+                font-size: 0.8rem;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+
+            .color-option.selected::after {
+                opacity: 1;
+            }
+
+        .preview-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .preview-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .slug-preview {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: var(--admin-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .category-suggestions {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-top: 0.5rem;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .suggestion-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+            transition: background 0.3s ease;
+        }
+
+            .suggestion-item:hover {
+                background: #f8fafc;
+            }
+
+            .suggestion-item:last-child {
+                border-bottom: none;
+            }
+    </style>
+}
+
+<div class="category-form-card" data-aos="fade-up">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-1">@(isEdit ? "Chỉnh sửa danh mục" : "Tạo danh mục mới")</h4>
+            <p class="text-muted mb-0">@(isEdit ? "Cập nhật thông tin danh mục" : "Tạo danh mục mới cho khóa học")</p>
+        </div>
+        <div>
+            <a href="/Admin/Admin/Categories" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Quay lại
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <form method="POST" action="@(isEdit ? $"/Admin/Admin/EditCategory" : "/Admin/Admin/CreateCategory")" id="categoryForm">
+                @Html.AntiForgeryToken()
+
+                @if (isEdit)
+                {
+                    <input type="hidden" name="CategoryID" value="@Model.CategoryID" />
+                }
+
+                <!-- Basic Information -->
+                <div class="mb-4">
+                    <h5 class="mb-3">
+                        <i class="fas fa-info-circle me-2"></i>Thông tin cơ bản
+                    </h5>
+
+                    <div class="mb-3">
+                        <label for="Name" class="form-label">
+                            Tên danh mục <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="Name" name="Name"
+                               value="@Model?.Name" placeholder="Nhập tên danh mục..." required>
+                        <div class="slug-preview" id="slugPreview">/category/ten-danh-muc</div>
+                        <div class="form-text">Tên danh mục nên ngắn gọn và dễ hiểu</div>
+
+                        <!-- Suggestions -->
+                        <div class="category-suggestions" id="categorySuggestions">
+                            <div class="suggestion-item" onclick="selectSuggestion('Lập trình')">
+                                <i class="fas fa-code me-2"></i>Lập trình
+                            </div>
+                            <div class="suggestion-item" onclick="selectSuggestion('Thiết kế')">
+                                <i class="fas fa-paint-brush me-2"></i>Thiết kế
+                            </div>
+                            <div class="suggestion-item" onclick="selectSuggestion('Kinh doanh')">
+                                <i class="fas fa-chart-line me-2"></i>Kinh doanh
+                            </div>
+                            <div class="suggestion-item" onclick="selectSuggestion('Marketing')">
+                                <i class="fas fa-bullhorn me-2"></i>Marketing
+                            </div>
+                            <div class="suggestion-item" onclick="selectSuggestion('Ngôn ngữ')">
+                                <i class="fas fa-language me-2"></i>Ngôn ngữ
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="Description" class="form-label">Mô tả</label>
+                        <textarea class="form-control" id="Description" name="Description" rows="4"
+                                  placeholder="Mô tả chi tiết về danh mục này...">@Model?.Description</textarea>
+                        <div class="form-text">Mô tả giúp người dùng hiểu rõ hơn về nội dung danh mục</div>
+                    </div>
+                </div>
+
+                <!-- Icon Selection -->
+                <div class="mb-4">
+                    <h5 class="mb-3">
+                        <i class="fas fa-icons me-2"></i>Chọn biểu tượng
+                    </h5>
+
+                    <div class="icon-selector">
+                        <div class="icon-option" data-icon="fa-code" onclick="selectIcon(this)">
+                            <i class="fas fa-code"></i>
+                        </div>
+                        <div class="icon-option" data-icon="fa-paint-brush" onclick="selectIcon(this)">
+                            <i class="fas fa-paint-brush"></i>
+                        </div>
+                        <div class="icon-option" data-icon="fa-chart-line" onclick="selectIcon(this)">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="icon-option" data-icon="fa-bullhorn" onclick="selectIcon(this)">
+                            <i class="fas fa-bullhorn"></i>
+                        </div>
+                        <div class="icon-option" data-icon="fa-language" onclick="selectIcon(this)">
+                            <i class="fas fa-language"></i>
+                        </div>
+                        <div class="icon-option" data-icon="fa-camera" onclick="selectIcon(this)">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                        <div class="icon-option" data-icon="fa-music" onclick="selectIcon(this)">
+                            <i class="fas fa-music"></i>
+                        </div>
+                        <div class="icon-option" data-icon="fa-dumbbell" onclick="selectIcon(this)">
+                            <i class="fas fa-dumbbell"></i>
+                        </div>
+                        <div class="icon-option" data-icon="fa-book" onclick="selectIcon(this)">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div class="icon-option" data-icon="fa-graduation-cap" onclick="selectIcon(this)">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <div class="icon-option" data-icon="fa-laptop-code" onclick="selectIcon(this)">
+                            <i class="fas fa-laptop-code"></i>
+                        </div>
+                        <div class="icon-option" data-icon="fa-mobile-alt" onclick="selectIcon(this)">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="Icon" id="selectedIcon" value="fa-folder">
+                </div>
+
+                <!-- Color Selection -->
+                <div class="mb-4">
+                    <h5 class="mb-3">
+                        <i class="fas fa-palette me-2"></i>Chọn màu sắc
+                    </h5>
+
+                    <div class="color-selector">
+                        <div class="color-option" style="background: #3b82f6;" data-color="#3b82f6" onclick="selectColor(this)"></div>
+                        <div class="color-option" style="background: #10b981;" data-color="#10b981" onclick="selectColor(this)"></div>
+                        <div class="color-option" style="background: #f59e0b;" data-color="#f59e0b" onclick="selectColor(this)"></div>
+                        <div class="color-option" style="background: #ef4444;" data-color="#ef4444" onclick="selectColor(this)"></div>
+                        <div class="color-option" style="background: #8b5cf6;" data-color="#8b5cf6" onclick="selectColor(this)"></div>
+                        <div class="color-option" style="background: #06b6d4;" data-color="#06b6d4" onclick="selectColor(this)"></div>
+                        <div class="color-option" style="background: #84cc16;" data-color="#84cc16" onclick="selectColor(this)"></div>
+                        <div class="color-option" style="background: #f97316;" data-color="#f97316" onclick="selectColor(this)"></div>
+                        <div class="color-option" style="background: #ec4899;" data-color="#ec4899" onclick="selectColor(this)"></div>
+                        <div class="color-option" style="background: #6b7280;" data-color="#6b7280" onclick="selectColor(this)"></div>
+                    </div>
+
+                    <input type="hidden" name="Color" id="selectedColor" value="#3b82f6">
+                </div>
+
+                <!-- Form Actions -->
+                <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                    <button type="button" class="btn btn-outline-secondary" onclick="resetForm()">
+                        <i class="fas fa-undo me-1"></i>Đặt lại
+                    </button>
+
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-info" onclick="previewCategory()">
+                            <i class="fas fa-eye me-1"></i>Xem trước
+                        </button>
+                        <button type="submit" class="btn btn-admin-primary">
+                            <i class="fas fa-@(isEdit ? "save" : "plus") me-1"></i>
+                            @(isEdit ? "Cập nhật" : "Tạo danh mục")
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Preview -->
+            <div class="preview-card" id="categoryPreview" data-aos="fade-up" data-aos-delay="200">
+                <div class="preview-icon" id="previewIcon">
+                    <i class="fas fa-folder"></i>
+                </div>
+                <h5 id="previewName">Tên danh mục</h5>
+                <p id="previewDescription">Mô tả danh mục sẽ hiển thị ở đây</p>
+            </div>
+
+            <!-- Tips -->
+            <div class="card border-0 bg-light" data-aos="fade-up" data-aos-delay="300">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-lightbulb text-warning me-2"></i>Gợi ý
+                    </h6>
+                    <ul class="small mb-0">
+                        <li>Tên danh mục nên ngắn gọn, dễ hiểu</li>
+                        <li>Mô tả chi tiết giúp người dùng tìm kiếm dễ dàng</li>
+                        <li>Chọn biểu tượng phù hợp với nội dung</li>
+                        <li>Màu sắc giúp phân biệt các danh mục</li>
+                        <li>Kiểm tra kỹ trước khi lưu</li>
+                    </ul>
+                </div>
+            </div>
+
+            @if (isEdit)
+            {
+                <!-- Category Statistics -->
+                <div class="card border-0 mt-3" data-aos="fade-up" data-aos-delay="400">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="fas fa-chart-bar text-info me-2"></i>Thống kê
+                        </h6>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Số khóa học:</span>
+                            <strong class="text-primary">@(Model?.CourseCategories?.Count ?? 0)</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Tổng học viên:</span>
+                            <strong class="text-success">
+                                @{
+                                    var totalStudents = Model?.CourseCategories?.Sum(cc => cc.Course?.Enrollments?.Count ?? 0) ?? 0;
+                                }
+                                @totalStudents
+                            </strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Doanh thu:</span>
+                            <strong class="text-warning">
+                                @{
+                                    var totalRevenue = Model?.CourseCategories?.Sum(cc => (cc.Course?.Enrollments?.Count ?? 0) * cc.Course?.Gia ?? 0) ?? 0;
+                                }
+                                @((totalRevenue / 1000000m).ToString("F1"))M₫
+                            </strong>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+	<script src="~/js/CreateCategory.js"></script>
+}

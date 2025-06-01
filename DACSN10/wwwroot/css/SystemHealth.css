@@ -1,0 +1,200 @@
+﻿
+.health-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+    .health-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    }
+
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.status-healthy {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+}
+
+.status-warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+}
+
+.status-critical {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+    .status-dot.healthy {
+        background: #10b981;
+    }
+
+    .status-dot.warning {
+        background: #f59e0b;
+    }
+
+    .status-dot.critical {
+        background: #ef4444;
+    }
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+.metric-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+    .metric-row:last-child {
+        border-bottom: none;
+    }
+
+.metric-label {
+    font-weight: 500;
+    color: var(--admin-dark);
+}
+
+.metric-value {
+    font-weight: 600;
+    color: var(--admin-primary);
+}
+
+.system-logs {
+    max-height: 400px;
+    overflow-y: auto;
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 1rem;
+    border-radius: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+
+.log-entry {
+    margin-bottom: 0.5rem;
+    padding: 0.25rem 0;
+}
+
+.log-timestamp {
+    color: #94a3b8;
+}
+
+.log-level-info {
+    color: #3b82f6;
+}
+
+.log-level-warning {
+    color: #f59e0b;
+}
+
+.log-level-error {
+    color: #ef4444;
+}
+
+.progress-ring {
+    width: 80px;
+    height: 80px;
+}
+
+.progress-ring-circle {
+    stroke: #e2e8f0;
+    stroke-width: 8;
+    fill: transparent;
+    r: 30;
+    cx: 40;
+    cy: 40;
+}
+
+.progress-ring-progress {
+    stroke: #10b981;
+    stroke-width: 8;
+    fill: transparent;
+    r: 30;
+    cx: 40;
+    cy: 40;
+    stroke-dasharray: 188.5;
+    stroke-dashoffset: 188.5;
+    transition: stroke-dashoffset 0.5s ease;
+}
+
+.backup-status {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.backup-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: white;
+}
+
+.service-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.service-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.service-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: white;
+}

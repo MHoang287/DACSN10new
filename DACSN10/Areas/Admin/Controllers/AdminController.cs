@@ -9,6 +9,7 @@ using OfficeOpenXml;
 
 namespace DACSN10.Controllers
 {
+    [Area("Admin")]
     [Authorize(Roles = RoleNames.Admin)]
     public class AdminController : Controller
     {
@@ -103,7 +104,7 @@ namespace DACSN10.Controllers
 
             if (course == null)
             {
-                TempData["Error"] = "Không tìm th?y khóa h?c.";
+                TempData["Error"] = "Không tìm thấy khóa học.";
                 return NotFound();
             }
 
@@ -126,7 +127,7 @@ namespace DACSN10.Controllers
                 try
                 {
                     course.NgayTao = DateTime.Now;
-                    course.TrangThai = "Active"; // Admin t?o thì active luôn
+                    course.TrangThai = "Active"; // Admin tạo thì active luôn
 
                     _context.Courses.Add(course);
                     await _context.SaveChangesAsync();
@@ -145,12 +146,12 @@ namespace DACSN10.Controllers
                         await _context.SaveChangesAsync();
                     }
 
-                    TempData["Success"] = "T?o khóa h?c thành công!";
+                    TempData["Success"] = "Tạo khóa học thành công!";
                     return RedirectToAction("Courses");
                 }
                 catch (Exception ex)
                 {
-                    TempData["Error"] = "L?i khi t?o khóa h?c: " + ex.Message;
+                    TempData["Error"] = "Lỗi khi tạo khóa học: " + ex.Message;
                 }
             }
 
@@ -167,7 +168,7 @@ namespace DACSN10.Controllers
 
             if (course == null)
             {
-                TempData["Error"] = "Không tìm th?y khóa h?c.";
+                TempData["Error"] = "Không tìm thấy khóa học.";
                 return NotFound();
             }
 
@@ -188,7 +189,7 @@ namespace DACSN10.Controllers
 
             if (existingCourse == null)
             {
-                TempData["Error"] = "Không tìm th?y khóa h?c.";
+                TempData["Error"] = "Không tìm thấy khóa học.";
                 return NotFound();
             }
 
@@ -218,12 +219,12 @@ namespace DACSN10.Controllers
                     }
 
                     await _context.SaveChangesAsync();
-                    TempData["Success"] = "C?p nh?t khóa h?c thành công!";
+                    TempData["Success"] = "Cập nhật khóa học thành công!";
                     return RedirectToAction("Courses");
                 }
                 catch (Exception ex)
                 {
-                    TempData["Error"] = "L?i khi c?p nh?t: " + ex.Message;
+                    TempData["Error"] = "Lỗi khi cập nhật: " + ex.Message;
                 }
             }
 
@@ -241,7 +242,7 @@ namespace DACSN10.Controllers
 
             if (course == null)
             {
-                return Json(new { success = false, message = "Không tìm th?y khóa h?c." });
+                return Json(new { success = false, message = "Không tìm thấy khóa học." });
             }
 
             try
@@ -266,11 +267,11 @@ namespace DACSN10.Controllers
                 _context.Courses.Remove(course);
                 await _context.SaveChangesAsync();
 
-                return Json(new { success = true, message = "Xóa khóa h?c thành công!" });
+                return Json(new { success = true, message = "Xóa khóa học thành công!" });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "L?i khi xóa: " + ex.Message });
+                return Json(new { success = false, message = "Lỗi khi xóa: " + ex.Message });
             }
         }
 
@@ -282,18 +283,18 @@ namespace DACSN10.Controllers
 
             if (course == null)
             {
-                return Json(new { success = false, message = "Không tìm th?y khóa h?c." });
+                return Json(new { success = false, message = "Không tìm thấy khóa học." });
             }
 
             try
             {
                 course.TrangThai = "Active";
                 await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "Duy?t khóa h?c thành công!" });
+                return Json(new { success = true, message = "Duyệt khóa học thành công!" });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "L?i khi duy?t: " + ex.Message });
+                return Json(new { success = false, message = "Lỗi khi duyệt: " + ex.Message });
             }
         }
 
@@ -305,7 +306,7 @@ namespace DACSN10.Controllers
 
             if (course == null)
             {
-                return Json(new { success = false, message = "Không tìm th?y khóa h?c." });
+                return Json(new { success = false, message = "Không tìm thấy khóa học." });
             }
 
             try
@@ -313,11 +314,11 @@ namespace DACSN10.Controllers
                 course.TrangThai = "Rejected";
                 // You might want to add a reason field to Course model
                 await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "T? ch?i khóa h?c thành công!" });
+                return Json(new { success = true, message = "Từ chối khóa học thành công!" });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "L?i khi t? ch?i: " + ex.Message });
+                return Json(new { success = false, message = "Lỗi khi từ chối: " + ex.Message });
             }
         }
 
@@ -333,11 +334,11 @@ namespace DACSN10.Controllers
                     course.TrangThai = "Active";
                 }
                 await _context.SaveChangesAsync();
-                return Json(new { success = true, message = $"?ã duy?t {courses.Count} khóa h?c thành công!" });
+                return Json(new { success = true, message = $"Đã duyệtt {courses.Count} khóa học thành công!" });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "L?i khi duy?t hàng lo?t: " + ex.Message });
+                return Json(new { success = false, message = "Lỗi khi duyệt hàng loạt: " + ex.Message });
             }
         }
 
@@ -385,12 +386,12 @@ namespace DACSN10.Controllers
                 {
                     _context.Categories.Add(category);
                     await _context.SaveChangesAsync();
-                    TempData["Success"] = "T?o danh m?c thành công!";
+                    TempData["Success"] = "Tạo danh mục thành công!";
                     return RedirectToAction("Categories");
                 }
                 catch (Exception ex)
                 {
-                    TempData["Error"] = "L?i khi t?o danh m?c: " + ex.Message;
+                    TempData["Error"] = "Lỗi khi tạo danh mục: " + ex.Message;
                 }
             }
 
@@ -403,7 +404,7 @@ namespace DACSN10.Controllers
 
             if (category == null)
             {
-                TempData["Error"] = "Không tìm th?y danh m?c.";
+                TempData["Error"] = "Không tìm thấy danh mục.";
                 return NotFound();
             }
 
@@ -418,7 +419,7 @@ namespace DACSN10.Controllers
 
             if (existingCategory == null)
             {
-                TempData["Error"] = "Không tìm th?y danh m?c.";
+                TempData["Error"] = "Không tìm thấy danh mục.";
                 return NotFound();
             }
 
@@ -430,12 +431,12 @@ namespace DACSN10.Controllers
                     existingCategory.Description = category.Description;
 
                     await _context.SaveChangesAsync();
-                    TempData["Success"] = "C?p nh?t danh m?c thành công!";
+                    TempData["Success"] = "Cập nhật danh mục thành công!";
                     return RedirectToAction("Categories");
                 }
                 catch (Exception ex)
                 {
-                    TempData["Error"] = "L?i khi c?p nh?t: " + ex.Message;
+                    TempData["Error"] = "Lỗi khi cập nhật: " + ex.Message;
                 }
             }
 
@@ -450,7 +451,7 @@ namespace DACSN10.Controllers
 
             if (category == null)
             {
-                TempData["Error"] = "Không tìm th?y danh m?c.";
+                TempData["Error"] = "Không tìm thấy danh mục.";
                 return NotFound();
             }
 
@@ -467,23 +468,23 @@ namespace DACSN10.Controllers
 
             if (category == null)
             {
-                return Json(new { success = false, message = "Không tìm th?y danh m?c." });
+                return Json(new { success = false, message = "Không tìm thấy danh mục." });
             }
 
             if (category.CourseCategories.Any())
             {
-                return Json(new { success = false, message = "Không th? xóa danh m?c ?ang có khóa h?c." });
+                return Json(new { success = false, message = "Không thể xóa danh mục đang có khóa học." });
             }
 
             try
             {
                 _context.Categories.Remove(category);
                 await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "Xóa danh m?c thành công!" });
+                return Json(new { success = true, message = "Xóa danh mục thành công!" });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "L?i khi xóa: " + ex.Message });
+                return Json(new { success = false, message = "Lỗi khi xóa: " + ex.Message });
             }
         }
 
@@ -531,7 +532,7 @@ namespace DACSN10.Controllers
 
             if (student == null)
             {
-                TempData["Error"] = "Không tìm th?y h?c viên.";
+                TempData["Error"] = "Không tìm thấy học viên.";
                 return NotFound();
             }
 
@@ -560,7 +561,7 @@ namespace DACSN10.Controllers
                     if (result.Succeeded)
                     {
                         await _userManager.AddToRoleAsync(user, RoleNames.User);
-                        TempData["Success"] = "T?o tài kho?n h?c viên thành công!";
+                        TempData["Success"] = "Tạo tài khoản học viên thành công!";
                         return RedirectToAction("Students");
                     }
                     else
@@ -573,7 +574,7 @@ namespace DACSN10.Controllers
                 }
                 catch (Exception ex)
                 {
-                    TempData["Error"] = "L?i khi t?o tài kho?n: " + ex.Message;
+                    TempData["Error"] = "Lỗi khi tạo tài khoản: " + ex.Message;
                 }
             }
 
@@ -586,7 +587,7 @@ namespace DACSN10.Controllers
 
             if (student == null || student.LoaiNguoiDung != RoleNames.User)
             {
-                TempData["Error"] = "Không tìm th?y h?c viên.";
+                TempData["Error"] = "Không tìm thấy học viên.";
                 return NotFound();
             }
 
@@ -601,7 +602,7 @@ namespace DACSN10.Controllers
 
             if (existingUser == null || existingUser.LoaiNguoiDung != RoleNames.User)
             {
-                TempData["Error"] = "Không tìm th?y h?c viên.";
+                TempData["Error"] = "Không tìm thấy học viên.";
                 return NotFound();
             }
 
@@ -618,7 +619,7 @@ namespace DACSN10.Controllers
                     var result = await _userManager.UpdateAsync(existingUser);
                     if (result.Succeeded)
                     {
-                        TempData["Success"] = "C?p nh?t thông tin h?c viên thành công!";
+                        TempData["Success"] = "Cập nhật thông tin học viên thành công!";
                         return RedirectToAction("Students");
                     }
                     else
@@ -631,7 +632,7 @@ namespace DACSN10.Controllers
                 }
                 catch (Exception ex)
                 {
-                    TempData["Error"] = "L?i khi c?p nh?t: " + ex.Message;
+                    TempData["Error"] = "Lỗi khi cập nhật: " + ex.Message;
                 }
             }
 
@@ -646,7 +647,7 @@ namespace DACSN10.Controllers
 
             if (student == null || student.LoaiNguoiDung != RoleNames.User)
             {
-                return Json(new { success = false, message = "Không tìm th?y h?c viên." });
+                return Json(new { success = false, message = "Không tìm thấy học viên." });
             }
 
             try
@@ -655,22 +656,22 @@ namespace DACSN10.Controllers
                 var hasEnrollments = await _context.Enrollments.AnyAsync(e => e.UserID == id);
                 if (hasEnrollments)
                 {
-                    return Json(new { success = false, message = "Không th? xóa h?c viên ?ã có ??ng ký khóa h?c." });
+                    return Json(new { success = false, message = "Không thể xóa học viên đã có đăng ký khóa học." });
                 }
 
                 var result = await _userManager.DeleteAsync(student);
                 if (result.Succeeded)
                 {
-                    return Json(new { success = true, message = "Xóa h?c viên thành công!" });
+                    return Json(new { success = true, message = "Xóa học viên thành công!" });
                 }
                 else
                 {
-                    return Json(new { success = false, message = "L?i khi xóa h?c viên." });
+                    return Json(new { success = false, message = "Lỗi khi xóa học viên." });
                 }
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "L?i khi xóa: " + ex.Message });
+                return Json(new { success = false, message = "Lỗi khi xóa: " + ex.Message });
             }
         }
 
@@ -682,7 +683,7 @@ namespace DACSN10.Controllers
 
             if (student == null || student.LoaiNguoiDung != RoleNames.User)
             {
-                return Json(new { success = false, message = "Không tìm th?y h?c viên." });
+                return Json(new { success = false, message = "Không tìm thấy học viên." });
             }
 
             try
@@ -692,17 +693,17 @@ namespace DACSN10.Controllers
 
                 if (result.Succeeded)
                 {
-                    var message = student.TrangThai == "Locked" ? "Khóa tài kho?n thành công!" : "M? khóa tài kho?n thành công!";
+                    var message = student.TrangThai == "Locked" ? "Khóa tài khoản thành công!" : "Mở khóa tài khoản thành công!";
                     return Json(new { success = true, message = message });
                 }
                 else
                 {
-                    return Json(new { success = false, message = "L?i khi c?p nh?t tr?ng thái." });
+                    return Json(new { success = false, message = "Lỗi khi cập nhật trạng thái." });
                 }
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "L?i: " + ex.Message });
+                return Json(new { success = false, message = "Lỗi: " + ex.Message });
             }
         }
 
@@ -714,7 +715,7 @@ namespace DACSN10.Controllers
 
             if (user == null || user.LoaiNguoiDung != RoleNames.User)
             {
-                return Json(new { success = false, message = "Không tìm th?y h?c viên." });
+                return Json(new { success = false, message = "Không tìm thấy học viên." });
             }
 
             try
@@ -728,16 +729,16 @@ namespace DACSN10.Controllers
 
                 if (result.Succeeded)
                 {
-                    return Json(new { success = true, message = "C?p quy?n gi?ng viên thành công!" });
+                    return Json(new { success = true, message = "Cấp quyền giảng viên thành công!" });
                 }
                 else
                 {
-                    return Json(new { success = false, message = "L?i khi c?p quy?n." });
+                    return Json(new { success = false, message = "Lỗi khi cấp quyền." });
                 }
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "L?i: " + ex.Message });
+                return Json(new { success = false, message = "Lỗi: " + ex.Message });
             }
         }
 
@@ -784,7 +785,7 @@ namespace DACSN10.Controllers
 
             if (teacher == null)
             {
-                TempData["Error"] = "Không tìm th?y gi?ng viên.";
+                TempData["Error"] = "Không tìm thấy giảng viên.";
                 return NotFound();
             }
 
@@ -821,7 +822,7 @@ namespace DACSN10.Controllers
                     if (result.Succeeded)
                     {
                         await _userManager.AddToRoleAsync(user, RoleNames.Teacher);
-                        TempData["Success"] = "T?o tài kho?n gi?ng viên thành công!";
+                        TempData["Success"] = "Tạo tài khoản giảng viên thành công!";
                         return RedirectToAction("Teachers");
                     }
                     else
@@ -834,7 +835,7 @@ namespace DACSN10.Controllers
                 }
                 catch (Exception ex)
                 {
-                    TempData["Error"] = "L?i khi t?o tài kho?n: " + ex.Message;
+                    TempData["Error"] = "Lỗi khi tạo tài khoản: " + ex.Message;
                 }
             }
 
@@ -847,7 +848,7 @@ namespace DACSN10.Controllers
 
             if (teacher == null || teacher.LoaiNguoiDung != RoleNames.Teacher)
             {
-                TempData["Error"] = "Không tìm th?y gi?ng viên.";
+                TempData["Error"] = "Không tìm thấy giảng viên.";
                 return NotFound();
             }
 
@@ -862,7 +863,7 @@ namespace DACSN10.Controllers
 
             if (existingUser == null || existingUser.LoaiNguoiDung != RoleNames.Teacher)
             {
-                TempData["Error"] = "Không tìm th?y gi?ng viên.";
+                TempData["Error"] = "Không tìm thấy giảng viên.";
                 return NotFound();
             }
 
@@ -879,7 +880,7 @@ namespace DACSN10.Controllers
                     var result = await _userManager.UpdateAsync(existingUser);
                     if (result.Succeeded)
                     {
-                        TempData["Success"] = "C?p nh?t thông tin gi?ng viên thành công!";
+                        TempData["Success"] = "Cập nhật thông tin giảng viên thành công!";
                         return RedirectToAction("Teachers");
                     }
                     else
@@ -892,7 +893,7 @@ namespace DACSN10.Controllers
                 }
                 catch (Exception ex)
                 {
-                    TempData["Error"] = "L?i khi c?p nh?t: " + ex.Message;
+                    TempData["Error"] = "Lỗi khi cập nhật: " + ex.Message;
                 }
             }
 
@@ -907,7 +908,7 @@ namespace DACSN10.Controllers
 
             if (teacher == null || teacher.LoaiNguoiDung != RoleNames.Teacher)
             {
-                return Json(new { success = false, message = "Không tìm th?y gi?ng viên." });
+                return Json(new { success = false, message = "Không tìm thấy giảng viên." });
             }
 
             try
@@ -916,22 +917,22 @@ namespace DACSN10.Controllers
                 var hasCourses = await _context.Courses.AnyAsync(c => c.UserID == id);
                 if (hasCourses)
                 {
-                    return Json(new { success = false, message = "Không th? xóa gi?ng viên ?ã có khóa h?c." });
+                    return Json(new { success = false, message = "Không thể xóa giảng viên đã có khóa học." });
                 }
 
                 var result = await _userManager.DeleteAsync(teacher);
                 if (result.Succeeded)
                 {
-                    return Json(new { success = true, message = "Xóa gi?ng viên thành công!" });
+                    return Json(new { success = true, message = "Xóa giảng viên thành công!" });
                 }
                 else
                 {
-                    return Json(new { success = false, message = "L?i khi xóa gi?ng viên." });
+                    return Json(new { success = false, message = "Lỗi khi xóa giảng viên." });
                 }
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "L?i khi xóa: " + ex.Message });
+                return Json(new { success = false, message = "Lỗi khi xóa: " + ex.Message });
             }
         }
 
@@ -943,7 +944,7 @@ namespace DACSN10.Controllers
 
             if (teacher == null || teacher.LoaiNguoiDung != RoleNames.Teacher)
             {
-                return Json(new { success = false, message = "Không tìm th?y gi?ng viên." });
+                return Json(new { success = false, message = "Không tìm thấy giảng viên." });
             }
 
             try
@@ -953,17 +954,17 @@ namespace DACSN10.Controllers
 
                 if (result.Succeeded)
                 {
-                    var message = teacher.TrangThai == "Locked" ? "Khóa tài kho?n thành công!" : "M? khóa tài kho?n thành công!";
+                    var message = teacher.TrangThai == "Locked" ? "Khóa tài khoản thành công!" : "Mở khóa tài khoản thành công!";
                     return Json(new { success = true, message = message });
                 }
                 else
                 {
-                    return Json(new { success = false, message = "L?i khi c?p nh?t tr?ng thái." });
+                    return Json(new { success = false, message = "Lỗi khi cập nhật trạng thái." });
                 }
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "L?i: " + ex.Message });
+                return Json(new { success = false, message = "Lỗi: " + ex.Message });
             }
         }
 
@@ -976,6 +977,7 @@ namespace DACSN10.Controllers
             var query = _context.Payments
                 .Include(p => p.User)
                 .Include(p => p.Course)
+                    .ThenInclude(c => c.User) // Ensure Course.User is included
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<PaymentStatus>(status, out var paymentStatus))
@@ -1022,12 +1024,13 @@ namespace DACSN10.Controllers
         {
             var payment = await _context.Payments
                 .Include(p => p.User)
-                .Include(p => p.Course).ThenInclude(c => c.User)
+                .Include(p => p.Course)
+                    .ThenInclude(c => c.User) // Ensure Course.User is included
                 .FirstOrDefaultAsync(p => p.PaymentID == id);
 
             if (payment == null)
             {
-                TempData["Error"] = "Không tìm th?y giao d?ch.";
+                TempData["Error"] = "Không tìm thấy giao dịch.";
                 return NotFound();
             }
 
@@ -1040,11 +1043,12 @@ namespace DACSN10.Controllers
         {
             var payment = await _context.Payments
                 .Include(p => p.Course)
+                    .ThenInclude(c => c.User) // Include for safety
                 .FirstOrDefaultAsync(p => p.PaymentID == id);
 
             if (payment == null)
             {
-                return Json(new { success = false, message = "Không tìm th?y giao d?ch." });
+                return Json(new { success = false, message = "Không tìm thấy giao dịch." });
             }
 
             try
@@ -1068,11 +1072,11 @@ namespace DACSN10.Controllers
                 }
 
                 await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "Duy?t thanh toán thành công!" });
+                return Json(new { success = true, message = "Duyệt thanh toán thành công!" });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "L?i khi duy?t: " + ex.Message });
+                return Json(new { success = false, message = "Lỗi khi duyệt: " + ex.Message });
             }
         }
 
@@ -1080,22 +1084,23 @@ namespace DACSN10.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RejectPayment(int id, string reason)
         {
-            var payment = await _context.Payments.FirstOrDefaultAsync(p => p.PaymentID == id);
+            var payment = await _context.Payments
+                .FirstOrDefaultAsync(p => p.PaymentID == id);
 
             if (payment == null)
             {
-                return Json(new { success = false, message = "Không tìm th?y giao d?ch." });
+                return Json(new { success = false, message = "Không tìm thấy giao dịch." });
             }
 
             try
             {
                 payment.Status = PaymentStatus.Rejected;
                 await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "T? ch?i thanh toán thành công!" });
+                return Json(new { success = true, message = "Từ chối thanh toán thành công!" });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "L?i khi t? ch?i: " + ex.Message });
+                return Json(new { success = false, message = "Lỗi khi từ chối: " + ex.Message });
             }
         }
 
@@ -1106,6 +1111,8 @@ namespace DACSN10.Controllers
             try
             {
                 var payments = await _context.Payments
+                    .Include(p => p.Course)
+                        .ThenInclude(c => c.User) // Include for safety
                     .Where(p => paymentIds.Contains(p.PaymentID))
                     .ToListAsync();
 
@@ -1131,11 +1138,35 @@ namespace DACSN10.Controllers
                 }
 
                 await _context.SaveChangesAsync();
-                return Json(new { success = true, message = $"?ã duy?t {payments.Count} giao d?ch thành công!" });
+                return Json(new { success = true, message = $"Đã duyệt {payments.Count} giao dịch thành công!" });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "L?i khi duy?t hàng lo?t: " + ex.Message });
+                return Json(new { success = false, message = "Lỗi khi duyệt hàng loạt: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BulkRejectPayments(int[] paymentIds)
+        {
+            try
+            {
+                var payments = await _context.Payments
+                    .Where(p => paymentIds.Contains(p.PaymentID))
+                    .ToListAsync();
+
+                foreach (var payment in payments)
+                {
+                    payment.Status = PaymentStatus.Rejected;
+                }
+
+                await _context.SaveChangesAsync();
+                return Json(new { success = true, message = $"Đã từ chối {payments.Count} giao dịch!" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi khi từ chối hàng loạt: " + ex.Message });
             }
         }
 
@@ -1143,82 +1174,14 @@ namespace DACSN10.Controllers
 
         #region Statistics & Reports
 
-        public async Task<IActionResult> Statistics()
-        {
-            var stats = await GetAdvancedStats();
-            return View(stats);
-        }
-
-        private async Task<dynamic> GetAdvancedStats()
-        {
-            var now = DateTime.Now;
-            var startOfMonth = new DateTime(now.Year, now.Month, 1);
-            var startOfYear = new DateTime(now.Year, 1, 1);
-
-            // Monthly stats
-            var monthlyRevenue = await _context.Payments
-                .Where(p => p.Status == PaymentStatus.Success && p.NgayThanhToan >= startOfMonth)
-                .SumAsync(p => (decimal?)p.SoTien) ?? 0;
-
-            var monthlyEnrollments = await _context.Enrollments
-                .Where(e => e.EnrollDate >= startOfMonth)
-                .CountAsync();
-
-            var monthlyNewUsers = await _userManager.Users
-                .Where(u => u.NgayDangKy >= startOfMonth)
-                .CountAsync();
-
-            // Yearly stats
-            var yearlyRevenue = await _context.Payments
-                .Where(p => p.Status == PaymentStatus.Success && p.NgayThanhToan >= startOfYear)
-                .SumAsync(p => (decimal?)p.SoTien) ?? 0;
-
-            // Course stats
-            var popularCourses = await _context.Courses
-                .Include(c => c.Enrollments)
-                .OrderByDescending(c => c.Enrollments.Count)
-                .Take(10)
-                .Select(c => new { c.TenKhoaHoc, EnrollmentCount = c.Enrollments.Count })
-                .ToListAsync();
-
-            // Revenue by month (last 12 months)
-            var revenueByMonth = new List<object>();
-            for (int i = 11; i >= 0; i--)
-            {
-                var month = now.AddMonths(-i);
-                var monthStart = new DateTime(month.Year, month.Month, 1);
-                var monthEnd = monthStart.AddMonths(1);
-
-                var revenue = await _context.Payments
-                    .Where(p => p.Status == PaymentStatus.Success &&
-                               p.NgayThanhToan >= monthStart && p.NgayThanhToan < monthEnd)
-                    .SumAsync(p => (decimal?)p.SoTien) ?? 0;
-
-                revenueByMonth.Add(new
-                {
-                    Month = month.ToString("MM/yyyy"),
-                    Revenue = revenue
-                });
-            }
-
-            return new
-            {
-                MonthlyRevenue = monthlyRevenue,
-                MonthlyEnrollments = monthlyEnrollments,
-                MonthlyNewUsers = monthlyNewUsers,
-                YearlyRevenue = yearlyRevenue,
-                PopularCourses = popularCourses,
-                RevenueByMonth = revenueByMonth
-            };
-        }
-
         public async Task<IActionResult> RevenueReport(DateTime? fromDate = null, DateTime? toDate = null)
         {
             fromDate ??= DateTime.Now.AddMonths(-1);
             toDate ??= DateTime.Now;
 
             var query = _context.Payments
-                .Include(p => p.Course).ThenInclude(c => c.User)
+                .Include(p => p.Course)
+                    .ThenInclude(c => c.User) // Ensure Course.User is included
                 .Include(p => p.User)
                 .Where(p => p.Status == PaymentStatus.Success &&
                            p.NgayThanhToan >= fromDate && p.NgayThanhToan <= toDate);
@@ -1232,16 +1195,19 @@ namespace DACSN10.Controllers
                 TotalRevenue = payments.Sum(p => p.SoTien),
                 TotalTransactions = payments.Count,
                 AverageTransactionValue = payments.Any() ? payments.Average(p => p.SoTien) : 0,
-                RevenueByTeacher = payments.GroupBy(p => p.Course.User.HoTen)
+                RevenueByTeacher = payments
+                    .GroupBy(p => p.Course.User?.HoTen ?? "Không xác định")
                     .Select(g => new { TeacherName = g.Key, Revenue = g.Sum(p => p.SoTien), Count = g.Count() })
                     .OrderByDescending(x => x.Revenue)
                     .ToList(),
-                RevenueByCategory = payments.GroupBy(p => p.Course.TenKhoaHoc)
+                RevenueByCategory = payments
+                    .GroupBy(p => p.Course.TenKhoaHoc)
                     .Select(g => new { CourseName = g.Key, Revenue = g.Sum(p => p.SoTien), Count = g.Count() })
                     .OrderByDescending(x => x.Revenue)
                     .Take(10)
                     .ToList(),
-                DailyRevenue = payments.GroupBy(p => p.NgayThanhToan.Date)
+                DailyRevenue = payments
+                    .GroupBy(p => p.NgayThanhToan.Date)
                     .Select(g => new { Date = g.Key, Revenue = g.Sum(p => p.SoTien), Count = g.Count() })
                     .OrderBy(x => x.Date)
                     .ToList()
@@ -1259,7 +1225,8 @@ namespace DACSN10.Controllers
             toDate ??= DateTime.Now;
 
             var payments = await _context.Payments
-                .Include(p => p.Course).ThenInclude(c => c.User)
+                .Include(p => p.Course)
+                    .ThenInclude(c => c.User) // Ensure Course.User is included
                 .Include(p => p.User)
                 .Where(p => p.Status == PaymentStatus.Success &&
                            p.NgayThanhToan >= fromDate && p.NgayThanhToan <= toDate)
@@ -1270,24 +1237,24 @@ namespace DACSN10.Controllers
 
             // Headers
             worksheet.Cells[1, 1].Value = "Ngày thanh toán";
-            worksheet.Cells[1, 2].Value = "H?c viên";
+            worksheet.Cells[1, 2].Value = "Học viên";
             worksheet.Cells[1, 3].Value = "Email";
-            worksheet.Cells[1, 4].Value = "Khóa h?c";
-            worksheet.Cells[1, 5].Value = "Gi?ng viên";
-            worksheet.Cells[1, 6].Value = "S? ti?n";
-            worksheet.Cells[1, 7].Value = "Ph??ng th?c";
+            worksheet.Cells[1, 4].Value = "Khóa học";
+            worksheet.Cells[1, 5].Value = "Giảng viên";
+            worksheet.Cells[1, 6].Value = "Số tiền";
+            worksheet.Cells[1, 7].Value = "Phương thức";
 
             // Data
             for (int i = 0; i < payments.Count; i++)
             {
                 var payment = payments[i];
                 worksheet.Cells[i + 2, 1].Value = payment.NgayThanhToan.ToString("dd/MM/yyyy");
-                worksheet.Cells[i + 2, 2].Value = payment.User.HoTen;
-                worksheet.Cells[i + 2, 3].Value = payment.User.Email;
-                worksheet.Cells[i + 2, 4].Value = payment.Course.TenKhoaHoc;
-                worksheet.Cells[i + 2, 5].Value = payment.Course.User.HoTen;
+                worksheet.Cells[i + 2, 2].Value = payment.User?.HoTen ?? "Không xác định";
+                worksheet.Cells[i + 2, 3].Value = payment.User?.Email ?? "Không xác định";
+                worksheet.Cells[i + 2, 4].Value = payment.Course?.TenKhoaHoc ?? "Không xác định";
+                worksheet.Cells[i + 2, 5].Value = payment.Course?.User?.HoTen ?? "Không xác định";
                 worksheet.Cells[i + 2, 6].Value = payment.SoTien;
-                worksheet.Cells[i + 2, 7].Value = payment.PhuongThucThanhToan;
+                worksheet.Cells[i + 2, 7].Value = payment.PhuongThucThanhToan ?? "Không xác định";
             }
 
             worksheet.Cells.AutoFitColumns();
@@ -1296,126 +1263,6 @@ namespace DACSN10.Controllers
             var content = package.GetAsByteArray();
 
             return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetChartData(string type, DateTime? fromDate = null, DateTime? toDate = null)
-        {
-            fromDate ??= DateTime.Now.AddMonths(-6);
-            toDate ??= DateTime.Now;
-
-            switch (type.ToLower())
-            {
-                case "revenue":
-                    var revenueData = await GetRevenueChartData(fromDate.Value, toDate.Value);
-                    return Json(revenueData);
-
-                case "enrollments":
-                    var enrollmentData = await GetEnrollmentChartData(fromDate.Value, toDate.Value);
-                    return Json(enrollmentData);
-
-                case "users":
-                    var userData = await GetUserRegistrationChartData(fromDate.Value, toDate.Value);
-                    return Json(userData);
-
-                default:
-                    return BadRequest("Invalid chart type");
-            }
-        }
-
-        private async Task<object> GetRevenueChartData(DateTime fromDate, DateTime toDate)
-        {
-            var data = await _context.Payments
-                .Where(p => p.Status == PaymentStatus.Success &&
-                           p.NgayThanhToan >= fromDate && p.NgayThanhToan <= toDate)
-                .GroupBy(p => new { p.NgayThanhToan.Year, p.NgayThanhToan.Month })
-                .Select(g => new
-                {
-                    Year = g.Key.Year,
-                    Month = g.Key.Month,
-                    Revenue = g.Sum(p => p.SoTien),
-                    Count = g.Count()
-                })
-                .OrderBy(x => x.Year).ThenBy(x => x.Month)
-                .ToListAsync();
-
-            return new
-            {
-                labels = data.Select(d => $"{d.Month:00}/{d.Year}").ToArray(),
-                datasets = new[]
-                {
-                    new
-                    {
-                        label = "Doanh thu",
-                        data = data.Select(d => d.Revenue).ToArray(),
-                        borderColor = "rgb(75, 192, 192)",
-                        backgroundColor = "rgba(75, 192, 192, 0.2)",
-                        tension = 0.1
-                    }
-                }
-            };
-        }
-
-        private async Task<object> GetEnrollmentChartData(DateTime fromDate, DateTime toDate)
-        {
-            var data = await _context.Enrollments
-                .Where(e => e.EnrollDate >= fromDate && e.EnrollDate <= toDate)
-                .GroupBy(e => new { e.EnrollDate.Year, e.EnrollDate.Month })
-                .Select(g => new
-                {
-                    Year = g.Key.Year,
-                    Month = g.Key.Month,
-                    Count = g.Count()
-                })
-                .OrderBy(x => x.Year).ThenBy(x => x.Month)
-                .ToListAsync();
-
-            return new
-            {
-                labels = data.Select(d => $"{d.Month:00}/{d.Year}").ToArray(),
-                datasets = new[]
-                {
-                    new
-                    {
-                        label = "??ng ký khóa h?c",
-                        data = data.Select(d => d.Count).ToArray(),
-                        borderColor = "rgb(255, 99, 132)",
-                        backgroundColor = "rgba(255, 99, 132, 0.2)",
-                        tension = 0.1
-                    }
-                }
-            };
-        }
-
-        private async Task<object> GetUserRegistrationChartData(DateTime fromDate, DateTime toDate)
-        {
-            var data = await _userManager.Users
-                .Where(u => u.NgayDangKy >= fromDate && u.NgayDangKy <= toDate)
-                .GroupBy(u => new { u.NgayDangKy.Year, u.NgayDangKy.Month })
-                .Select(g => new
-                {
-                    Year = g.Key.Year,
-                    Month = g.Key.Month,
-                    Count = g.Count()
-                })
-                .OrderBy(x => x.Year).ThenBy(x => x.Month)
-                .ToListAsync();
-
-            return new
-            {
-                labels = data.Select(d => $"{d.Month:00}/{d.Year}").ToArray(),
-                datasets = new[]
-                {
-                    new
-                    {
-                        label = "Ng??i dùng m?i",
-                        data = data.Select(d => d.Count).ToArray(),
-                        borderColor = "rgb(54, 162, 235)",
-                        backgroundColor = "rgba(54, 162, 235, 0.2)",
-                        tension = 0.1
-                    }
-                }
-            };
         }
 
         #endregion
@@ -1539,12 +1386,12 @@ namespace DACSN10.Controllers
             {
                 // Here you would typically save these settings to a configuration table or file
                 // For now, we'll just return success
-                TempData["Success"] = "C?p nh?t cài ??t thành công!";
+                TempData["Success"] = "Cập nhật cài đặt thành công!";
                 return RedirectToAction("Settings");
             }
             catch (Exception ex)
             {
-                TempData["Error"] = "L?i khi c?p nh?t cài ??t: " + ex.Message;
+                TempData["Error"] = "Lỗi khi cập nhật cài đặt: " + ex.Message;
                 return View();
             }
         }
@@ -1553,124 +1400,12 @@ namespace DACSN10.Controllers
 
         #region Advanced Search & Filters
 
-        public async Task<IActionResult> AdvancedSearch(string searchType, string keyword, string status, DateTime? fromDate, DateTime? toDate, int page = 1, int pageSize = 20)
-        {
-            ViewBag.SearchType = searchType;
-            ViewBag.Keyword = keyword;
-            ViewBag.Status = status;
-            ViewBag.FromDate = fromDate;
-            ViewBag.ToDate = toDate;
-            ViewBag.Page = page;
-            ViewBag.PageSize = pageSize;
-
-            object results = null;
-            int totalCount = 0;
-
-            switch (searchType?.ToLower())
-            {
-                case "courses":
-                    var (courses, courseCount) = await SearchCourses(keyword, status, fromDate, toDate, page, pageSize);
-                    results = courses;
-                    totalCount = courseCount;
-                    break;
-
-                case "users":
-                    var (users, userCount) = await SearchUsers(keyword, status, fromDate, toDate, page, pageSize);
-                    results = users;
-                    totalCount = userCount;
-                    break;
-
-                case "payments":
-                    var (payments, paymentCount) = await SearchPayments(keyword, status, fromDate, toDate, page, pageSize);
-                    results = payments;
-                    totalCount = paymentCount;
-                    break;
-
-                default:
-                    results = new List<object>();
-                    break;
-            }
-
-            ViewBag.Results = results;
-            ViewBag.TotalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-            ViewBag.TotalCount = totalCount;
-
-            return View();
-        }
-
-        private async Task<(List<Course>, int)> SearchCourses(string keyword, string status, DateTime? fromDate, DateTime? toDate, int page, int pageSize)
-        {
-            var query = _context.Courses.Include(c => c.User).AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(keyword))
-            {
-                query = query.Where(c => c.TenKhoaHoc.Contains(keyword) || c.MoTa.Contains(keyword) || c.User.HoTen.Contains(keyword));
-            }
-
-            if (!string.IsNullOrWhiteSpace(status))
-            {
-                query = query.Where(c => c.TrangThai == status);
-            }
-
-            if (fromDate.HasValue)
-            {
-                query = query.Where(c => c.NgayTao >= fromDate.Value);
-            }
-
-            if (toDate.HasValue)
-            {
-                query = query.Where(c => c.NgayTao <= toDate.Value);
-            }
-
-            var totalCount = await query.CountAsync();
-            var results = await query
-                .OrderByDescending(c => c.NgayTao)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-
-            return (results, totalCount);
-        }
-
-        private async Task<(List<User>, int)> SearchUsers(string keyword, string status, DateTime? fromDate, DateTime? toDate, int page, int pageSize)
-        {
-            var query = _userManager.Users.AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(keyword))
-            {
-                query = query.Where(u => u.HoTen.Contains(keyword) || u.Email.Contains(keyword) || u.PhoneNumber.Contains(keyword));
-            }
-
-            if (!string.IsNullOrWhiteSpace(status))
-            {
-                query = query.Where(u => u.TrangThai == status);
-            }
-
-            if (fromDate.HasValue)
-            {
-                query = query.Where(u => u.NgayDangKy >= fromDate.Value);
-            }
-
-            if (toDate.HasValue)
-            {
-                query = query.Where(u => u.NgayDangKy <= toDate.Value);
-            }
-
-            var totalCount = await query.CountAsync();
-            var results = await query
-                .OrderByDescending(u => u.NgayDangKy)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-
-            return (results, totalCount);
-        }
-
         private async Task<(List<Payment>, int)> SearchPayments(string keyword, string status, DateTime? fromDate, DateTime? toDate, int page, int pageSize)
         {
             var query = _context.Payments
                 .Include(p => p.User)
                 .Include(p => p.Course)
+                    .ThenInclude(c => c.User) // Ensure Course.User is included
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(keyword))
@@ -1740,11 +1475,11 @@ namespace DACSN10.Controllers
                 _context.Courses.RemoveRange(courses);
                 await _context.SaveChangesAsync();
 
-                return Json(new { success = true, message = $"?ã xóa {courses.Count} khóa h?c thành công!" });
+                return Json(new { success = true, message = $"Đã xóa {courses.Count} khóa học thành công!" });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "L?i khi xóa hàng lo?t: " + ex.Message });
+                return Json(new { success = false, message = "Lỗi khi xóa hàng loạt: " + ex.Message });
             }
         }
 
@@ -1763,12 +1498,12 @@ namespace DACSN10.Controllers
                     await _userManager.UpdateAsync(user);
                 }
 
-                var message = lockStatus ? $"?ã khóa {users.Count} tài kho?n!" : $"?ã m? khóa {users.Count} tài kho?n!";
+                var message = lockStatus ? $"Đã khóa {users.Count} tài khoản!" : $"Đã mở khóa {users.Count} tài khoản!";
                 return Json(new { success = true, message = message });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "L?i khi c?p nh?t hàng lo?t: " + ex.Message });
+                return Json(new { success = false, message = "Lỗi khi cập nhật hàng loạt: " + ex.Message });
             }
         }
 
@@ -1786,11 +1521,11 @@ namespace DACSN10.Controllers
                 }
 
                 await _context.SaveChangesAsync();
-                return Json(new { success = true, message = $"?ã t? ch?i {payments.Count} giao d?ch!" });
+                return Json(new { success = true, message = $"Đã từ chối {payments.Count} giao dịch!" });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "L?i khi t? ch?i hàng lo?t: " + ex.Message });
+                return Json(new { success = false, message = "Lỗi khi từ chối hàng loạt: " + ex.Message });
             }
         }
 
@@ -1798,95 +1533,12 @@ namespace DACSN10.Controllers
 
         #region Export Functions
 
-        public async Task<IActionResult> ExportUsers(string userType = "")
-        {
-            var query = _userManager.Users.AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(userType))
-            {
-                query = query.Where(u => u.LoaiNguoiDung == userType);
-            }
-
-            var users = await query.OrderBy(u => u.HoTen).ToListAsync();
-
-            using var package = new ExcelPackage();
-            var worksheet = package.Workbook.Worksheets.Add("Users");
-
-            // Headers
-            worksheet.Cells[1, 1].Value = "H? tên";
-            worksheet.Cells[1, 2].Value = "Email";
-            worksheet.Cells[1, 3].Value = "S? ?i?n tho?i";
-            worksheet.Cells[1, 4].Value = "Lo?i ng??i dùng";
-            worksheet.Cells[1, 5].Value = "Tr?ng thái";
-            worksheet.Cells[1, 6].Value = "Ngày ??ng ký";
-
-            // Data
-            for (int i = 0; i < users.Count; i++)
-            {
-                var user = users[i];
-                worksheet.Cells[i + 2, 1].Value = user.HoTen;
-                worksheet.Cells[i + 2, 2].Value = user.Email;
-                worksheet.Cells[i + 2, 3].Value = user.PhoneNumber;
-                worksheet.Cells[i + 2, 4].Value = user.LoaiNguoiDung;
-                worksheet.Cells[i + 2, 5].Value = user.TrangThai;
-                worksheet.Cells[i + 2, 6].Value = user.NgayDangKy.ToString("dd/MM/yyyy");
-            }
-
-            worksheet.Cells.AutoFitColumns();
-
-            var fileName = $"Users_{userType}_{DateTime.Now:yyyyMMdd}.xlsx";
-            var content = package.GetAsByteArray();
-
-            return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
-        }
-
-        public async Task<IActionResult> ExportCourses(string status = "")
-        {
-            var query = _context.Courses.Include(c => c.User).AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(status))
-            {
-                query = query.Where(c => c.TrangThai == status);
-            }
-
-            var courses = await query.OrderByDescending(c => c.NgayTao).ToListAsync();
-
-            using var package = new ExcelPackage();
-            var worksheet = package.Workbook.Worksheets.Add("Courses");
-
-            // Headers
-            worksheet.Cells[1, 1].Value = "Tên khóa h?c";
-            worksheet.Cells[1, 2].Value = "Mô t?";
-            worksheet.Cells[1, 3].Value = "Giá";
-            worksheet.Cells[1, 4].Value = "Gi?ng viên";
-            worksheet.Cells[1, 5].Value = "Tr?ng thái";
-            worksheet.Cells[1, 6].Value = "Ngày t?o";
-
-            // Data
-            for (int i = 0; i < courses.Count; i++)
-            {
-                var course = courses[i];
-                worksheet.Cells[i + 2, 1].Value = course.TenKhoaHoc;
-                worksheet.Cells[i + 2, 2].Value = course.MoTa;
-                worksheet.Cells[i + 2, 3].Value = course.Gia;
-                worksheet.Cells[i + 2, 4].Value = course.User?.HoTen;
-                worksheet.Cells[i + 2, 5].Value = course.TrangThai;
-                worksheet.Cells[i + 2, 6].Value = course.NgayTao.ToString("dd/MM/yyyy");
-            }
-
-            worksheet.Cells.AutoFitColumns();
-
-            var fileName = $"Courses_{status}_{DateTime.Now:yyyyMMdd}.xlsx";
-            var content = package.GetAsByteArray();
-
-            return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
-        }
-
         public async Task<IActionResult> ExportPayments(string status = "", DateTime? fromDate = null, DateTime? toDate = null)
         {
             var query = _context.Payments
                 .Include(p => p.User)
                 .Include(p => p.Course)
+                    .ThenInclude(c => c.User) // Ensure Course.User is included
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<PaymentStatus>(status, out var paymentStatus))
@@ -1912,12 +1564,13 @@ namespace DACSN10.Controllers
             // Headers
             worksheet.Cells[1, 1].Value = "ID";
             worksheet.Cells[1, 2].Value = "Ngày thanh toán";
-            worksheet.Cells[1, 3].Value = "H?c viên";
+            worksheet.Cells[1, 3].Value = "Học viên";
             worksheet.Cells[1, 4].Value = "Email";
-            worksheet.Cells[1, 5].Value = "Khóa h?c";
-            worksheet.Cells[1, 6].Value = "S? ti?n";
-            worksheet.Cells[1, 7].Value = "Ph??ng th?c";
-            worksheet.Cells[1, 8].Value = "Tr?ng thái";
+            worksheet.Cells[1, 5].Value = "Khóa học";
+            worksheet.Cells[1, 6].Value = "Giảng viên";
+            worksheet.Cells[1, 7].Value = "Số tiền";
+            worksheet.Cells[1, 8].Value = "Phương thức";
+            worksheet.Cells[1, 9].Value = "Trạng thái";
 
             // Data
             for (int i = 0; i < payments.Count; i++)
@@ -1925,12 +1578,13 @@ namespace DACSN10.Controllers
                 var payment = payments[i];
                 worksheet.Cells[i + 2, 1].Value = payment.PaymentID;
                 worksheet.Cells[i + 2, 2].Value = payment.NgayThanhToan.ToString("dd/MM/yyyy HH:mm");
-                worksheet.Cells[i + 2, 3].Value = payment.User.HoTen;
-                worksheet.Cells[i + 2, 4].Value = payment.User.Email;
-                worksheet.Cells[i + 2, 5].Value = payment.Course.TenKhoaHoc;
-                worksheet.Cells[i + 2, 6].Value = payment.SoTien;
-                worksheet.Cells[i + 2, 7].Value = payment.PhuongThucThanhToan;
-                worksheet.Cells[i + 2, 8].Value = payment.Status.ToString();
+                worksheet.Cells[i + 2, 3].Value = payment.User?.HoTen ?? "Không xác định";
+                worksheet.Cells[i + 2, 4].Value = payment.User?.Email ?? "Không xác định";
+                worksheet.Cells[i + 2, 5].Value = payment.Course?.TenKhoaHoc ?? "Không xác định";
+                worksheet.Cells[i + 2, 6].Value = payment.Course?.User?.HoTen ?? "Không xác định";
+                worksheet.Cells[i + 2, 7].Value = payment.SoTien;
+                worksheet.Cells[i + 2, 8].Value = payment.PhuongThucThanhToan ?? "Không xác định";
+                worksheet.Cells[i + 2, 9].Value = payment.Status.ToString();
             }
 
             worksheet.Cells.AutoFitColumns();
@@ -2141,14 +1795,14 @@ namespace DACSN10.Controllers
                 {
                     new
                     {
-                        label = "H?c viên",
+                        label = "Học viên",
                         data = data.Select(d => ((dynamic)d).Students).ToArray(),
                         borderColor = "rgb(75, 192, 192)",
                         backgroundColor = "rgba(75, 192, 192, 0.2)"
                     },
                     new
                     {
-                        label = "Gi?ng viên",
+                        label = "Giảng viên",
                         data = data.Select(d => ((dynamic)d).Teachers).ToArray(),
                         borderColor = "rgb(255, 99, 132)",
                         backgroundColor = "rgba(255, 99, 132, 0.2)"
@@ -2177,7 +1831,7 @@ namespace DACSN10.Controllers
                 {
                     new
                     {
-                        label = "S? l??ng ??ng ký",
+                        label = "Số lượng đăng ký",
                         data = courses.Select(c => c.Enrollments).ToArray(),
                         backgroundColor = new[]
                         {
@@ -2310,11 +1964,11 @@ namespace DACSN10.Controllers
 
                 await _context.SaveChangesAsync();
 
-                return Json(new { success = true, message = $"?ã d?n d?p {cleanupCount} b?n ghi!" });
+                return Json(new { success = true, message = $"Đã dọn dẹp {cleanupCount} bản ghi!" });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "L?i khi d?n d?p: " + ex.Message });
+                return Json(new { success = false, message = "Lỗi khi dọn dẹp: " + ex.Message });
             }
         }
 
@@ -2335,11 +1989,11 @@ namespace DACSN10.Controllers
                 // For demo purposes, we'll just return success
                 await Task.Delay(1000); // Simulate processing time
 
-                return Json(new { success = true, message = "T?i ?u hóa c? s? d? li?u thành công!" });
+                return Json(new { success = true, message = "Tối ưu hóa cơ sở dữ liệu thành công!" });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "L?i khi t?i ?u hóa: " + ex.Message });
+                return Json(new { success = false, message = "Lỗi khi tối ưu hóa: " + ex.Message });
             }
         }
 

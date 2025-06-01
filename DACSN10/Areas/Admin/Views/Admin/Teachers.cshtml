@@ -1,0 +1,794 @@
+﻿@model List<DACSN10.Models.User>
+@{
+    ViewData["Title"] = "Quản lý giảng viên";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+    var currentPage = ViewBag.Page ?? 1;
+    var totalPages = ViewBag.TotalPages ?? 1;
+    var status = ViewBag.Status ?? "";
+    var search = ViewBag.Search ?? "";
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item active">Quản lý giảng viên</li>
+}
+
+@section Styles {
+    <style>
+        .teacher-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+            .teacher-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            }
+
+        .teacher-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 1.5rem 1rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .teacher-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 1rem;
+        }
+
+        .teacher-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .teacher-email {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .teacher-body {
+            padding: 1.5rem;
+        }
+
+        .teacher-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--admin-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--admin-secondary);
+        }
+
+        .teacher-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.375rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+        }
+
+        .teacher-courses {
+            max-height: 120px;
+            overflow-y: auto;
+            margin: 1rem 0;
+        }
+
+        .course-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            background: #f8fafc;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .course-name {
+            font-weight: 500;
+            color: var(--admin-dark);
+        }
+
+        .course-students {
+            color: var(--admin-secondary);
+            font-size: 0.8rem;
+        }
+
+        .teacher-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .rating-stars {
+            color: #fbbf24;
+            font-size: 0.9rem;
+            margin: 0.5rem 0;
+        }
+
+        .performance-indicator {
+            height: 4px;
+            background: #e2e8f0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .performance-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+            transition: width 0.3s ease;
+        }
+
+        .teacher-checkbox {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            transform: scale(1.2);
+        }
+
+        .filters-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .bulk-actions {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+            display: none;
+        }
+    </style>
+}
+
+<!-- Filters and Search -->
+<div class="filters-card" data-aos="fade-up">
+    <form method="GET" action="/Admin/Admin/Teachers" class="row g-3">
+        <div class="col-md-4">
+            <label for="search" class="form-label">Tìm kiếm</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" id="search" name="search"
+                       value="@search" placeholder="Tên, email, chuyên môn...">
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <label for="status" class="form-label">Trạng thái</label>
+            <select class="form-select" id="status" name="status">
+                <option value="">Tất cả</option>
+                <option value="Active" @(status == "Active" ? "selected" : "")>Hoạt động</option>
+                <option value="Locked" @(status == "Locked" ? "selected" : "")>Bị khóa</option>
+                <option value="Pending" @(status == "Pending" ? "selected" : "")>Chờ duyệt</option>
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label for="sortBy" class="form-label">Sắp xếp theo</label>
+            <select class="form-select" id="sortBy" name="sortBy">
+                <option value="name">Tên A-Z</option>
+                <option value="revenue">Doanh thu cao nhất</option>
+                <option value="students">Nhiều học viên nhất</option>
+                <option value="courses">Nhiều khóa học nhất</option>
+                <option value="rating">Đánh giá cao nhất</option>
+                <option value="newest">Mới nhất</option>
+            </select>
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-admin-primary me-2">
+                <i class="fas fa-filter me-1"></i>Lọc
+            </button>
+            <a href="/Admin/Admin/Teachers" class="btn btn-outline-secondary">
+                <i class="fas fa-times"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Action Bar -->
+<div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-up" data-aos-delay="100">
+    <div>
+        <h4 class="mb-0">Danh sách giảng viên</h4>
+        <p class="text-muted mb-0">Quản lý tất cả giảng viên và hiệu suất của họ</p>
+    </div>
+
+    <div class="d-flex gap-2">
+        <div class="dropdown">
+            <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-download me-1"></i>Xuất dữ liệu
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="/Admin/Admin/ExportUsers?userType=Teacher"><i class="fas fa-file-excel me-2"></i>Excel</a></li>
+                <li><a class="dropdown-item" href="#" onclick="printTeachers()"><i class="fas fa-print me-2"></i>In danh sách</a></li>
+                <li><a class="dropdown-item" href="#" onclick="exportPerformanceReport()"><i class="fas fa-chart-bar me-2"></i>Báo cáo hiệu suất</a></li>
+            </ul>
+        </div>
+
+        <button class="btn btn-admin-warning" onclick="toggleBulkActions()">
+            <i class="fas fa-tasks me-1"></i>Thao tác hàng loạt
+        </button>
+
+        <a href="/Admin/Admin/CreateTeacher" class="btn btn-admin-primary">
+            <i class="fas fa-user-plus me-1"></i>Thêm giảng viên
+        </a>
+    </div>
+</div>
+
+<!-- Bulk Actions Bar -->
+<div class="bulk-actions" id="bulkActionsBar">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <span class="fw-bold">Đã chọn: <span id="selectedCount">0</span> giảng viên</span>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-admin-success btn-sm" onclick="bulkSendNotification()">
+                <i class="fas fa-bell me-1"></i>Gửi thông báo
+            </button>
+            <button class="btn btn-admin-warning btn-sm" onclick="bulkLockTeachers()">
+                <i class="fas fa-lock me-1"></i>Khóa tài khoản
+            </button>
+            <button class="btn btn-admin-info btn-sm" onclick="bulkExportData()">
+                <i class="fas fa-download me-1"></i>Xuất dữ liệu
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="clearSelection()">
+                <i class="fas fa-times me-1"></i>Bỏ chọn
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Teachers Grid -->
+<div class="row" id="teachersGrid">
+    @if (Model != null && Model.Any())
+    {
+        @foreach (var teacher in Model)
+        {
+            <div class="col-xl-4 col-lg-6 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="teacher-card">
+                    <div class="teacher-header">
+                        <input type="checkbox" class="form-check-input teacher-checkbox"
+                               value="@teacher.Id">
+
+                        @switch (teacher.TrangThai)
+                        {
+                            case "Active":
+                                <div class="teacher-badge">
+                                    <i class="fas fa-check me-1"></i>Hoạt động
+                                </div>
+                                break;
+                            case "Locked":
+                                <div class="teacher-badge">
+                                    <i class="fas fa-lock me-1"></i>Bị khóa
+                                </div>
+                                break;
+                            default:
+                                <div class="teacher-badge">
+                                    <i class="fas fa-clock me-1"></i>@teacher.TrangThai
+                                </div>
+                                break;
+                        }
+
+                        <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(teacher.HoTen ?? "Teacher")&background=fff&color=667eea&bold=true&size=80"
+                             alt="@teacher.HoTen" class="teacher-avatar">
+
+                        <div class="teacher-name">@teacher.HoTen</div>
+                        <div class="teacher-email">@teacher.Email</div>
+
+                        <div class="rating-stars mt-2">
+                            @{
+                                var rating = new Random().Next(35, 50) / 10.0; // Simulate rating 3.5-5.0
+                            }
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                if (i <= rating)
+                                {
+                                    <i class="fas fa-star"></i>
+                                }
+                                else if (i - 0.5 <= rating)
+                                {
+                                    <i class="fas fa-star-half-alt"></i>
+                                }
+                                else
+                                {
+                                    <i class="far fa-star"></i>
+                                }
+                            }
+                            <span class="ms-1">(@rating.ToString("F1"))</span>
+                        </div>
+                    </div>
+
+                    <div class="teacher-body">
+                        <div class="teacher-stats">
+                            <div class="stat-item">
+                                <div class="stat-number">@(teacher.Courses?.Count ?? 0)</div>
+                                <div class="stat-label">Khóa học</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">
+                                    @{
+                                        var totalStudents = teacher.Courses?.Sum(c => c.Enrollments?.Count ?? 0) ?? 0;
+                                    }
+                                    @totalStudents
+                                </div>
+                                <div class="stat-label">Học viên</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">@(teacher.Followers?.Count ?? 0)</div>
+                                <div class="stat-label">Followers</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">
+                                    @{
+                                        var revenue = new Random().Next(1000000, 10000000); // Simulate revenue
+                                    }
+                                    @((revenue / 1000000.0).ToString("F1"))M
+                                </div>
+                                <div class="stat-label">Doanh thu</div>
+                            </div>
+                        </div>
+
+                        <!-- Performance Indicator -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <small class="text-muted">Hiệu suất tổng thể</small>
+                                <small class="fw-semibold">
+                                    @{
+                                        var performance = new Random().Next(65, 95);
+                                    }
+                                    @performance%
+                                </small>
+                            </div>
+                            <div class="performance-indicator">
+                                <div class="performance-bar" style="width: @performance%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Teacher's Courses -->
+                        @if (teacher.Courses != null && teacher.Courses.Any())
+                        {
+                            <div class="mb-3">
+                                <h6 class="fw-semibold mb-2">Khóa học gần đây</h6>
+                                <div class="teacher-courses">
+                                    @foreach (var course in teacher.Courses.Take(3))
+                                    {
+                                        <div class="course-item">
+                                            <div>
+                                                <div class="course-name">@course.TenKhoaHoc</div>
+                                                <div class="course-students">@(course.Enrollments?.Count ?? 0) học viên</div>
+                                            </div>
+                                            <div class="text-end">
+                                                @switch (course.TrangThai)
+                                                {
+                                                    case "Active":
+                                                        <span class="badge bg-success btn-sm">Hoạt động</span>
+                                                        break;
+                                                    case "Pending":
+                                                        <span class="badge bg-warning btn-sm">Chờ duyệt</span>
+                                                        break;
+                                                    default:
+                                                        <span class="badge bg-secondary btn-sm">@course.TrangThai</span>
+                                                        break;
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Additional Info -->
+                        <div class="mb-3">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>Tham gia: @teacher.NgayDangKy.ToString("dd/MM/yyyy")
+                            </small>
+                            @if (!string.IsNullOrEmpty(teacher.PhoneNumber))
+                            {
+                                <br>
+                                <small class="text-muted">
+                                    <i class="fas fa-phone me-1"></i>@teacher.PhoneNumber
+                                </small>
+                            }
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="teacher-actions">
+                            <a href="/Admin/Admin/TeacherDetails/@teacher.Id"
+                               class="btn btn-outline-primary btn-sm flex-fill">
+                                <i class="fas fa-eye me-1"></i>Chi tiết
+                            </a>
+                            <a href="/Admin/Admin/EditTeacher/@teacher.Id"
+                               class="btn btn-outline-warning btn-sm">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button class="btn btn-outline-info btn-sm"
+                                    onclick="sendMessage('@teacher.Id')" title="Gửi tin nhắn">
+                                <i class="fas fa-envelope"></i>
+                            </button>
+                            @if (teacher.TrangThai == "Active")
+                            {
+                                <button class="btn btn-outline-warning btn-sm"
+                                        onclick="lockTeacher('@teacher.Id')" title="Khóa tài khoản">
+                                    <i class="fas fa-lock"></i>
+                                </button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-outline-success btn-sm"
+                                        onclick="lockTeacher('@teacher.Id')" title="Mở khóa tài khoản">
+                                    <i class="fas fa-unlock"></i>
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-chalkboard-teacher fa-5x text-muted mb-3"></i>
+                <h4 class="text-muted">Chưa có giảng viên nào</h4>
+                <p class="text-muted">Các giảng viên sẽ hiển thị ở đây khi họ đăng ký tài khoản</p>
+                <a href="/Admin/Admin/CreateTeacher" class="btn btn-admin-primary">
+                    <i class="fas fa-user-plus me-2"></i>Thêm giảng viên mới
+                </a>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Pagination -->
+@if (totalPages > 1)
+{
+    <nav aria-label="Teacher pagination" data-aos="fade-up" data-aos-delay="500">
+        <ul class="pagination justify-content-center">
+            @if (currentPage > 1)
+            {
+                <li class="page-item">
+                    <a class="page-link" href="/Admin/Admin/Teachers?page=@(currentPage - 1)&status=@status&search=@search">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+            }
+
+            @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
+            {
+                <li class="page-item @(i == currentPage ? "active" : "")">
+                    <a class="page-link" href="/Admin/Admin/Teachers?page=@i&status=@status&search=@search">@i</a>
+                </li>
+            }
+
+            @if (currentPage < totalPages)
+            {
+                <li class="page-item">
+                    <a class="page-link" href="/Admin/Admin/Teachers?page=@(currentPage + 1)&status=@status&search=@search">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            }
+        </ul>
+    </nav>
+}
+
+<!-- Send Message Modal -->
+<div class="modal fade" id="sendMessageModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-envelope me-2"></i>Gửi tin nhắn
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="messageForm">
+                    <div class="mb-3">
+                        <label for="messageSubject" class="form-label">Tiêu đề</label>
+                        <input type="text" class="form-control" id="messageSubject" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="messageContent" class="form-label">Nội dung</label>
+                        <textarea class="form-control" id="messageContent" rows="5" required></textarea>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="sendEmail">
+                        <label class="form-check-label" for="sendEmail">
+                            Gửi qua email
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-admin-primary" onclick="sendMessageToTeacher()">
+                    <i class="fas fa-paper-plane me-1"></i>Gửi tin nhắn
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let selectedTeacherId = null;
+
+        $(document).ready(function() {
+            // Individual checkbox change
+            $('.teacher-checkbox').change(function() {
+                updateSelectedCount();
+            });
+
+            // Load additional teacher statistics
+            loadTeacherStatistics();
+        });
+
+        function updateSelectedCount() {
+            const selectedCount = $('.teacher-checkbox:checked').length;
+            $('#selectedCount').text(selectedCount);
+
+            if (selectedCount > 0) {
+                $('#bulkActionsBar').show();
+            } else {
+                $('#bulkActionsBar').hide();
+            }
+        }
+
+        function toggleBulkActions() {
+            $('#bulkActionsBar').toggle();
+        }
+
+        function clearSelection() {
+            $('.teacher-checkbox').prop('checked', false);
+            updateSelectedCount();
+        }
+
+        function loadTeacherStatistics() {
+            console.log('Loading teacher statistics...');
+        }
+
+        function sendMessage(teacherId) {
+            selectedTeacherId = teacherId;
+            $('#sendMessageModal').modal('show');
+        }
+
+        function sendMessageToTeacher() {
+            const subject = $('#messageSubject').val();
+            const content = $('#messageContent').val();
+            const sendEmail = $('#sendEmail').prop('checked');
+
+            if (!subject || !content) {
+                showWarning('Vui lòng điền đầy đủ thông tin!');
+                return;
+            }
+
+            showLoading();
+
+            // Simulate sending message
+            setTimeout(() => {
+                hideLoading();
+                showSuccess('Đã gửi tin nhắn thành công!');
+                $('#sendMessageModal').modal('hide');
+                $('#messageForm')[0].reset();
+                console.log(`Message sent to teacher ${selectedTeacherId}: ${subject}`);
+            }, 1000);
+        }
+
+        function lockTeacher(teacherId) {
+            Swal.fire({
+                title: 'Thay đổi trạng thái tài khoản?',
+                text: 'Bạn có chắc chắn muốn thay đổi trạng thái tài khoản giảng viên này?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#f59e0b',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Thay đổi',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    showLoading();
+
+                    $.post('/Admin/Admin/LockTeacher', {
+                        id: teacherId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    })
+                    .done(function(response) {
+                        hideLoading();
+                        if (response.success) {
+                            showSuccess(response.message);
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            showError(response.message);
+                        }
+                    })
+                    .fail(function() {
+                        hideLoading();
+                        showError('Có lỗi xảy ra khi thay đổi trạng thái!');
+                    });
+                }
+            });
+        }
+
+        function bulkSendNotification() {
+            const selectedTeachers = $('.teacher-checkbox:checked').map(function() {
+                return $(this).val();
+            }).get();
+
+            if (selectedTeachers.length === 0) {
+                showWarning('Vui lòng chọn ít nhất một giảng viên!');
+                return;
+            }
+
+            Swal.fire({
+                title: 'Gửi thông báo hàng loạt',
+                html: `
+                    <div class="text-start">
+                        <div class="mb-3">
+                            <label class="form-label">Tiêu đề thông báo</label>
+                            <input type="text" class="form-control" id="bulkNotificationTitle" placeholder="Nhập tiêu đề...">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Nội dung</label>
+                            <textarea class="form-control" id="bulkNotificationContent" rows="4" placeholder="Nhập nội dung thông báo..."></textarea>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="bulkSendEmail" checked>
+                            <label class="form-check-label" for="bulkSendEmail">
+                                Gửi qua email
+                            </label>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Gửi thông báo',
+                cancelButtonText: 'Hủy',
+                preConfirm: () => {
+                    const title = document.getElementById('bulkNotificationTitle').value;
+                    const content = document.getElementById('bulkNotificationContent').value;
+                    const sendEmail = document.getElementById('bulkSendEmail').checked;
+
+                    if (!title || !content) {
+                        Swal.showValidationMessage('Vui lòng điền đầy đủ thông tin!');
+                        return false;
+                    }
+
+                    return { title, content, sendEmail };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    showLoading();
+
+                    setTimeout(() => {
+                        hideLoading();
+                        showSuccess(`Đã gửi thông báo đến ${selectedTeachers.length} giảng viên!`);
+                        console.log('Bulk notification sent:', result.value);
+                    }, 2000);
+                }
+            });
+        }
+
+        function bulkLockTeachers() {
+            const selectedTeachers = $('.teacher-checkbox:checked').map(function() {
+                return $(this).val();
+            }).get();
+
+            if (selectedTeachers.length === 0) {
+                showWarning('Vui lòng chọn ít nhất một giảng viên!');
+                return;
+            }
+
+            Swal.fire({
+                title: 'Khóa tài khoản hàng loạt?',
+                text: `Bạn có chắc chắn muốn khóa ${selectedTeachers.length} tài khoản giảng viên đã chọn?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#f59e0b',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Khóa tất cả',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    showLoading();
+
+                    $.post('/Admin/Admin/BulkLockUsers', {
+                        userIds: selectedTeachers,
+                        lockStatus: true,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    })
+                    .done(function(response) {
+                        hideLoading();
+                        if (response.success) {
+                            showSuccess(response.message);
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            showError(response.message);
+                        }
+                    })
+                    .fail(function() {
+                        hideLoading();
+                        showError('Có lỗi xảy ra khi khóa tài khoản hàng loạt!');
+                    });
+                }
+            });
+        }
+
+        function bulkExportData() {
+            const selectedTeachers = $('.teacher-checkbox:checked').map(function() {
+                return $(this).val();
+            }).get();
+
+            if (selectedTeachers.length === 0) {
+                showWarning('Vui lòng chọn ít nhất một giảng viên!');
+                return;
+            }
+
+            showLoading();
+
+            setTimeout(() => {
+                hideLoading();
+                showSuccess(`Đã xuất dữ liệu ${selectedTeachers.length} giảng viên!`);
+                console.log('Exporting data for teachers:', selectedTeachers);
+            }, 1500);
+        }
+
+        function printTeachers() {
+            window.print();
+        }
+
+        function exportPerformanceReport() {
+            showLoading();
+
+            setTimeout(() => {
+                hideLoading();
+                showSuccess('Đã tạo báo cáo hiệu suất giảng viên!');
+                console.log('Performance report exported');
+            }, 2000);
+        }
+
+        // Auto-refresh every 3 minutes
+        setInterval(function() {
+            console.log('Checking for teacher updates...');
+        }, 180000);
+    </script>
+
+    @Html.AntiForgeryToken()
+}

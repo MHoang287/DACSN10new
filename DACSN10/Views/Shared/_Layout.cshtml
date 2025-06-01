@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿﻿
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
@@ -20,7 +21,6 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="~/css/site.css" />
 
-    <!-- Render any additional styles from the view -->
     <!-- Render any additional styles from the view -->
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -108,10 +108,90 @@
                         }
                         @if (User.IsInRole("Admin"))
                         {
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
-                                    <i class="fas fa-users-cog"></i>Quản&nbsp;trị
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle admin-link" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-users-cog"></i>Quản&nbsp;trị&nbsp;viên
                                 </a>
+                                <ul class="dropdown-menu admin-dropdown" aria-labelledby="adminDropdown">
+                                    <li class="dropdown-header">
+                                        <i class="fas fa-crown me-2 text-warning"></i>Bảng điều khiển
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("Dashboard", "Admin", new { area = "Admin" })">
+                                            <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider" /></li>
+
+                                    <li class="dropdown-header">
+                                        <i class="fas fa-users me-2 text-primary"></i>Quản lý người dùng
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("Students", "Admin", new { area = "Admin" })">
+                                            <i class="fas fa-user-graduate me-2"></i> Học viên
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("Teachers", "Admin", new { area = "Admin" })">
+                                            <i class="fas fa-chalkboard-teacher me-2"></i> Giảng viên
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider" /></li>
+
+                                    <li class="dropdown-header">
+                                        <i class="fas fa-book-open me-2 text-success"></i>Quản lý khóa học
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("Courses", "Admin", new { area = "Admin" })">
+                                            <i class="fas fa-list me-2"></i> Tất cả khóa học
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("Categories", "Admin", new { area = "Admin" })">
+                                            <i class="fas fa-tags me-2"></i> Danh mục
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider" /></li>
+
+                                    <li class="dropdown-header">
+                                        <i class="fas fa-credit-card me-2 text-info"></i>Thanh toán & Thống kê
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("Payments", "Admin", new { area = "Admin" })">
+                                            <i class="fas fa-money-bill-wave me-2"></i> Thanh toán
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("Statistics", "Admin", new { area = "Admin" })">
+                                            <i class="fas fa-chart-line me-2"></i> Thống kê
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("Analytics", "Admin", new { area = "Admin" })">
+                                            <i class="fas fa-chart-pie me-2"></i> Phân tích
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider" /></li>
+
+                                    <li class="dropdown-header">
+                                        <i class="fas fa-cog me-2 text-secondary"></i>Hệ thống
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("Settings", "Admin", new { area = "Admin" })">
+                                            <i class="fas fa-sliders-h me-2"></i> Cài đặt
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("SystemHealth", "Admin", new { area = "Admin" })">
+                                            <i class="fas fa-heartbeat me-2"></i> Tình trạng hệ thống
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("Maintenance", "Admin", new { area = "Admin" })">
+                                            <i class="fas fa-tools me-2"></i> Bảo trì
+                                        </a>
+                                    </li>
+                                </ul>
                             </li>
                         }
                     </ul>
@@ -190,9 +270,22 @@
                                              alt="@User.Identity.Name" />
                                     </div>
                                     <span class="d-none d-lg-inline fw-medium">@User.Identity.Name</span>
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <span class="badge bg-danger ms-2 small">ADMIN</span>
+                                    }
                                     <i class="fas fa-chevron-down ms-2 small"></i>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item admin-quick-access" href="@Url.Action("Dashboard", "Admin", new { area = "Admin" })">
+                                                <i class="fas fa-crown me-2 text-warning"></i> Bảng điều khiển Admin
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider" /></li>
+                                    }
                                     <li>
                                         <a class="dropdown-item" href="@Url.Action("MyCourses", "Course")">
                                             <i class="fas fa-book me-2"></i> Khóa&nbsp;học&nbsp;của&nbsp;tôi
@@ -339,7 +432,6 @@
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 
     <!-- Render any additional scripts from the view -->
     @await RenderSectionAsync("Scripts", required: false)

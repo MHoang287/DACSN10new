@@ -1,0 +1,894 @@
+﻿@{
+    ViewData["Title"] = "Thống kê & Phân tích";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item active">Thống kê & Phân tích</li>
+}
+
+@section Styles {
+    <style>
+        .stats-widget {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+            .stats-widget:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            }
+
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .widget-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--admin-dark);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .widget-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+            .chart-container.small {
+                height: 200px;
+            }
+
+            .chart-container.large {
+                height: 400px;
+            }
+
+        .metric-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 10px;
+            padding: 1.25rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .metric-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            color: var(--admin-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-change {
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+            .metric-change.positive {
+                color: var(--admin-success);
+            }
+
+            .metric-change.negative {
+                color: var(--admin-danger);
+            }
+
+        .period-selector {
+            background: white;
+            border-radius: 10px;
+            padding: 0.5rem;
+            display: inline-flex;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .period-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            font-weight: 500;
+            color: var(--admin-secondary);
+            transition: all 0.3s ease;
+        }
+
+            .period-btn.active {
+                background: var(--admin-primary);
+                color: white;
+            }
+
+        .top-performers {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .performer-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+            .performer-item:hover {
+                background: #e2e8f0;
+                transform: translateX(5px);
+            }
+
+        .performer-rank {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--admin-primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 1rem;
+        }
+
+        .performer-info {
+            flex: 1;
+        }
+
+        .performer-name {
+            font-weight: 600;
+            color: var(--admin-dark);
+        }
+
+        .performer-details {
+            font-size: 0.9rem;
+            color: var(--admin-secondary);
+        }
+
+        .performer-value {
+            font-weight: 700;
+            color: var(--admin-primary);
+        }
+
+        .heatmap-container {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-top: 1rem;
+        }
+
+        .heatmap-cell {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+            .heatmap-cell:hover {
+                transform: scale(1.1);
+            }
+
+        .export-controls {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+    </style>
+}
+
+<!-- Period Selector -->
+<div class="text-center mb-4" data-aos="fade-up">
+    <div class="period-selector">
+        <button class="period-btn active" onclick="changePeriod('7days')">7 ngày</button>
+        <button class="period-btn" onclick="changePeriod('30days')">30 ngày</button>
+        <button class="period-btn" onclick="changePeriod('90days')">90 ngày</button>
+        <button class="period-btn" onclick="changePeriod('1year')">1 năm</button>
+        <button class="period-btn" onclick="changePeriod('custom')">Tùy chỉnh</button>
+    </div>
+</div>
+
+<!-- Key Metrics Row -->
+<div class="row mb-4" data-aos="fade-up" data-aos-delay="100">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="metric-card">
+            <div class="metric-number text-primary" id="totalRevenue">25,350,000₫</div>
+            <div class="metric-label">Tổng doanh thu</div>
+            <div class="metric-change positive">
+                <i class="fas fa-arrow-up me-1"></i>+12.5% so với tháng trước
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="metric-card">
+            <div class="metric-number text-success" id="totalEnrollments">1,247</div>
+            <div class="metric-label">Lượt đăng ký</div>
+            <div class="metric-change positive">
+                <i class="fas fa-arrow-up me-1"></i>+8.3% so với tháng trước
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="metric-card">
+            <div class="metric-number text-warning" id="activeUsers">856</div>
+            <div class="metric-label">Người dùng hoạt động</div>
+            <div class="metric-change positive">
+                <i class="fas fa-arrow-up me-1"></i>+5.7% so với tháng trước
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="metric-card">
+            <div class="metric-number text-info" id="completionRate">76.8%</div>
+            <div class="metric-label">Tỷ lệ hoàn thành</div>
+            <div class="metric-change negative">
+                <i class="fas fa-arrow-down me-1"></i>-2.1% so với tháng trước
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <!-- Revenue Trend -->
+    <div class="col-xl-8 col-lg-7 mb-4">
+        <div class="stats-widget" data-aos="fade-up" data-aos-delay="200">
+            <div class="widget-header">
+                <h5 class="widget-title">
+                    <div class="widget-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    Xu hướng doanh thu
+                </h5>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="updateChart('revenue', 'daily')">Theo ngày</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="updateChart('revenue', 'weekly')">Theo tuần</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="updateChart('revenue', 'monthly')">Theo tháng</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Activity -->
+    <div class="col-xl-4 col-lg-5 mb-4">
+        <div class="stats-widget" data-aos="fade-up" data-aos-delay="300">
+            <div class="widget-header">
+                <h5 class="widget-title">
+                    <div class="widget-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    Hoạt động người dùng
+                </h5>
+            </div>
+            <div class="chart-container small">
+                <canvas id="userActivityChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Analysis Row -->
+<div class="row mb-4">
+    <!-- Course Performance -->
+    <div class="col-xl-6 col-lg-6 mb-4">
+        <div class="stats-widget" data-aos="fade-up" data-aos-delay="400">
+            <div class="widget-header">
+                <h5 class="widget-title">
+                    <div class="widget-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    Hiệu suất khóa học
+                </h5>
+            </div>
+            <div class="chart-container">
+                <canvas id="coursePerformanceChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Traffic Sources -->
+    <div class="col-xl-6 col-lg-6 mb-4">
+        <div class="stats-widget" data-aos="fade-up" data-aos-delay="500">
+            <div class="widget-header">
+                <h5 class="widget-title">
+                    <div class="widget-icon" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    Nguồn truy cập
+                </h5>
+            </div>
+            <div class="chart-container">
+                <canvas id="trafficSourceChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Performers -->
+<div class="row mb-4">
+    <!-- Top Courses -->
+    <div class="col-xl-4 col-lg-6 mb-4">
+        <div class="top-performers" data-aos="fade-up" data-aos-delay="600">
+            <h5 class="widget-title mb-3">
+                <i class="fas fa-trophy text-warning me-2"></i>Khóa học hàng đầu
+            </h5>
+
+            <div class="performer-item">
+                <div class="performer-rank">1</div>
+                <div class="performer-info">
+                    <div class="performer-name">JavaScript cơ bản</div>
+                    <div class="performer-details">245 học viên</div>
+                </div>
+                <div class="performer-value">4,900,000₫</div>
+            </div>
+
+            <div class="performer-item">
+                <div class="performer-rank">2</div>
+                <div class="performer-info">
+                    <div class="performer-name">React Advanced</div>
+                    <div class="performer-details">189 học viên</div>
+                </div>
+                <div class="performer-value">3,780,000₫</div>
+            </div>
+
+            <div class="performer-item">
+                <div class="performer-rank">3</div>
+                <div class="performer-info">
+                    <div class="performer-name">Python for AI</div>
+                    <div class="performer-details">156 học viên</div>
+                </div>
+                <div class="performer-value">3,120,000₫</div>
+            </div>
+
+            <div class="performer-item">
+                <div class="performer-rank">4</div>
+                <div class="performer-info">
+                    <div class="performer-name">HTML & CSS</div>
+                    <div class="performer-details">298 học viên</div>
+                </div>
+                <div class="performer-value">2,980,000₫</div>
+            </div>
+
+            <div class="performer-item">
+                <div class="performer-rank">5</div>
+                <div class="performer-info">
+                    <div class="performer-name">Node.js Backend</div>
+                    <div class="performer-details">124 học viên</div>
+                </div>
+                <div class="performer-value">2,480,000₫</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Teachers -->
+    <div class="col-xl-4 col-lg-6 mb-4">
+        <div class="top-performers" data-aos="fade-up" data-aos-delay="700">
+            <h5 class="widget-title mb-3">
+                <i class="fas fa-chalkboard-teacher text-primary me-2"></i>Giảng viên xuất sắc
+            </h5>
+
+            <div class="performer-item">
+                <div class="performer-rank">1</div>
+                <div class="performer-info">
+                    <div class="performer-name">Nguyễn Văn A</div>
+                    <div class="performer-details">5 khóa học, 487 học viên</div>
+                </div>
+                <div class="performer-value">8,750,000₫</div>
+            </div>
+
+            <div class="performer-item">
+                <div class="performer-rank">2</div>
+                <div class="performer-info">
+                    <div class="performer-name">Trần Thị B</div>
+                    <div class="performer-details">3 khóa học, 356 học viên</div>
+                </div>
+                <div class="performer-value">6,420,000₫</div>
+            </div>
+
+            <div class="performer-item">
+                <div class="performer-rank">3</div>
+                <div class="performer-info">
+                    <div class="performer-name">Lê Văn C</div>
+                    <div class="performer-details">4 khóa học, 289 học viên</div>
+                </div>
+                <div class="performer-value">5,780,000₫</div>
+            </div>
+
+            <div class="performer-item">
+                <div class="performer-rank">4</div>
+                <div class="performer-info">
+                    <div class="performer-name">Phạm Thị D</div>
+                    <div class="performer-details">2 khóa học, 234 học viên</div>
+                </div>
+                <div class="performer-value">4,680,000₫</div>
+            </div>
+
+            <div class="performer-item">
+                <div class="performer-rank">5</div>
+                <div class="performer-info">
+                    <div class="performer-name">Võ Văn E</div>
+                    <div class="performer-details">3 khóa học, 198 học viên</div>
+                </div>
+                <div class="performer-value">3,960,000₫</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Learning Activity Heatmap -->
+    <div class="col-xl-4 col-lg-12 mb-4">
+        <div class="heatmap-container" data-aos="fade-up" data-aos-delay="800">
+            <h5 class="widget-title mb-3">
+                <i class="fas fa-calendar-alt text-info me-2"></i>Hoạt động học tập
+            </h5>
+
+            <div class="text-center mb-3">
+                <small class="text-muted">30 ngày gần đây</small>
+            </div>
+
+            <div class="heatmap-grid" id="activityHeatmap">
+                <!-- Heatmap cells will be generated by JavaScript -->
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <small class="text-muted">Ít</small>
+                <div class="d-flex gap-1">
+                    <div class="heatmap-cell" style="background: #ebedf0; width: 12px; height: 12px;"></div>
+                    <div class="heatmap-cell" style="background: #c6e48b; width: 12px; height: 12px;"></div>
+                    <div class="heatmap-cell" style="background: #7bc96f; width: 12px; height: 12px;"></div>
+                    <div class="heatmap-cell" style="background: #239a3b; width: 12px; height: 12px;"></div>
+                    <div class="heatmap-cell" style="background: #196127; width: 12px; height: 12px;"></div>
+                </div>
+                <small class="text-muted">Nhiều</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Controls -->
+<div class="export-controls" data-aos="fade-up" data-aos-delay="900">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="mb-1">
+                <i class="fas fa-download me-2"></i>Xuất báo cáo
+            </h5>
+            <p class="text-muted mb-0">Tải xuống báo cáo chi tiết theo định dạng mong muốn</p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" onclick="exportReport('pdf')">
+                <i class="fas fa-file-pdf me-1"></i>PDF
+            </button>
+            <button class="btn btn-outline-success" onclick="exportReport('excel')">
+                <i class="fas fa-file-excel me-1"></i>Excel
+            </button>
+            <button class="btn btn-outline-info" onclick="exportReport('csv')">
+                <i class="fas fa-file-csv me-1"></i>CSV
+            </button>
+            <button class="btn btn-admin-primary" onclick="scheduleReport()">
+                <i class="fas fa-clock me-1"></i>Lên lịch báo cáo
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Period Modal -->
+<div class="modal fade" id="customPeriodModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chọn khoảng thời gian tùy chỉnh</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="startDate" class="form-label">Từ ngày</label>
+                        <input type="date" class="form-control" id="startDate">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="endDate" class="form-label">Đến ngày</label>
+                        <input type="date" class="form-control" id="endDate">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-admin-primary" onclick="applyCustomPeriod()">Áp dụng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentPeriod = '7days';
+        let charts = {};
+
+        $(document).ready(function() {
+            initializeCharts();
+            generateActivityHeatmap();
+            loadStatistics(currentPeriod);
+
+            // Auto-refresh every 5 minutes
+            setInterval(() => {
+                loadStatistics(currentPeriod);
+            }, 300000);
+        });
+
+        function changePeriod(period) {
+            // Update active button
+            $('.period-btn').removeClass('active');
+            $(`button[onclick="changePeriod('${period}')"]`).addClass('active');
+
+            if (period === 'custom') {
+                $('#customPeriodModal').modal('show');
+                return;
+            }
+
+            currentPeriod = period;
+            loadStatistics(period);
+        }
+
+        function applyCustomPeriod() {
+            const startDate = $('#startDate').val();
+            const endDate = $('#endDate').val();
+
+            if (!startDate || !endDate) {
+                showWarning('Vui lòng chọn đầy đủ ngày bắt đầu và kết thúc!');
+                return;
+            }
+
+            if (new Date(startDate) > new Date(endDate)) {
+                showError('Ngày bắt đầu không thể lớn hơn ngày kết thúc!');
+                return;
+            }
+
+            currentPeriod = 'custom';
+            loadStatistics('custom', startDate, endDate);
+            $('#customPeriodModal').modal('hide');
+            showSuccess('Đã áp dụng khoảng thời gian tùy chỉnh!');
+        }
+
+        function loadStatistics(period, startDate = null, endDate = null) {
+            showLoading();
+
+            // Simulate API call
+            setTimeout(() => {
+                hideLoading();
+                updateMetrics(period);
+                updateCharts(period);
+                showInfo(`Đã cập nhật dữ liệu cho ${getPeriodLabel(period)}`);
+            }, 1000);
+        }
+
+        function getPeriodLabel(period) {
+            const labels = {
+                '7days': '7 ngày gần đây',
+                '30days': '30 ngày gần đây',
+                '90days': '90 ngày gần đây',
+                '1year': '1 năm gần đây',
+                'custom': 'khoảng thời gian tùy chỉnh'
+            };
+            return labels[period] || period;
+        }
+
+        function updateMetrics(period) {
+            // Simulate different metrics based on period
+            const metrics = {
+                '7days': {
+                    revenue: '5,250,000₫',
+                    enrollments: 87,
+                    activeUsers: 234,
+                    completionRate: '82.3%'
+                },
+                '30days': {
+                    revenue: '25,350,000₫',
+                    enrollments: 1247,
+                    activeUsers: 856,
+                    completionRate: '76.8%'
+                },
+                '90days': {
+                    revenue: '68,750,000₫',
+                    enrollments: 3521,
+                    activeUsers: 1456,
+                    completionRate: '74.5%'
+                },
+                '1year': {
+                    revenue: '285,420,000₫',
+                    enrollments: 12847,
+                    activeUsers: 4326,
+                    completionRate: '71.2%'
+                }
+            };
+
+            const data = metrics[period] || metrics['30days'];
+
+            $('#totalRevenue').text(data.revenue);
+            $('#totalEnrollments').text(data.enrollments);
+            $('#activeUsers').text(data.activeUsers);
+            $('#completionRate').text(data.completionRate);
+        }
+
+        function initializeCharts() {
+            // Revenue Chart
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            charts.revenue = new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'],
+                    datasets: [{
+                        label: 'Doanh thu (VNĐ)',
+                        data: [1200000, 1850000, 2100000, 1950000, 2400000, 2800000, 3200000],
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return (value / 1000000).toFixed(1) + 'M';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // User Activity Chart
+            const userActivityCtx = document.getElementById('userActivityChart').getContext('2d');
+            charts.userActivity = new Chart(userActivityCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Hoạt động', 'Không hoạt động', 'Mới'],
+                    datasets: [{
+                        data: [65, 25, 10],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(139, 92, 246, 0.8)',
+                            'rgba(239, 68, 68, 0.8)'
+                        ],
+                        borderRadius: 8,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+            // Course Performance Chart
+            const coursePerformanceCtx = document.getElementById('coursePerformanceChart').getContext('2d');
+            charts.coursePerformance = new Chart(coursePerformanceCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Đăng ký', 'Hoàn thành', 'Đánh giá', 'Tương tác', 'Tỷ lệ hủy'],
+                    datasets: [{
+                        label: 'Hiệu suất trung bình',
+                        data: [85, 72, 88, 76, 15],
+                        borderColor: 'rgb(245, 158, 11)',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        pointBackgroundColor: 'rgb(245, 158, 11)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+
+            // Traffic Source Chart
+            const trafficSourceCtx = document.getElementById('trafficSourceChart').getContext('2d');
+			charts.trafficSource = new Chart(trafficSourceCtx, {
+				type: 'bar',
+				data: {
+					labels: ['Organic', 'Direct', 'Referral', 'Social Media', 'Email'],
+					datasets: [{
+						label: 'Lượt truy cập',
+						data: [4500, 3200, 1800, 1500, 800],
+						backgroundColor: [
+							'rgba(59, 130, 246, 0.8)',
+							'rgba(16, 185, 129, 0.8)',
+							'rgba(245, 158, 11, 0.8)',
+							'rgba(139, 92, 246, 0.8)',
+							'rgba(239, 68, 68, 0.8)'
+						],
+						borderRadius: 8,
+						borderWidth: 0
+					}]
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					plugins: {
+						legend: { display: false }
+					},
+					scales: {
+						y: { beginAtZero: true }
+					}
+				}
+			});
+                            
+
+        function updateCharts(period) {
+            // Update chart data based on period
+            Object.values(charts).forEach(chart => {
+                chart.update();
+            });
+        }
+
+        function updateChart(chartType, interval) {
+            console.log(`Updating ${chartType} chart with ${interval} interval`);
+        }
+
+        function generateActivityHeatmap() {
+            const heatmapContainer = document.getElementById('activityHeatmap');
+            const colors = ['#ebedf0', '#c6e48b', '#7bc96f', '#239a3b', '#196127'];
+
+            // Generate 30 days of activity data
+            for (let i = 0; i < 30; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'heatmap-cell';
+
+                // Random activity level (0-4)
+                const activity = Math.floor(Math.random() * 5);
+                cell.style.backgroundColor = colors[activity];
+
+                // Tooltip with date and activity
+                const date = new Date();
+                date.setDate(date.getDate() - (29 - i));
+                cell.title = `${date.toLocaleDateString('vi-VN')}: ${activity * 25}% hoạt động`;
+
+                heatmapContainer.appendChild(cell);
+            }
+        }
+
+        function exportReport(format) {
+            showLoading();
+
+            setTimeout(() => {
+                hideLoading();
+                showSuccess(`Đã tạo báo cáo ${format.toUpperCase()} thành công!`);
+                console.log(`Exporting report in ${format} format for period: ${currentPeriod}`);
+            }, 2000);
+        }
+
+        function scheduleReport() {
+            Swal.fire({
+                title: 'Lên lịch báo cáo',
+                html: `
+                    <div class="text-start">
+                        <div class="mb-3">
+                            <label class="form-label">Tần suất</label>
+                            <select class="form-select" id="reportFrequency">
+                                <option value="daily">Hàng ngày</option>
+                                <option value="weekly">Hàng tuần</option>
+                                <option value="monthly">Hàng tháng</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Định dạng</label>
+                            <select class="form-select" id="reportFormat">
+                                <option value="pdf">PDF</option>
+                                <option value="excel">Excel</option>
+                                <option value="csv">CSV</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email nhận báo cáo</label>
+                            <input type="email" class="form-control" id="reportEmail" placeholder="admin@onlinelearning.com">
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Lên lịch',
+                cancelButtonText: 'Hủy',
+                preConfirm: () => {
+                    const frequency = document.getElementById('reportFrequency').value;
+                    const format = document.getElementById('reportFormat').value;
+                    const email = document.getElementById('reportEmail').value;
+
+                    if (!email) {
+                        Swal.showValidationMessage('Vui lòng nhập email nhận báo cáo!');
+                        return false;
+                    }
+
+                    return { frequency, format, email };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    showSuccess('Đã lên lịch báo cáo thành công!');
+                    console.log('Scheduled report:', result.value);
+                }
+            });
+        }
+
+        function startRealTimeUpdates() {
+            setInterval(() => {
+                console.log('Updating real-time data...');
+            }, 30000);
+        }
+
+        startRealTimeUpdates();
+    </script>
+}
+                            
