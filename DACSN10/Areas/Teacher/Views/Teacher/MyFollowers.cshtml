@@ -1,0 +1,286 @@
+﻿@model List<DACSN10.Models.Follow>
+@{
+    ViewData["Title"] = "Người theo dõi";
+    Layout = "~/Areas/Teacher/Views/Shared/_TeacherLayout.cshtml";
+}
+
+@section Styles {
+    <link href="~/css/teacher-myfollowers.css" rel="stylesheet" />
+}
+
+<!-- Page Header -->
+<div class="page-header" data-aos="fade-down">
+    <h1 class="page-title">Người theo dõi</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Teacher")">Dashboard</a></li>
+            <li class="breadcrumb-item active">Người theo dõi</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Followers Header -->
+<div class="followers-header" data-aos="fade-up">
+    <div class="followers-count counter" data-target="@Model.Count">0</div>
+    <div class="followers-subtitle">Người đang theo dõi bạn</div>
+</div>
+
+<!-- Statistics -->
+<div class="followers-stats" data-aos="fade-up" data-aos-delay="100">
+    <div class="stat-card-mini">
+        <div class="stat-icon-mini" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+            <i class="fas fa-user-plus"></i>
+        </div>
+        <div class="stat-value-mini">@Model.Count(f => f.Follower.NgayDangKy >= DateTime.Now.AddDays(-30))</div>
+        <div class="stat-label-mini">Người theo dõi mới (30 ngày)</div>
+    </div>
+
+    <div class="stat-card-mini">
+        <div class="stat-icon-mini" style="background: linear-gradient(135deg, #10b981, #059669);">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="stat-value-mini">+15%</div>
+        <div class="stat-label-mini">Tăng trưởng tháng này</div>
+    </div>
+
+    <div class="stat-card-mini">
+        <div class="stat-icon-mini" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-value-mini">@Model.Count(f => f.Follower.Enrollments?.Any() == true)</div>
+        <div class="stat-label-mini">Đã đăng ký khóa học</div>
+    </div>
+
+    <div class="stat-card-mini">
+        <div class="stat-icon-mini" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+            <i class="fas fa-star"></i>
+        </div>
+        <div class="stat-value-mini">4.8</div>
+        <div class="stat-label-mini">Đánh giá trung bình</div>
+    </div>
+</div>
+
+<!-- Growth Chart -->
+<div class="growth-chart" data-aos="fade-up" data-aos-delay="200">
+    <div class="chart-header">
+        <h3 class="chart-title">
+            <i class="fas fa-chart-area text-primary"></i>
+            Biểu đồ tăng trưởng người theo dõi
+        </h3>
+        <div class="time-filter">
+            <button class="time-btn active" onclick="updateGrowthChart('week')">Tuần</button>
+            <button class="time-btn" onclick="updateGrowthChart('month')">Tháng</button>
+            <button class="time-btn" onclick="updateGrowthChart('year')">Năm</button>
+        </div>
+    </div>
+    <div style="height: 300px;">
+        <canvas id="growthChart"></canvas>
+    </div>
+</div>
+
+<!-- Followers List -->
+<div class="followers-container" data-aos="fade-up" data-aos-delay="300">
+    <div class="search-followers">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" class="search-input" id="searchFollowers" placeholder="Tìm kiếm người theo dõi...">
+    </div>
+
+    <div class="followers-filters">
+        <button class="filter-btn active" onclick="filterFollowers('all')">
+            <i class="fas fa-users me-2"></i>Tất cả
+        </button>
+        <button class="filter-btn" onclick="filterFollowers('enrolled')">
+            <i class="fas fa-user-graduate me-2"></i>Đã đăng ký
+        </button>
+        <button class="filter-btn" onclick="filterFollowers('new')">
+            <i class="fas fa-user-plus me-2"></i>Mới theo dõi
+        </button>
+        <button class="filter-btn" onclick="filterFollowers('active')">
+            <i class="fas fa-user-check me-2"></i>Hoạt động
+        </button>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="followers-grid" id="followersGrid">
+            @foreach (var follow in Model)
+            {
+                <div class="follower-card" data-follower="@follow.Follower.HoTen.ToLower()"
+                     data-email="@follow.Follower.Email.ToLower()">
+                    <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(follow.Follower.HoTen)&background=8b5cf6&color=fff&bold=true"
+                         alt="@follow.Follower.HoTen"
+                         class="follower-avatar">
+                    <h4 class="follower-name">@follow.Follower.HoTen</h4>
+                    <p class="follower-email">@follow.Follower.Email</p>
+                    <p class="follower-date">
+                        <i class="far fa-calendar me-1"></i>
+                        Theo dõi từ @follow.Follower.NgayDangKy.ToString("dd/MM/yyyy")
+                    </p>
+
+                    <div class="follower-stats">
+                        <div class="follower-stat">
+                            <div class="follower-stat-value">@(follow.Follower.Enrollments?.Count ?? 0)</div>
+                            <div class="follower-stat-label">Khóa học</div>
+                        </div>
+                        <div class="follower-stat">
+                            <div class="follower-stat-value">85%</div>
+                            <div class="follower-stat-label">Tiến độ TB</div>
+                        </div>
+                        <div class="follower-stat">
+                            <div class="follower-stat-value">4.5</div>
+                            <div class="follower-stat-label">Đánh giá</div>
+                        </div>
+                    </div>
+
+                    <div class="follower-actions">
+                        <button class="action-btn-small btn-message" onclick="sendMessage('@follow.FollowerID', '@follow.Follower.HoTen')">
+                            <i class="fas fa-envelope"></i>
+                            Nhắn tin
+                        </button>
+                        <button class="action-btn-small btn-view" onclick="viewProfile('@follow.FollowerID')">
+                            <i class="fas fa-user"></i>
+                            Xem hồ sơ
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-user-friends"></i>
+            </div>
+            <h3>Chưa có người theo dõi</h3>
+            <p class="text-muted">Tạo khóa học chất lượng để thu hút học viên theo dõi bạn</p>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Initialize counter
+        document.addEventListener('DOMContentLoaded', function() {
+            const counter = document.querySelector('.counter');
+            const target = +counter.getAttribute('data-target');
+            const increment = target / 100;
+
+            function updateCounter() {
+                const current = +counter.innerText;
+
+                if (current < target) {
+                    counter.innerText = Math.ceil(current + increment);
+                    setTimeout(updateCounter, 20);
+                } else {
+                    counter.innerText = target;
+                }
+            }
+
+            updateCounter();
+        });
+
+        // Growth Chart
+        const growthCtx = document.getElementById('growthChart').getContext('2d');
+        const growthChart = new Chart(growthCtx, {
+            type: 'line',
+            data: {
+                labels: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
+                datasets: [{
+                    label: 'Người theo dõi',
+                    data: [145, 148, 150, 155, 158, 162, 165],
+                    borderColor: '#8b5cf6',
+                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#8b5cf6',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        grid: {
+                            borderDash: [5, 5]
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Search functionality
+        $('#searchFollowers').on('keyup', function() {
+            const searchText = $(this).val().toLowerCase();
+
+            $('.follower-card').each(function() {
+                const name = $(this).data('follower');
+                const email = $(this).data('email');
+
+                if (name.includes(searchText) || email.includes(searchText)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        });
+
+        // Filter followers
+        function filterFollowers(type) {
+            $('.filter-btn').removeClass('active');
+            event.target.classList.add('active');
+
+            // Implement filtering logic
+            toastr.info(`Đang lọc: ${type}`);
+        }
+
+        // Update growth chart
+        function updateGrowthChart(period) {
+            $('.time-btn').removeClass('active');
+            event.target.classList.add('active');
+
+            // Update chart data based on period
+            toastr.info(`Cập nhật biểu đồ: ${period}`);
+        }
+
+        // Send message
+        function sendMessage(userId, userName) {
+            Swal.fire({
+                title: `Gửi tin nhắn cho ${userName}`,
+                input: 'textarea',
+                inputLabel: 'Nội dung tin nhắn',
+                inputPlaceholder: 'Nhập tin nhắn của bạn...',
+                showCancelButton: true,
+                confirmButtonText: 'Gửi',
+                cancelButtonText: 'Hủy',
+                confirmButtonColor: '#8b5cf6'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    toastr.success('Tin nhắn đã được gửi!');
+                }
+            });
+        }
+
+        // View profile
+        function viewProfile(userId) {
+            toastr.info('Đang mở hồ sơ người dùng...');
+            // Redirect to user profile
+        }
+    </script>
+}

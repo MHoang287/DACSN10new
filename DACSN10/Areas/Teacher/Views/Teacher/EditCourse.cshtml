@@ -1,0 +1,286 @@
+﻿@model DACSN10.Models.Course
+@{
+    ViewData["Title"] = "Chỉnh sửa khóa học";
+    Layout = "~/Areas/Teacher/Views/Shared/_TeacherLayout.cshtml";
+    var selectedCategories = ViewBag.SelectedCategories as int[] ?? new int[0];
+}
+
+@section Styles {
+    <link href="~/css/teacher-editcourse.css" rel="stylesheet" />
+}
+
+<!-- Page Header -->
+<div class="page-header" data-aos="fade-down">
+    <h1 class="page-title">Chỉnh sửa khóa học</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Teacher")">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="@Url.Action("MyCourses", "Teacher")">Khóa học</a></li>
+            <li class="breadcrumb-item active">Chỉnh sửa</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="edit-course-container">
+    <form asp-action="EditCourse" method="post" id="editCourseForm">
+        <input asp-for="CourseID" type="hidden" />
+
+        <!-- Basic Information -->
+        <div class="form-card" data-aos="fade-up">
+            <h3 class="section-title">
+                <i class="fas fa-info-circle"></i>
+                Thông tin cơ bản
+            </h3>
+
+            <div class="form-section">
+                <div class="mb-4">
+                    <label asp-for="TenKhoaHoc" class="form-label">
+                        Tên khóa học <span class="required">*</span>
+                    </label>
+                    <input asp-for="TenKhoaHoc" class="form-control" placeholder="VD: Lập trình Web với ASP.NET Core" maxlength="200" />
+                    <div class="char-counter">
+                        <span id="titleCharCount">0</span>/200
+                    </div>
+                    <span asp-validation-for="TenKhoaHoc" class="validation-error"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="MoTa" class="form-label">
+                        Mô tả khóa học <span class="required">*</span>
+                    </label>
+                    <textarea asp-for="MoTa" class="form-control"
+                              placeholder="Mô tả chi tiết về khóa học, nội dung sẽ học, đối tượng phù hợp..."
+                              maxlength="1000"></textarea>
+                    <div class="char-counter">
+                        <span id="descCharCount">0</span>/1000
+                    </div>
+                    <span asp-validation-for="MoTa" class="validation-error"></span>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <label asp-for="Gia" class="form-label">
+                            Giá khóa học <span class="required">*</span>
+                        </label>
+                        <div class="price-input-group">
+                            <input asp-for="Gia" type="number" class="form-control" placeholder="0" min="0" step="1000" />
+                            <span class="currency-symbol">VNĐ</span>
+                        </div>
+                        <small class="text-muted">Để 0 nếu muốn khóa học miễn phí</small>
+                        <span asp-validation-for="Gia" class="validation-error"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <label asp-for="TrangThai" class="form-label">
+                            Trạng thái <span class="required">*</span>
+                        </label>
+                        <div class="position-relative">
+                            <select asp-for="TrangThai" class="form-select status-select">
+                                <option value="Active">Đang hoạt động</option>
+                                <option value="Pending">Chờ duyệt</option>
+                                <option value="Inactive">Không hoạt động</option>
+                            </select>
+                            <span class="status-icon" id="statusIcon"></span>
+                        </div>
+                        <span asp-validation-for="TrangThai" class="validation-error"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course Statistics -->
+        <div class="form-card" data-aos="fade-up" data-aos-delay="100">
+            <h3 class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                Thống kê khóa học
+            </h3>
+
+            <div class="info-alert">
+                <i class="fas fa-info-circle"></i>
+                <div>
+                    <strong>Lưu ý:</strong> Đây là thông tin thống kê hiện tại của khóa học. Bạn không thể chỉnh sửa các thông tin này.
+                </div>
+            </div>
+
+            <div class="course-stats-display">
+                <div class="stat-display">
+                    <div class="stat-display-value">@(Model.Enrollments?.Count ?? 0)</div>
+                    <div class="stat-display-label">Học viên đã đăng ký</div>
+                </div>
+                <div class="stat-display">
+                    <div class="stat-display-value">@(Model.Lessons?.Count ?? 0)</div>
+                    <div class="stat-display-label">Bài học</div>
+                </div>
+                <div class="stat-display">
+                    <div class="stat-display-value">@(Model.Quizzes?.Count ?? 0)</div>
+                    <div class="stat-display-label">Bài kiểm tra</div>
+                </div>
+                <div class="stat-display">
+                    <div class="stat-display-value">@(Model.Assignments?.Count ?? 0)</div>
+                    <div class="stat-display-label">Bài tập</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories -->
+        <div class="form-card" data-aos="fade-up" data-aos-delay="200">
+            <h3 class="section-title">
+                <i class="fas fa-tags"></i>
+                Danh mục khóa học
+            </h3>
+
+            <p class="text-muted mb-3">Chọn các danh mục phù hợp với nội dung khóa học (tối đa 3 danh mục)</p>
+
+            <div class="categories-container">
+                @if (ViewBag.Categories != null)
+                {
+                    @foreach (var category in ViewBag.Categories as SelectList)
+                    {
+                        <div class="category-item">
+                            <input type="checkbox"
+                                   id="category_@category.Value"
+                                   name="selectedCategories"
+                                   value="@category.Value"
+                            @(selectedCategories.Contains(int.Parse(category.Value)) ? "checked" : "") />
+                            <label for="category_@category.Value">@category.Text</label>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
+        <!-- Preview -->
+        <div class="form-card" data-aos="fade-up" data-aos-delay="300">
+            <h3 class="section-title">
+                <i class="fas fa-eye"></i>
+                Xem trước thay đổi
+            </h3>
+
+            <div class="preview-box">
+                <h4 class="mb-3">Tên khóa học</h4>
+                <div id="previewTitle" class="mb-4">@Model.TenKhoaHoc</div>
+
+                <h4 class="mb-3">Mô tả</h4>
+                <div id="previewDescription">@Model.MoTa</div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <a href="@Url.Action("MyCourses", "Teacher")" class="btn-cancel">
+                <i class="fas fa-times"></i>
+                Hủy bỏ
+            </a>
+            <button type="submit" class="btn-submit">
+                <i class="fas fa-save"></i>
+                Lưu thay đổi
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(document).ready(function() {
+            // Initialize character counters
+            updateCharCounter('#TenKhoaHoc', '#titleCharCount');
+            updateCharCounter('#MoTa', '#descCharCount');
+
+            // Character counters
+            $('#TenKhoaHoc').on('input', function() {
+                updateCharCounter(this, '#titleCharCount');
+                $('#previewTitle').text($(this).val() || 'Chưa nhập tên khóa học');
+            });
+
+            $('#MoTa').on('input', function() {
+                updateCharCounter(this, '#descCharCount');
+                $('#previewDescription').html($(this).val().replace(/\n/g, '<br>') || 'Chưa nhập mô tả');
+            });
+
+            function updateCharCounter(input, counter) {
+                const length = $(input).val().length;
+                $(counter).text(length);
+            }
+
+            // Status icon update
+            $('#TrangThai').on('change', function() {
+                updateStatusIcon($(this).val());
+            });
+
+            updateStatusIcon($('#TrangThai').val());
+
+            function updateStatusIcon(status) {
+                const icon = $('#statusIcon');
+                icon.removeClass('active pending inactive');
+                icon.addClass(status.toLowerCase());
+            }
+
+            // Category selection limit
+            $('input[name="selectedCategories"]').on('change', function() {
+                const checkedCount = $('input[name="selectedCategories"]:checked').length;
+                if (checkedCount > 3) {
+                    $(this).prop('checked', false);
+                    toastr.warning('Chỉ được chọn tối đa 3 danh mục');
+                }
+            });
+
+            // Form submission
+            $('#editCourseForm').on('submit', function(e) {
+                e.preventDefault();
+
+                // Validate
+                if (!$('#TenKhoaHoc').val().trim()) {
+                    toastr.error('Vui lòng nhập tên khóa học');
+                    $('#TenKhoaHoc').focus();
+                    return;
+                }
+
+                if (!$('#MoTa').val().trim()) {
+                    toastr.error('Vui lòng nhập mô tả khóa học');
+                    $('#MoTa').focus();
+                    return;
+                }
+
+                // Confirm changes
+                Swal.fire({
+                    title: 'Xác nhận lưu thay đổi',
+                    text: 'Bạn có chắc chắn muốn lưu các thay đổi này?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3b82f6',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'Lưu thay đổi',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Show loading
+                        Swal.fire({
+                            title: 'Đang lưu...',
+                            text: 'Vui lòng đợi trong giây lát',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+
+                        // Submit form
+                        this.submit();
+                    }
+                });
+            });
+
+            // Add price formatting
+            $('#Gia').on('input', function() {
+                const value = $(this).val();
+                if (value < 0) {
+                    $(this).val(0);
+                }
+            });
+
+            // Initialize tooltips
+            $('[data-bs-toggle="tooltip"]').tooltip();
+        });
+    </script>
+}

@@ -1,0 +1,438 @@
+﻿@model List<DACSN10.Models.Enrollment>
+@{
+    ViewData["Title"] = "Học viên khóa học";
+    Layout = "~/Areas/Teacher/Views/Shared/_TeacherLayout.cshtml";
+
+    var course = ViewBag.Course as DACSN10.Models.Course;
+    var totalPages = ViewBag.TotalPages ?? 1;
+    var currentPage = ViewBag.Page ?? 1;
+}
+
+@section Styles {
+    <link href="~/css/teacher-coursestudents.css" rel="stylesheet" />
+}
+
+<!-- Page Header -->
+<div class="page-header" data-aos="fade-down">
+    <h1 class="page-title">Học viên khóa học</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Teacher")">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="@Url.Action("MyCourses", "Teacher")">Khóa học</a></li>
+            <li class="breadcrumb-item active">Học viên</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Course Header -->
+<div class="course-header" data-aos="fade-up">
+    <h2 class="course-title">@course?.TenKhoaHoc</h2>
+    <div class="course-meta">
+        <i class="fas fa-info-circle me-2"></i>
+        @(course?.MoTa?.Length > 100 ? course.MoTa.Substring(0, 100) + "..." : course?.MoTa)
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="stats-row" data-aos="fade-up" data-aos-delay="100">
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #6366f1, #4f46e5);">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-value">@Model.Count</div>
+        <div class="stat-label">Tổng học viên</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+            <i class="fas fa-graduation-cap"></i>
+        </div>
+        <div class="stat-value">@Model.Count(e => e.Progress >= 100)</div>
+        <div class="stat-label">Đã hoàn thành</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="stat-value">@((Model.Any() ? Model.Average(e => e.Progress) : 0).ToString("F0"))%</div>
+        <div class="stat-label">Tiến độ trung bình</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-value">@Model.Count(e => e.EnrollDate >= DateTime.Now.AddDays(-7))</div>
+        <div class="stat-label">Mới trong 7 ngày</div>
+    </div>
+</div>
+
+<!-- Export Actions -->
+<div class="export-section" data-aos="fade-up" data-aos-delay="200">
+    <button class="export-btn" onclick="exportToExcel()">
+        <i class="fas fa-file-excel"></i>
+        Xuất Excel
+    </button>
+    <button class="export-btn" onclick="sendBulkEmail()">
+        <i class="fas fa-envelope"></i>
+        Gửi email hàng loạt
+    </button>
+</div>
+
+<!-- Students List -->
+<div class="students-container" data-aos="fade-up" data-aos-delay="300">
+    <div class="filter-section">
+        <div class="search-box">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="search-input" id="searchInput" placeholder="Tìm kiếm học viên...">
+        </div>
+
+        <button class="filter-btn active" onclick="filterStudents('all')">Tất cả</button>
+        <button class="filter-btn" onclick="filterStudents('completed')">Hoàn thành</button>
+        <button class="filter-btn" onclick="filterStudents('inprogress')">Đang học</button>
+        <button class="filter-btn" onclick="filterStudents('new')">Mới</button>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="students-grid" id="studentsGrid">
+            @foreach (var enrollment in Model)
+            {
+                <div class="student-card"
+                     data-student="@enrollment.User.HoTen.ToLower()"
+                     data-email="@enrollment.User.Email.ToLower()"
+                     data-progress="@enrollment.Progress"
+                     data-date="@enrollment.EnrollDate">
+
+                    <span class="enrollment-date">
+                        @enrollment.EnrollDate.ToString("dd/MM/yyyy")
+                    </span>
+
+                    <div class="student-header">
+                        <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(enrollment.User.HoTen)&background=6366f1&color=fff&bold=true"
+                             alt="@enrollment.User.HoTen"
+                             class="student-avatar">
+                        <div class="student-info">
+                            <div class="student-name">@enrollment.User.HoTen</div>
+                            <div class="student-email">@enrollment.User.Email</div>
+                        </div>
+                    </div>
+
+                    <div class="progress-section">
+                        <div class="progress-header">
+                            <span class="progress-label">Tiến độ học</span>
+                            <span class="progress-value">@enrollment.Progress%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" style="width: @enrollment.Progress%"></div>
+                        </div>
+                    </div>
+
+                    <div class="student-stats">
+                        <div class="stat-item">
+                            <div class="stat-num">15</div>
+                            <div class="stat-text">Bài đã học</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-num">8.5</div>
+                            <div class="stat-text">Điểm TB</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-num">92%</div>
+                            <div class="stat-text">Tỷ lệ đúng</div>
+                        </div>
+                    </div>
+
+                    <div class="student-actions">
+                        <button class="action-btn btn-message" onclick="sendMessage('@enrollment.UserID', '@enrollment.User.HoTen')">
+                            <i class="fas fa-envelope"></i>
+                            Nhắn tin
+                        </button>
+                        <button class="action-btn btn-details" onclick="viewDetails('@enrollment.UserID', '@enrollment.CourseID')">
+                            <i class="fas fa-chart-bar"></i>
+                            Chi tiết
+                        </button>
+                        @if (enrollment.Progress >= 100)
+                        {
+                            <button class="action-btn btn-certificate" onclick="issueCertificate('@enrollment.UserID', '@enrollment.CourseID')">
+                                <i class="fas fa-award"></i>
+                                Chứng chỉ
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Pagination -->
+        @if (totalPages > 1)
+        {
+            <div class="pagination-container">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination">
+                        @if (currentPage > 1)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" href="@Url.Action("CourseStudents", new { courseId = course?.CourseID, page = currentPage - 1 })">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                        }
+
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            <li class="page-item">
+                                <a class="page-link @(i == currentPage ? "active" : "")"
+                                   href="@Url.Action("CourseStudents", new { courseId = course?.CourseID, page = i })">@i</a>
+                            </li>
+                        }
+
+                        @if (currentPage < totalPages)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" href="@Url.Action("CourseStudents", new { courseId = course?.CourseID, page = currentPage + 1 })">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-user-graduate"></i>
+            </div>
+            <h3>Chưa có học viên nào</h3>
+            <p class="text-muted">Khóa học này chưa có học viên đăng ký</p>
+        </div>
+    }
+</div>
+
+<!-- Student Details Modal -->
+<div class="modal fade" id="studentDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-graduate me-2 text-primary"></i>
+                    Chi tiết học viên
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="studentDetailsContent">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Search functionality
+        $('#searchInput').on('keyup', function() {
+            const searchText = $(this).val().toLowerCase();
+
+            $('.student-card').each(function() {
+                const name = $(this).data('student');
+                const email = $(this).data('email');
+
+                if (name.includes(searchText) || email.includes(searchText)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        });
+
+        // Filter students
+        function filterStudents(type) {
+            $('.filter-btn').removeClass('active');
+            event.target.classList.add('active');
+
+            $('.student-card').each(function() {
+                const progress = parseInt($(this).data('progress'));
+                const enrollDate = new Date($(this).data('date'));
+                const daysSinceEnroll = (new Date() - enrollDate) / (1000 * 60 * 60 * 24);
+
+                let show = false;
+
+                switch(type) {
+                    case 'all':
+                        show = true;
+                        break;
+                    case 'completed':
+                        show = progress >= 100;
+                        break;
+                    case 'inprogress':
+                        show = progress > 0 && progress < 100;
+                        break;
+                    case 'new':
+                        show = daysSinceEnroll <= 7;
+                        break;
+                }
+
+                $(this).toggle(show);
+            });
+        }
+
+        // Send message
+        function sendMessage(userId, userName) {
+            Swal.fire({
+                title: `Gửi tin nhắn cho ${userName}`,
+                input: 'textarea',
+                inputLabel: 'Nội dung tin nhắn',
+                inputPlaceholder: 'Nhập tin nhắn của bạn...',
+                showCancelButton: true,
+                confirmButtonText: 'Gửi',
+                cancelButtonText: 'Hủy',
+                confirmButtonColor: '#6366f1'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    toastr.success('Tin nhắn đã được gửi!');
+                }
+            });
+        }
+
+        // View details
+        function viewDetails(userId, courseId) {
+            $('#studentDetailsModal').modal('show');
+            $('#studentDetailsContent').html('<div class="text-center"><i class="fas fa-spinner fa-spin fa-2x"></i></div>');
+
+            // Simulate loading details
+            setTimeout(() => {
+                const detailsHTML = `
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <img src="https://ui-avatars.com/api/?name=Student&background=6366f1&color=fff&bold=true&size=150"
+                                 class="rounded-circle mb-3">
+                            <h5>Nguyễn Văn A</h5>
+                            <p class="text-muted">student@example.com</p>
+                        </div>
+                        <div class="col-md-8">
+                            <h6 class="mb-3">Tiến độ học tập</h6>
+                            <div class="progress mb-4" style="height: 25px;">
+                                <div class="progress-bar bg-primary" style="width: 75%">75%</div>
+                            </div>
+
+                            <h6 class="mb-3">Thống kê chi tiết</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td>Ngày đăng ký:</td>
+                                    <td><strong>15/03/2024</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Bài đã học:</td>
+                                    <td><strong>15/20</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Bài tập đã nộp:</td>
+                                    <td><strong>8/10</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Điểm trung bình:</td>
+                                    <td><strong>8.5/10</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Thời gian học:</td>
+                                    <td><strong>25 giờ 30 phút</strong></td>
+                                </tr>
+                            </table>
+
+                            <h6 class="mb-3 mt-4">Hoạt động gần đây</h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    Hoàn thành bài "Giới thiệu" - <small class="text-muted">2 giờ trước</small>
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-file-alt text-primary me-2"></i>
+                                    Nộp bài tập "Bài tập 1" - <small class="text-muted">1 ngày trước</small>
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-question-circle text-warning me-2"></i>
+                                    Làm bài kiểm tra "Quiz 1" - Điểm: 8/10 - <small class="text-muted">3 ngày trước</small>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+
+                $('#studentDetailsContent').html(detailsHTML);
+            }, 1000);
+        }
+
+        // Issue certificate
+        function issueCertificate(userId, courseId) {
+            Swal.fire({
+                title: 'Cấp chứng chỉ',
+                text: 'Xác nhận cấp chứng chỉ hoàn thành khóa học cho học viên này?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Cấp chứng chỉ',
+                cancelButtonText: 'Hủy',
+                confirmButtonColor: '#10b981'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    toastr.success('Chứng chỉ đã được cấp thành công!');
+                }
+            });
+        }
+
+        // Export to Excel
+        function exportToExcel() {
+            toastr.info('Đang xuất file Excel...');
+            setTimeout(() => {
+                toastr.success('File Excel đã được tải xuống!');
+            }, 2000);
+        }
+
+        // Send bulk email
+        function sendBulkEmail() {
+            Swal.fire({
+                title: 'Gửi email hàng loạt',
+                html: `
+                    <div class="text-start">
+                        <div class="mb-3">
+                            <label class="form-label">Tiêu đề email</label>
+                            <input type="text" class="form-control" id="emailSubject" placeholder="Nhập tiêu đề...">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Nội dung</label>
+                            <textarea class="form-control" id="emailContent" rows="4" placeholder="Nhập nội dung email..."></textarea>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="sendToAll" checked>
+                            <label class="form-check-label" for="sendToAll">
+                                Gửi cho tất cả học viên (@Model.Count người)
+                            </label>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Gửi email',
+                cancelButtonText: 'Hủy',
+                confirmButtonColor: '#6366f1',
+                preConfirm: () => {
+                    const subject = $('#emailSubject').val();
+                    const content = $('#emailContent').val();
+
+                    if (!subject || !content) {
+                        Swal.showValidationMessage('Vui lòng nhập đầy đủ thông tin');
+                        return false;
+                    }
+
+                    return { subject, content };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    toastr.success('Email đã được gửi thành công!');
+                }
+            });
+        }
+    </script>
+}

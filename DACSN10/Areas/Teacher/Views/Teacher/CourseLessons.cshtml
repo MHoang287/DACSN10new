@@ -1,0 +1,230 @@
+﻿@model IEnumerable<DACSN10.Models.Lesson>
+@{
+    ViewData["Title"] = "Quản lý bài học";
+    Layout = "~/Areas/Teacher/Views/Shared/_TeacherLayout.cshtml";
+    var course = ViewBag.Course as DACSN10.Models.Course;
+}
+
+@section Styles {
+    <link href="~/css/teacher-courselessons.css" rel="stylesheet" />
+}
+
+<!-- Page Header -->
+<div class="page-header" data-aos="fade-down">
+    <h1 class="page-title">Quản lý bài học</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Teacher")">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="@Url.Action("MyCourses", "Teacher")">Khóa học</a></li>
+            <li class="breadcrumb-item active">Bài học</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Course Info Header -->
+<div class="course-info-header" data-aos="fade-up">
+    <h2 class="course-title-large">@course?.TenKhoaHoc</h2>
+    <div class="course-meta">
+        <i class="fas fa-info-circle me-2"></i>
+        @(course?.MoTa?.Length > 100 ? course.MoTa.Substring(0, 100) + "..." : course?.MoTa)
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="stats-row" data-aos="fade-up" data-aos-delay="100">
+    <div class="stat-card-small">
+        <div class="stat-icon-small" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+            <i class="fas fa-book"></i>
+        </div>
+        <div class="stat-value-small">@Model.Count()</div>
+        <div class="stat-label-small">Tổng bài học</div>
+    </div>
+
+    <div class="stat-card-small">
+        <div class="stat-icon-small" style="background: linear-gradient(135deg, #10b981, #059669);">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-value-small">@Model.Sum(l => l.ThoiLuong)</div>
+        <div class="stat-label-small">Tổng thời lượng (phút)</div>
+    </div>
+
+    <div class="stat-card-small">
+        <div class="stat-icon-small" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+            <i class="fas fa-video"></i>
+        </div>
+        <div class="stat-value-small">@Model.Count(l => !string.IsNullOrEmpty(l.VideoUrl))</div>
+        <div class="stat-label-small">Video bài giảng</div>
+    </div>
+
+    <div class="stat-card-small">
+        <div class="stat-icon-small" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+            <i class="fas fa-tasks"></i>
+        </div>
+        <div class="stat-value-small">@(course?.Assignments?.Count ?? 0)</div>
+        <div class="stat-label-small">Bài tập</div>
+    </div>
+</div>
+
+<!-- Lessons List -->
+<div class="lessons-container" data-aos="fade-up" data-aos-delay="200">
+    <div class="lessons-header">
+        <h3 class="lessons-title">
+            <i class="fas fa-list"></i>
+            Danh sách bài học
+        </h3>
+        <a href="@Url.Action("CreateLesson", "Teacher", new { courseId = course?.CourseID })" class="add-lesson-btn">
+            <i class="fas fa-plus"></i>
+            Thêm bài học mới
+        </a>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="lessons-list" id="lessonsList">
+            @{
+                int lessonNumber = 1;
+            }
+            @foreach (var lesson in Model.OrderBy(l => l.LessonID))
+            {
+                <div class="lesson-item" data-lesson-id="@lesson.LessonID">
+                    <i class="fas fa-grip-vertical drag-handle"></i>
+                    <div class="lesson-number">@lessonNumber</div>
+                    <div class="lesson-content">
+                        <h4 class="lesson-title">@lesson.TenBaiHoc</h4>
+                        <p class="lesson-description">@lesson.NoiDung</p>
+
+                        <div class="lesson-meta">
+                            <div class="meta-item">
+                                <i class="far fa-clock"></i>
+                                <span>@lesson.ThoiLuong phút</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(lesson.VideoUrl))
+                            {
+                                <div class="meta-item">
+                                    <i class="fas fa-video"></i>
+                                    <span class="video-badge">Có video</span>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="lesson-actions">
+                            <a href="@Url.Action("EditLesson", "Teacher", new { id = lesson.LessonID })" class="action-btn btn-edit">
+                                <i class="fas fa-edit"></i>
+                                Chỉnh sửa
+                            </a>
+                            @if (!string.IsNullOrEmpty(lesson.VideoUrl))
+                            {
+                                <a href="@lesson.VideoUrl" target="_blank" class="action-btn btn-preview">
+                                    <i class="fas fa-play"></i>
+                                    Xem video
+                                </a>
+                            }
+                            <button class="action-btn btn-delete" onclick="deleteLesson(@lesson.LessonID, '@lesson.TenBaiHoc')">
+                                <i class="fas fa-trash"></i>
+                                Xóa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                lessonNumber++;
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-folder-open"></i>
+            </div>
+            <h3>Chưa có bài học nào</h3>
+            <p class="text-muted mb-4">Bắt đầu thêm bài học cho khóa học của bạn</p>
+            <a href="@Url.Action("CreateLesson", "Teacher", new { courseId = course?.CourseID })" class="add-lesson-btn mx-auto">
+                <i class="fas fa-plus"></i>
+                Thêm bài học đầu tiên
+            </a>
+        </div>
+    }
+</div>
+
+<!-- Additional Actions -->
+<div class="text-center mt-4" data-aos="fade-up" data-aos-delay="300">
+    <a href="@Url.Action("CourseQuizzes", "Teacher", new { courseId = course?.CourseID })" class="btn btn-outline-primary me-2">
+        <i class="fas fa-question-circle me-2"></i>Quản lý bài kiểm tra
+    </a>
+    <a href="@Url.Action("CourseAssignments", "Teacher", new { courseId = course?.CourseID })" class="btn btn-outline-success">
+        <i class="fas fa-tasks me-2"></i>Quản lý bài tập
+    </a>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script>
+        // Initialize sortable
+        if (document.getElementById('lessonsList')) {
+            const sortable = Sortable.create(document.getElementById('lessonsList'), {
+                animation: 150,
+                handle: '.drag-handle',
+                ghostClass: 'sortable-ghost',
+                onEnd: function (evt) {
+                    toastr.info('Thứ tự bài học đã được cập nhật');
+                    // Update lesson numbers
+                    updateLessonNumbers();
+                }
+            });
+        }
+
+        function updateLessonNumbers() {
+            const lessons = document.querySelectorAll('.lesson-item');
+            lessons.forEach((lesson, index) => {
+                const numberElement = lesson.querySelector('.lesson-number');
+                if (numberElement) {
+                    numberElement.textContent = index + 1;
+                }
+            });
+        }
+
+        function deleteLesson(lessonId, lessonName) {
+            Swal.fire({
+                title: 'Xác nhận xóa',
+                html: `Bạn có chắc chắn muốn xóa bài học "<strong>${lessonName}</strong>"?<br>
+                       <small class="text-danger">Hành động này không thể hoàn tác!</small>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: '<i class="fas fa-trash me-2"></i>Xóa bài học',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '@Url.Action("DeleteLesson", "Teacher")',
+                        type: 'POST',
+                        data: {
+                            id: lessonId,
+                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    title: 'Đã xóa!',
+                                    text: response.message,
+                                    icon: 'success',
+                                    confirmButtonColor: '#10b981'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire('Lỗi!', response.message, 'error');
+                            }
+                        },
+                        error: function() {
+                            Swal.fire('Lỗi!', 'Có lỗi xảy ra khi xóa bài học.', 'error');
+                        }
+                    });
+                }
+            });
+        }
+    </script>
+
+    @Html.AntiForgeryToken()
+}

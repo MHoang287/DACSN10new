@@ -1,0 +1,263 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Giảng viên OnlineLearning</title>
+
+    <!-- Bootstrap & Bootswatch -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.0/dist/flatly/bootstrap.min.css" />
+
+    <!-- Font Awesome & Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+    <!-- Animate.css & AOS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
+
+    <!-- Toastr & SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+    <!-- FullCalendar -->
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+
+    <!-- Custom CSS -->
+    <link href="~/css/teacher-site.css" rel="stylesheet" />
+
+    @RenderSection("Styles", required: false)
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="teacher-sidebar" id="teacherSidebar">
+        <div class="sidebar-header">
+            <a href="@Url.Action("Dashboard", "Teacher")" class="sidebar-logo">
+                <i class="fas fa-graduation-cap"></i>
+                <span>Teacher Panel</span>
+            </a>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">Tổng quan</div>
+                <div class="nav-item">
+                    <a href="@Url.Action("Dashboard", "Teacher")" class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Dashboard" ? "active" : "")">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="@Url.Action("Statistics", "Teacher")" class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Statistics" ? "active" : "")">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Thống kê</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Quản lý khóa học</div>
+                <div class="nav-item">
+                    <a href="@Url.Action("MyCourses", "Teacher")" class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "MyCourses" ? "active" : "")">
+                        <i class="fas fa-book"></i>
+                        <span>Khóa học của tôi</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="@Url.Action("CreateCourse", "Teacher")" class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "CreateCourse" ? "active" : "")">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Tạo khóa học mới</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Học viên</div>
+                <div class="nav-item">
+                    <a href="@Url.Action("MyStudents", "Teacher")" class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "MyStudents" ? "active" : "")">
+                        <i class="fas fa-users"></i>
+                        <span>Học viên của tôi</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="@Url.Action("MyFollowers", "Teacher")" class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "MyFollowers" ? "active" : "")">
+                        <i class="fas fa-user-friends"></i>
+                        <span>Người theo dõi</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Báo cáo</div>
+                <div class="nav-item">
+                    <a href="@Url.Action("TeacherReports", "Teacher")" class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "TeacherReports" ? "active" : "")">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Báo cáo & Phân tích</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Khác</div>
+                <div class="nav-item">
+                    <a href="@Url.Action("Index", "Home")" class="nav-link">
+                        <i class="fas fa-home"></i>
+                        <span>Về trang chủ</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Đăng xuất</span>
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Header -->
+    <header class="teacher-header" id="teacherHeader">
+        <div class="header-content">
+            <div class="header-left">
+                <button class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+
+                <div class="search-box">
+                    <input type="text" placeholder="Tìm kiếm khóa học, học viên...">
+                    <button type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <button class="header-icon-btn" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Thông báo">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">3</span>
+                </button>
+
+                <button class="header-icon-btn" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Tin nhắn">
+                    <i class="fas fa-envelope"></i>
+                    <span class="notification-badge">5</span>
+                </button>
+
+                <div class="user-menu dropdown">
+                    <img src="https://ui-avatars.com/api/?name=@User.Identity.Name&background=3b82f6&color=fff&bold=true"
+                         alt="@User.Identity.Name"
+                         class="user-avatar"
+                         data-bs-toggle="dropdown">
+
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="fas fa-user me-2"></i> Thông tin cá nhân
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="fas fa-cog me-2"></i> Cài đặt
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                <i class="fas fa-sign-out-alt me-2"></i> Đăng xuất
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="teacher-main" id="teacherMain">
+        @RenderBody()
+    </main>
+
+    <!-- Logout Form -->
+    <form id="logout-form" action="/Identity/Account/Logout" method="post" style="display: none;">
+        @Html.AntiForgeryToken()
+    </form>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+
+    <script>
+        // Initialize AOS
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true
+        });
+
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Toggle sidebar
+        function toggleSidebar() {
+            const sidebar = document.getElementById('teacherSidebar');
+            const header = document.getElementById('teacherHeader');
+            const main = document.getElementById('teacherMain');
+
+            sidebar.classList.toggle('collapsed');
+            header.classList.toggle('sidebar-collapsed');
+            main.classList.toggle('sidebar-collapsed');
+
+            // Save state
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        }
+
+        // Restore sidebar state
+        window.addEventListener('load', function() {
+            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (isCollapsed) {
+                document.getElementById('teacherSidebar').classList.add('collapsed');
+                document.getElementById('teacherHeader').classList.add('sidebar-collapsed');
+                document.getElementById('teacherMain').classList.add('sidebar-collapsed');
+            }
+        });
+
+        // Toastr configuration
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "showDuration": "300",
+            "hideDuration": "1000",
+            "timeOut": "5000",
+            "extendedTimeOut": "1000"
+        };
+
+        // Show toast messages from TempData
+        @if (TempData["Success"] != null)
+        {
+            <text>toastr.success('@Html.Raw(TempData["Success"])');</text>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <text>toastr.error('@Html.Raw(TempData["Error"])');</text>
+        }
+        @if (TempData["Warning"] != null)
+        {
+            <text>toastr.warning('@Html.Raw(TempData["Warning"])');</text>
+        }
+        @if (TempData["Info"] != null)
+        {
+            <text>toastr.info('@Html.Raw(TempData["Info"])');</text>
+        }
+    </script>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,363 @@
+﻿@model List<DACSN10.Models.Enrollment>
+@{
+    ViewData["Title"] = "Học viên của tôi";
+    Layout = "~/Areas/Teacher/Views/Shared/_TeacherLayout.cshtml";
+
+    var totalPages = ViewBag.TotalPages ?? 1;
+    var currentPage = ViewBag.Page ?? 1;
+}
+
+@section Styles {
+    <link href="~/css/teacher-mystudents.css" rel="stylesheet" />
+}
+
+<!-- Page Header -->
+<div class="page-header" data-aos="fade-down">
+    <div class="d-flex justify-content-between align-items-center flex-wrap">
+        <div>
+            <h1 class="page-title">Học viên của tôi</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Teacher")">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Học viên</li>
+                </ol>
+            </nav>
+        </div>
+        <button class="export-btn" onclick="exportStudents()">
+            <i class="fas fa-download"></i>
+            Xuất Excel
+        </button>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="stats-cards" data-aos="fade-up">
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-value">@Model.Count</div>
+        <div class="stat-label">Tổng học viên</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+            <i class="fas fa-user-check"></i>
+        </div>
+        <div class="stat-value">@Model.Count(e => e.Progress >= 80)</div>
+        <div class="stat-label">Hoàn thành > 80%</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-value">@Model.Count(e => e.EnrollDate >= DateTime.Now.AddDays(-7))</div>
+        <div class="stat-label">Học viên mới (7 ngày)</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="stat-value">@((Model.Any() ? Model.Average(e => e.Progress) : 0).ToString("F1"))%</div>
+        <div class="stat-label">Tiến độ trung bình</div>
+    </div>
+</div>
+
+<!-- Students List -->
+<div class="students-container" data-aos="fade-up">
+    <div class="search-section">
+        <div class="position-relative flex-grow-1">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="search-input" id="searchInput" placeholder="Tìm kiếm theo tên, email...">
+        </div>
+
+        <select class="filter-select" id="courseFilter">
+            <option value="">Tất cả khóa học</option>
+            @foreach (var course in Model.Select(e => e.Course).Distinct())
+            {
+                <option value="@course.CourseID">@course.TenKhoaHoc</option>
+            }
+        </select>
+
+        <select class="filter-select" id="progressFilter">
+            <option value="">Tất cả tiến độ</option>
+            <option value="0-25">0% - 25%</option>
+            <option value="26-50">26% - 50%</option>
+            <option value="51-75">51% - 75%</option>
+            <option value="76-100">76% - 100%</option>
+        </select>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="students-table">
+                <thead>
+                    <tr>
+                        <th>Học viên</th>
+                        <th>Khóa học</th>
+                        <th>Tiến độ</th>
+                        <th>Ngày đăng ký</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var enrollment in Model)
+                    {
+                        <tr data-student="@enrollment.User.HoTen"
+                            data-email="@enrollment.User.Email"
+                            data-course="@enrollment.CourseID"
+                            data-progress="@enrollment.Progress">
+                            <td>
+                                <div class="student-info">
+                                    <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(enrollment.User.HoTen)&background=667eea&color=fff&bold=true"
+                                         alt="@enrollment.User.HoTen"
+                                         class="student-avatar">
+                                    <div class="student-details">
+                                        <div class="student-name">@enrollment.User.HoTen</div>
+                                        <div class="student-email">@enrollment.User.Email</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="course-badge">@enrollment.Course.TenKhoaHoc</span>
+                            </td>
+                            <td>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill" style="width: @enrollment.Progress%"></div>
+                                </div>
+                                <div class="progress-text">@enrollment.Progress%</div>
+                            </td>
+                            <td>
+                                <div class="enrollment-date">
+                                    @enrollment.EnrollDate.ToString("dd/MM/yyyy")
+                                </div>
+                            </td>
+                            <td>
+                                <button class="action-btn" onclick="viewStudentDetails('@enrollment.UserID', '@enrollment.CourseID')" title="Xem chi tiết">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="action-btn" onclick="sendMessage('@enrollment.UserID', '@enrollment.User.HoTen')" title="Gửi tin nhắn">
+                                    <i class="fas fa-envelope"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        @if (totalPages > 1)
+        {
+            <div class="pagination-container">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination">
+                        @if (currentPage > 1)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" href="@Url.Action("MyStudents", new { page = currentPage - 1 })">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                        }
+
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            <li class="page-item">
+                                <a class="page-link @(i == currentPage ? "active" : "")"
+                                   href="@Url.Action("MyStudents", new { page = i })">@i</a>
+                            </li>
+                        }
+
+                        @if (currentPage < totalPages)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" href="@Url.Action("MyStudents", new { page = currentPage + 1 })">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-user-graduate"></i>
+            </div>
+            <h3>Chưa có học viên nào</h3>
+            <p class="text-muted">Học viên sẽ xuất hiện ở đây khi họ đăng ký khóa học của bạn</p>
+        </div>
+    }
+</div>
+
+<!-- Student Details Modal -->
+<div class="modal fade" id="studentDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chi tiết học viên</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="studentDetailsContent">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Search functionality
+            $('#searchInput').on('keyup', function() {
+                filterStudents();
+            });
+
+            // Filter functionality
+            $('#courseFilter, #progressFilter').on('change', function() {
+                filterStudents();
+            });
+        });
+
+        function filterStudents() {
+            const searchText = $('#searchInput').val().toLowerCase();
+            const courseFilter = $('#courseFilter').val();
+            const progressFilter = $('#progressFilter').val();
+
+            $('.students-table tbody tr').each(function() {
+                const row = $(this);
+                const studentName = row.data('student').toLowerCase();
+                const email = row.data('email').toLowerCase();
+                const courseId = row.data('course').toString();
+                const progress = parseInt(row.data('progress'));
+
+                let show = true;
+
+                // Search filter
+                if (searchText && !studentName.includes(searchText) && !email.includes(searchText)) {
+                    show = false;
+                }
+
+                // Course filter
+                if (courseFilter && courseId !== courseFilter) {
+                    show = false;
+                }
+
+                // Progress filter
+                if (progressFilter) {
+                    const [min, max] = progressFilter.split('-').map(Number);
+                    if (progress < min || progress > max) {
+                        show = false;
+                    }
+                }
+
+                row.toggle(show);
+            });
+        }
+
+        function viewStudentDetails(userId, courseId) {
+            $('#studentDetailsModal').modal('show');
+            $('#studentDetailsContent').html('<div class="text-center"><i class="fas fa-spinner fa-spin fa-2x"></i></div>');
+
+            // Simulate loading student details
+            setTimeout(() => {
+                const content = `
+                    <div class="student-details-view">
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <img src="https://ui-avatars.com/api/?name=Student&background=667eea&color=fff&bold=true&size=150"
+                                     class="rounded-circle mb-3">
+                                <h5>Nguyễn Văn A</h5>
+                                <p class="text-muted">student@example.com</p>
+                            </div>
+                            <div class="col-md-8">
+                                <h6 class="mb-3">Thông tin học tập</h6>
+                                <table class="table">
+                                    <tr>
+                                        <td><strong>Khóa học:</strong></td>
+                                        <td>Lập trình Web với ASP.NET Core</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Ngày đăng ký:</strong></td>
+                                        <td>15/03/2024</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Tiến độ:</strong></td>
+                                        <td>
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar bg-success" style="width: 75%">75%</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Bài đã học:</strong></td>
+                                        <td>15/20 bài</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Điểm trung bình:</strong></td>
+                                        <td>8.5/10</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                $('#studentDetailsContent').html(content);
+            }, 1000);
+        }
+
+        function sendMessage(userId, userName) {
+            Swal.fire({
+                title: `Gửi tin nhắn cho ${userName}`,
+                input: 'textarea',
+                inputLabel: 'Nội dung tin nhắn',
+                inputPlaceholder: 'Nhập tin nhắn của bạn...',
+                inputAttributes: {
+                    'aria-label': 'Nhập tin nhắn của bạn'
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Gửi',
+                cancelButtonText: 'Hủy',
+                confirmButtonColor: '#3b82f6',
+                showLoaderOnConfirm: true,
+                preConfirm: (message) => {
+                    if (!message) {
+                        Swal.showValidationMessage('Vui lòng nhập nội dung tin nhắn');
+                    }
+                    return message;
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    toastr.success('Tin nhắn đã được gửi thành công!');
+                }
+            });
+        }
+
+        function exportStudents() {
+            Swal.fire({
+                title: 'Xuất danh sách học viên',
+                text: 'Bạn muốn xuất danh sách học viên dưới định dạng Excel?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Xuất Excel',
+                cancelButtonText: 'Hủy',
+                confirmButtonColor: '#10b981'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    toastr.info('Đang chuẩn bị file Excel...');
+                    // Simulate export
+                    setTimeout(() => {
+                        toastr.success('File Excel đã được tải xuống!');
+                    }, 2000);
+                }
+            });
+        }
+    </script>
+}

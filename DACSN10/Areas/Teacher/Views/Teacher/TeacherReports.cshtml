@@ -1,0 +1,664 @@
+﻿@{
+    ViewData["Title"] = "Báo cáo & Phân tích";
+    Layout = "~/Areas/Teacher/Views/Shared/_TeacherLayout.cshtml";
+    
+    var coursePerformance = ViewBag.CoursePerformance;
+    var monthlyRevenue = ViewBag.MonthlyRevenue;
+}
+
+@section Styles {
+    <style>
+        .report-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .report-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        .report-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .export-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .export-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        .report-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .performance-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .performance-table th {
+            background: #f8fafc;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #475569;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .performance-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+
+        .performance-table tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        .performance-table tbody tr:hover {
+            background: #f8fafc;
+            transform: translateX(5px);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .status-inactive {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .revenue-trend {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .trend-up {
+            color: #16a34a;
+        }
+
+        .trend-down {
+            color: #dc2626;
+        }
+
+        .chart-container {
+            height: 400px;
+            position: relative;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .summary-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .summary-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+        }
+
+        .summary-label {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .summary-change {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .date-range-picker {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: #f8fafc;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+        }
+
+        .date-input {
+            padding: 0.5rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .progress-bar-custom {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+            transition: width 0.3s ease;
+        }
+
+        .insights-box {
+            background: #eff6ff;
+            border: 2px solid #3b82f6;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .insight-item {
+            display: flex;
+            align-items: start;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .insight-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .insight-icon {
+            color: #3b82f6;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .insight-text {
+            color: #1e40af;
+            line-height: 1.6;
+        }
+    </style>
+}
+
+<!-- Page Header -->
+<div class="page-header" data-aos="fade-down">
+    <h1 class="page-title">Báo cáo & Phân tích</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Teacher")">Dashboard</a></li>
+            <li class="breadcrumb-item active">Báo cáo</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Report Header -->
+<div class="report-header" data-aos="fade-up">
+    <h2 class="mb-3">Báo cáo tổng hợp hoạt động giảng dạy</h2>
+    <p class="mb-0 opacity-90">Phân tích chi tiết hiệu suất khóa học và doanh thu</p>
+    
+    <div class="report-actions">
+        <button class="export-btn" onclick="exportPDF()">
+            <i class="fas fa-file-pdf"></i>
+            Xuất PDF
+        </button>
+        <button class="export-btn" onclick="exportExcel()">
+            <i class="fas fa-file-excel"></i>
+            Xuất Excel
+        </button>
+        <button class="export-btn" onclick="printReport()">
+            <i class="fas fa-print"></i>
+            In báo cáo
+        </button>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="summary-cards" data-aos="fade-up" data-aos-delay="100">
+    <div class="summary-card">
+        <div class="summary-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="summary-value">15.2M₫</div>
+        <div class="summary-label">Doanh thu tháng này</div>
+        <div class="summary-change trend-up">
+            <i class="fas fa-arrow-up"></i>
+            <span>+23% so với tháng trước</span>
+        </div>
+    </div>
+    
+    <div class="summary-card">
+        <div class="summary-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+            <i class="fas fa-user-plus"></i>
+        </div>
+        <div class="summary-value">47</div>
+        <div class="summary-label">Học viên mới</div>
+        <div class="summary-change trend-up">
+            <i class="fas fa-arrow-up"></i>
+            <span>+15% so với tháng trước</span>
+        </div>
+    </div>
+    
+    <div class="summary-card">
+        <div class="summary-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+            <i class="fas fa-star"></i>
+        </div>
+        <div class="summary-value">4.8/5</div>
+        <div class="summary-label">Đánh giá trung bình</div>
+        <div class="summary-change trend-up">
+            <i class="fas fa-arrow-up"></i>
+            <span>+0.2 điểm</span>
+        </div>
+    </div>
+    
+    <div class="summary-card">
+        <div class="summary-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+            <i class="fas fa-graduation-cap"></i>
+        </div>
+        <div class="summary-value">82%</div>
+        <div class="summary-label">Tỷ lệ hoàn thành</div>
+        <div class="summary-change trend-down">
+            <i class="fas fa-arrow-down"></i>
+            <span>-3% so với tháng trước</span>
+        </div>
+    </div>
+</div>
+
+<!-- Revenue Chart -->
+<div class="report-section" data-aos="fade-up" data-aos-delay="200">
+    <div class="section-header">
+        <h3 class="section-title">
+            <i class="fas fa-dollar-sign text-success"></i>
+            Biểu đồ doanh thu
+        </h3>
+        <div class="date-range-picker">
+            <input type="date" class="date-input" id="startDate">
+            <span>đến</span>
+            <input type="date" class="date-input" id="endDate">
+            <button class="btn btn-sm btn-primary" onclick="updateDateRange()">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div class="chart-container">
+        <canvas id="revenueChart"></canvas>
+    </div>
+</div>
+
+<!-- Course Performance -->
+<div class="report-section" data-aos="fade-up" data-aos-delay="300">
+    <div class="section-header">
+        <h3 class="section-title">
+            <i class="fas fa-trophy text-warning"></i>
+            Hiệu suất khóa học
+        </h3>
+    </div>
+    
+    @if (coursePerformance != null && coursePerformance.Any())
+    {
+        <div class="table-responsive">
+            <table class="performance-table">
+                <thead>
+                    <tr>
+                        <th>Khóa học</th>
+                        <th>Trạng thái</th>
+                        <th>Học viên</th>
+                        <th>Doanh thu</th>
+                        <th>Tiến độ TB</th>
+                        <th>Xu hướng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var course in coursePerformance)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@course.TenKhoaHoc</strong>
+                            </td>
+                            <td>
+                                <span class="status-badge status-@course.TrangThai.ToLower()">
+                                    @course.TrangThai
+                                </span>
+                            </td>
+                            <td>@course.StudentCount</td>
+                            <td>
+                                <strong>@course.Revenue.ToString("N0")₫</strong>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress-bar-custom flex-grow-1">
+                                        <div class="progress-fill" style="width: @course.AverageProgress%"></div>
+                                    </div>
+                                    <span>@course.AverageProgress.ToString("F0")%</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="revenue-trend trend-up">
+                                    <i class="fas fa-arrow-up"></i>
+                                    +12%
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <p class="text-center text-muted py-4">Chưa có dữ liệu hiệu suất khóa học</p>
+    }
+</div>
+
+<div class="row">
+    <!-- Student Analytics -->
+    <div class="col-lg-6" data-aos="fade-up" data-aos-delay="400">
+        <div class="report-section">
+            <h3 class="section-title">
+                <i class="fas fa-users text-info"></i>
+                Phân tích học viên
+            </h3>
+            <div class="chart-container" style="height: 300px;">
+                <canvas id="studentAnalyticsChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Course Categories -->
+    <div class="col-lg-6" data-aos="fade-up" data-aos-delay="500">
+        <div class="report-section">
+            <h3 class="section-title">
+                <i class="fas fa-tags text-purple"></i>
+                Phân bố theo danh mục
+            </h3>
+            <div class="chart-container" style="height: 300px;">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Insights -->
+<div class="report-section" data-aos="fade-up" data-aos-delay="600">
+    <h3 class="section-title mb-3">
+        <i class="fas fa-lightbulb text-warning"></i>
+        Gợi ý cải thiện
+    </h3>
+    
+    <div class="insights-box">
+        <div class="insight-item">
+            <i class="fas fa-check-circle insight-icon"></i>
+            <div class="insight-text">
+                <strong>Điểm mạnh:</strong> Tỷ lệ hoàn thành khóa học của bạn cao hơn 20% so với trung bình. 
+                Tiếp tục duy trì chất lượng giảng dạy tốt!
+            </div>
+        </div>
+        
+        <div class="insight-item">
+            <i class="fas fa-arrow-up insight-icon"></i>
+            <div class="insight-text">
+                <strong>Cơ hội tăng trưởng:</strong> Khóa học "Lập trình Web" có nhu cầu cao. 
+                Cân nhắc tạo thêm khóa học nâng cao cho học viên đã hoàn thành.
+            </div>
+        </div>
+        
+        <div class="insight-item">
+            <i class="fas fa-exclamation-triangle insight-icon"></i>
+            <div class="insight-text">
+                <strong>Cần chú ý:</strong> Một số học viên phản hồi về tốc độ bài giảng. 
+                Xem xét điều chỉnh tempo cho phù hợp với đa số học viên.
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Revenue Chart
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        const revenueChart = new Chart(revenueCtx, {
+            type: 'line',
+            data: {
+                labels: @Html.Raw(Json.Serialize((monthlyRevenue?.Select((Func<dynamic, string>)(m => $"T{m.Month}/{m.Year}")).ToArray() ?? new string[] { }).Cast<object>())),
+                datasets: [{
+                    label: 'Doanh thu',
+                    data: @Html.Raw(Json.Serialize((monthlyRevenue?.Select((Func<dynamic, decimal>)(m => m.Revenue)).ToArray() ?? new decimal[] { }).Cast<object>())),
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#3b82f6',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Doanh thu: ' + context.parsed.y.toLocaleString('vi-VN') + '₫';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString('vi-VN') + '₫';
+                            }
+                        },
+                        grid: {
+                            borderDash: [5, 5]
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Student Analytics Chart
+        const studentCtx = document.getElementById('studentAnalyticsChart').getContext('2d');
+        const studentChart = new Chart(studentCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Tuần 1', 'Tuần 2', 'Tuần 3', 'Tuần 4'],
+                datasets: [{
+                    label: 'Học viên mới',
+                    data: [12, 19, 15, 21],
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)'
+                }, {
+                    label: 'Học viên hoàn thành',
+                    data: [8, 11, 9, 14],
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // Category Chart
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        const categoryChart = new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Lập trình', 'Thiết kế', 'Marketing', 'Kinh doanh', 'Khác'],
+                datasets: [{
+                    data: [35, 25, 20, 15, 5],
+                    backgroundColor: [
+                        '#3b82f6',
+                        '#10b981',
+                        '#f59e0b',
+                        '#8b5cf6',
+                        '#6b7280'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            padding: 15
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Export functions
+        function exportPDF() {
+            toastr.info('Đang chuẩn bị file PDF...');
+            setTimeout(() => {
+                toastr.success('File PDF đã được tải xuống!');
+            }, 2000);
+        }
+        
+        function exportExcel() {
+            toastr.info('Đang xuất file Excel...');
+            setTimeout(() => {
+                toastr.success('File Excel đã được tải xuống!');
+            }, 2000);
+        }
+        
+        function printReport() {
+            window.print();
+        }
+        
+        function updateDateRange() {
+            const startDate = $('#startDate').val();
+            const endDate = $('#endDate').val();
+            
+            if (startDate && endDate) {
+                toastr.info('Đang cập nhật dữ liệu...');
+                // Update charts with new date range
+            } else {
+                toastr.warning('Vui lòng chọn khoảng thời gian');
+            }
+        }
+        
+        // Set default dates
+        const today = new Date();
+        const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        $('#endDate').val(today.toISOString().split('T')[0]);
+        $('#startDate').val(lastMonth.toISOString().split('T')[0]);
+    </script>
+}

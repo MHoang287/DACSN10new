@@ -1,0 +1,363 @@
+﻿@model IEnumerable<DACSN10.Models.Quiz>
+@{
+    ViewData["Title"] = "Quản lý bài kiểm tra";
+    Layout = "~/Areas/Teacher/Views/Shared/_TeacherLayout.cshtml";
+    var course = ViewBag.Course as DACSN10.Models.Course;
+}
+
+@section Styles {
+    <link href="~/css/teacher-coursequizzes.css" rel="stylesheet" />
+}
+
+<!-- Page Header -->
+<div class="page-header" data-aos="fade-down">
+    <h1 class="page-title">Quản lý bài kiểm tra</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Teacher")">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="@Url.Action("MyCourses", "Teacher")">Khóa học</a></li>
+            <li class="breadcrumb-item active">Bài kiểm tra</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Course Info Header -->
+<div class="quiz-header" data-aos="fade-up">
+    <div class="course-info">
+        <h2 class="course-title-quiz">@course?.TenKhoaHoc</h2>
+        <div class="course-meta-quiz">
+            <div class="meta-item-quiz">
+                <i class="fas fa-book"></i>
+                <span>@(course?.Lessons?.Count ?? 0) bài học</span>
+            </div>
+            <div class="meta-item-quiz">
+                <i class="fas fa-users"></i>
+                <span>@(course?.Enrollments?.Count ?? 0) học viên</span>
+            </div>
+            <div class="meta-item-quiz">
+                <i class="fas fa-question-circle"></i>
+                <span>@Model.Count() bài kiểm tra</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="quiz-stats" data-aos="fade-up" data-aos-delay="100">
+    <div class="stat-card-quiz">
+        <div class="stat-icon-quiz" style="background: linear-gradient(135deg, #0ea5e9, #2563eb);">
+            <i class="fas fa-question-circle"></i>
+        </div>
+        <div class="stat-value-quiz">@Model.Count()</div>
+        <div class="stat-label-quiz">Tổng bài kiểm tra</div>
+    </div>
+    
+    <div class="stat-card-quiz">
+        <div class="stat-icon-quiz" style="background: linear-gradient(135deg, #10b981, #059669);">
+            <i class="fas fa-list"></i>
+        </div>
+        <div class="stat-value-quiz">@Model.Sum(q => q.Questions?.Count ?? 0)</div>
+        <div class="stat-label-quiz">Tổng câu hỏi</div>
+    </div>
+    
+    <div class="stat-card-quiz">
+        <div class="stat-icon-quiz" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+            <i class="fas fa-clipboard-check"></i>
+        </div>
+        <div class="stat-value-quiz">@Model.Sum(q => q.QuizResults?.Count ?? 0)</div>
+        <div class="stat-label-quiz">Lượt làm bài</div>
+    </div>
+    
+    <div class="stat-card-quiz">
+        <div class="stat-icon-quiz" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+            <i class="fas fa-percentage"></i>
+        </div>
+        <div class="stat-value-quiz">
+            @{
+                var allResults = Model.SelectMany(q => q.QuizResults ?? new List<DACSN10.Models.QuizResult>());
+                var avgScore = allResults.Any() ? allResults.Average(r => r.Score) : 0;
+            }
+            @avgScore.ToString("F1")
+        </div>
+        <div class="stat-label-quiz">Điểm trung bình</div>
+    </div>
+</div>
+
+<!-- Quiz List -->
+<div class="quiz-container" data-aos="fade-up" data-aos-delay="200">
+    <div class="quiz-header-section">
+        <h3 class="section-title-quiz">
+            <i class="fas fa-list"></i>
+            Danh sách bài kiểm tra
+        </h3>
+        <a href="@Url.Action("CreateQuiz", "Teacher", new { courseId = course?.CourseID })" class="add-quiz-btn">
+            <i class="fas fa-plus"></i>
+            Tạo bài kiểm tra mới
+        </a>
+    </div>
+    
+    @if (Model != null && Model.Any())
+    {
+        <div class="quiz-list">
+            @foreach (var quiz in Model)
+            {
+                <div class="quiz-item">
+                    <span class="quiz-badge">@(quiz.Questions?.Count ?? 0) câu hỏi</span>
+                    
+                    <h4 class="quiz-title">@quiz.Title</h4>
+                    
+                    <div class="quiz-info">
+                        <div class="info-item">
+                            <i class="fas fa-clipboard-list"></i>
+                            <span>@(quiz.QuizResults?.Count ?? 0) lượt làm bài</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Điểm TB: @(quiz.QuizResults?.Any() == true ? quiz.QuizResults.Average(r => r.Score).ToString("F1") : "N/A")</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-clock"></i>
+                            <span>Thời gian: 30 phút</span>
+                        </div>
+                    </div>
+                    
+                    @if (quiz.Questions != null && quiz.Questions.Any())
+                    {
+                        <button class="toggle-questions" onclick="toggleQuestions(@quiz.QuizID)">
+                            <i class="fas fa-chevron-down" id="toggle-icon-@quiz.QuizID"></i>
+                            Xem câu hỏi
+                        </button>
+                        
+                        <div class="quiz-questions" id="questions-@quiz.QuizID" style="display: none;">
+                            @{
+                                int questionNumber = 1;
+                            }
+                            @foreach (var question in quiz.Questions.Take(5))
+                            {
+                                <div class="question-item">
+                                    <div class="question-number">@questionNumber</div>
+                                    <div class="question-text">@question.QuestionText</div>
+                                </div>
+                                questionNumber++;
+                            }
+                            @if (quiz.Questions.Count > 5)
+                            {
+                                <div class="text-center mt-2">
+                                    <small class="text-muted">... và @(quiz.Questions.Count - 5) câu hỏi khác</small>
+                                </div>
+                            }
+                        </div>
+                    }
+                    
+                    @if (quiz.QuizResults != null && quiz.QuizResults.Any())
+                    {
+                        <div class="results-summary">
+                            <strong>Thống kê kết quả:</strong>
+                            <div class="results-grid">
+                                <div class="result-item">
+                                    <div class="result-value">@quiz.QuizResults.Count(r => r.Score >= 8)</div>
+                                    <div class="result-label">Xuất sắc (≥8)</div>
+                                </div>
+                                <div class="result-item">
+                                    <div class="result-value">@quiz.QuizResults.Count(r => r.Score >= 5 && r.Score < 8)</div>
+                                    <div class="result-label">Đạt (5-7.9)</div>
+                                </div>
+                                <div class="result-item">
+                                    <div class="result-value">@quiz.QuizResults.Count(r => r.Score < 5)</div>
+                                    <div class="result-label">Chưa đạt (<5)</div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    
+                    <div class="quiz-actions">
+                        <a href="@Url.Action("EditQuiz", "Teacher", new { id = quiz.QuizID })" class="action-btn-quiz btn-edit-quiz">
+                            <i class="fas fa-edit"></i>
+                            Chỉnh sửa
+                        </a>
+                        <button class="action-btn-quiz btn-results" onclick="viewResults(@quiz.QuizID)">
+                            <i class="fas fa-chart-bar"></i>
+                            Xem kết quả
+                        </button>
+                        <button class="action-btn-quiz btn-delete-quiz" onclick="deleteQuiz(@quiz.QuizID, '@quiz.Title')">
+                            <i class="fas fa-trash"></i>
+                            Xóa
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-question-circle"></i>
+            </div>
+            <h3>Chưa có bài kiểm tra nào</h3>
+            <p class="text-muted mb-4">Tạo bài kiểm tra để đánh giá kiến thức học viên</p>
+            <a href="@Url.Action("CreateQuiz", "Teacher", new { courseId = course?.CourseID })" class="add-quiz-btn mx-auto">
+                <i class="fas fa-plus"></i>
+                Tạo bài kiểm tra đầu tiên
+            </a>
+        </div>
+    }
+</div>
+
+<!-- Additional Actions -->
+<div class="text-center mt-4" data-aos="fade-up" data-aos-delay="300">
+    <a href="@Url.Action("CourseLessons", "Teacher", new { courseId = course?.CourseID })" class="btn btn-outline-primary me-2">
+        <i class="fas fa-book me-2"></i>Quản lý bài học
+    </a>
+    <a href="@Url.Action("CourseAssignments", "Teacher", new { courseId = course?.CourseID })" class="btn btn-outline-success">
+        <i class="fas fa-tasks me-2"></i>Quản lý bài tập
+    </a>
+</div>
+
+<!-- Results Modal -->
+<div class="modal fade" id="resultsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-chart-bar me-2 text-primary"></i>
+                    Kết quả bài kiểm tra
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="resultsContent">
+                <!-- Results will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Toggle questions
+        function toggleQuestions(quizId) {
+            const questionsDiv = $(`#questions-${quizId}`);
+            const toggleIcon = $(`#toggle-icon-${quizId}`);
+            
+            questionsDiv.slideToggle(300);
+            toggleIcon.toggleClass('fa-chevron-down fa-chevron-up');
+        }
+        
+        // Delete quiz
+        function deleteQuiz(quizId, quizTitle) {
+            Swal.fire({
+                title: 'Xác nhận xóa',
+                html: `Bạn có chắc chắn muốn xóa bài kiểm tra "<strong>${quizTitle}</strong>"?<br>
+                       <small class="text-danger">Tất cả câu hỏi và kết quả sẽ bị xóa!</small>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: '<i class="fas fa-trash me-2"></i>Xóa bài kiểm tra',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loading
+                    Swal.fire({
+                        title: 'Đang xóa...',
+                        text: 'Vui lòng đợi',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    
+                    // Simulate deletion
+                    setTimeout(() => {
+                        Swal.fire({
+                            title: 'Đã xóa!',
+                            text: 'Bài kiểm tra đã được xóa thành công.',
+                            icon: 'success',
+                            confirmButtonColor: '#10b981'
+                        }).then(() => {
+                            location.reload();
+                        });
+                    }, 1500);
+                }
+            });
+        }
+        
+        // View results
+        function viewResults(quizId) {
+            $('#resultsModal').modal('show');
+            $('#resultsContent').html('<div class="text-center"><i class="fas fa-spinner fa-spin fa-2x"></i></div>');
+            
+            // Simulate loading results
+            setTimeout(() => {
+                const resultsHTML = `
+                    <div class="results-overview">
+                        <h6 class="mb-3">Tổng quan kết quả</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <canvas id="scoreChart" style="max-height: 300px;"></canvas>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Học viên</th>
+                                            <th>Điểm</th>
+                                            <th>Thời gian</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Nguyễn Văn A</td>
+                                            <td><span class="badge bg-success">8.5</span></td>
+                                            <td>25 phút</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Trần Thị B</td>
+                                            <td><span class="badge bg-warning">6.0</span></td>
+                                            <td>28 phút</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Lê Văn C</td>
+                                            <td><span class="badge bg-success">9.0</span></td>
+                                            <td>22 phút</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                $('#resultsContent').html(resultsHTML);
+                
+                // Create chart
+                const ctx = document.getElementById('scoreChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['0-2', '2-4', '4-6', '6-8', '8-10'],
+                        datasets: [{
+                            label: 'Số lượng học viên',
+                            data: [2, 3, 8, 15, 12],
+                            backgroundColor: 'rgba(14, 165, 233, 0.8)'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 5
+                                }
+                            }
+                        }
+                    }
+                });
+            }, 1000);
+        }
+    </script>
+    
+    @Html.AntiForgeryToken()
+}

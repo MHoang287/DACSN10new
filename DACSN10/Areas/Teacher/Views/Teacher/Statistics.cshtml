@@ -1,0 +1,564 @@
+﻿@{
+    ViewData["Title"] = "Thống kê";
+    Layout = "~/Areas/Teacher/Views/Shared/_TeacherLayout.cshtml";
+
+    var stats = ViewBag.Stats;
+    var courseStats = ViewBag.CourseStats;
+}
+
+@section Styles {
+    <style>
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+            .stat-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            }
+
+            .stat-card::before {
+                content: '';
+                position: absolute;
+                top: -50%;
+                right: -50%;
+                width: 200%;
+                height: 200%;
+                background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-card.primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+
+        .stat-card.success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .stat-card.warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .stat-card.info {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        }
+
+        .stat-card.purple {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        }
+
+            .stat-card.primary .stat-icon,
+            .stat-card.success .stat-icon,
+            .stat-card.warning .stat-icon,
+            .stat-card.info .stat-icon,
+            .stat-card.purple .stat-icon {
+                background: rgba(255, 255, 255, 0.2);
+            }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin-top: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            font-size: 0.875rem;
+            color: white;
+        }
+
+        .chart-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .chart-container {
+            height: 400px;
+            position: relative;
+        }
+
+        .time-filter {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .time-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+            .time-btn:hover {
+                border-color: #3b82f6;
+                color: #3b82f6;
+            }
+
+            .time-btn.active {
+                background: #3b82f6;
+                color: white;
+                border-color: #3b82f6;
+            }
+
+        .top-courses-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+            .top-courses-table th {
+                background: #f8fafc;
+                padding: 1rem;
+                text-align: left;
+                font-weight: 600;
+                color: #475569;
+                border-bottom: 2px solid #e2e8f0;
+            }
+
+            .top-courses-table td {
+                padding: 1rem;
+                border-bottom: 1px solid #f1f5f9;
+            }
+
+            .top-courses-table tbody tr {
+                transition: all 0.3s ease;
+            }
+
+                .top-courses-table tbody tr:hover {
+                    background: #f8fafc;
+                }
+
+        .course-rank {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+        }
+
+        .rank-1 {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        }
+
+        .rank-2 {
+            background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+        }
+
+        .rank-3 {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        }
+
+        .rank-other {
+            background: #e2e8f0;
+            color: #64748b;
+        }
+
+        .revenue-badge {
+            background: #dcfce7;
+            color: #16a34a;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .insight-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+            .insight-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            }
+
+        .insight-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .insight-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .insight-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 0.5rem;
+        }
+
+        .insight-description {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+    </style>
+}
+
+<!-- Page Header -->
+<div class="page-header" data-aos="fade-down">
+    <h1 class="page-title">Thống kê</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Teacher")">Dashboard</a></li>
+            <li class="breadcrumb-item active">Thống kê</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Statistics Overview -->
+<div class="stats-overview" data-aos="fade-up">
+    <div class="stat-card primary">
+        <div class="stat-icon">
+            <i class="fas fa-book-open"></i>
+        </div>
+        <div class="stat-value">@stats.TotalCourses</div>
+        <div class="stat-label">Tổng khóa học</div>
+        <div class="stat-change">
+            <i class="fas fa-arrow-up"></i>
+            <span>+12% so với tháng trước</span>
+        </div>
+    </div>
+
+    <div class="stat-card success">
+        <div class="stat-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-value">@stats.ActiveCourses</div>
+        <div class="stat-label">Khóa học đang hoạt động</div>
+        <div class="stat-change">
+            <i class="fas fa-arrow-up"></i>
+            <span>+5% so với tháng trước</span>
+        </div>
+    </div>
+
+    <div class="stat-card warning">
+        <div class="stat-icon">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-value">@stats.TotalStudents</div>
+        <div class="stat-label">Tổng học viên</div>
+        <div class="stat-change">
+            <i class="fas fa-arrow-up"></i>
+            <span>+25% so với tháng trước</span>
+        </div>
+    </div>
+
+    <div class="stat-card info">
+        <div class="stat-icon">
+            <i class="fas fa-dollar-sign"></i>
+        </div>
+        <div class="stat-value">@stats.TotalRevenue.ToString("N0")₫</div>
+        <div class="stat-label">Tổng doanh thu</div>
+        <div class="stat-change">
+            <i class="fas fa-arrow-up"></i>
+            <span>+18% so với tháng trước</span>
+        </div>
+    </div>
+
+    <div class="stat-card purple">
+        <div class="stat-icon">
+            <i class="fas fa-heart"></i>
+        </div>
+        <div class="stat-value">@stats.Followers</div>
+        <div class="stat-label">Người theo dõi</div>
+        <div class="stat-change">
+            <i class="fas fa-arrow-up"></i>
+            <span>+8% so với tháng trước</span>
+        </div>
+    </div>
+</div>
+
+<!-- Revenue Chart -->
+<div class="chart-section" data-aos="fade-up" data-aos-delay="100">
+    <div class="chart-header">
+        <h3 class="chart-title">
+            <i class="fas fa-chart-line text-primary"></i>
+            Doanh thu theo thời gian
+        </h3>
+        <div class="time-filter">
+            <button class="time-btn active" onclick="updateRevenueChart('week')">Tuần</button>
+            <button class="time-btn" onclick="updateRevenueChart('month')">Tháng</button>
+            <button class="time-btn" onclick="updateRevenueChart('year')">Năm</button>
+        </div>
+    </div>
+    <div class="chart-container">
+        <canvas id="revenueChart"></canvas>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Top Courses -->
+    <div class="col-lg-8" data-aos="fade-up" data-aos-delay="200">
+        <div class="chart-section">
+            <h3 class="chart-title">
+                <i class="fas fa-trophy text-warning"></i>
+                Top khóa học phổ biến
+            </h3>
+
+            @if (courseStats != null && courseStats.Any())
+            {
+                <div class="table-responsive">
+                    <table class="top-courses-table">
+                        <thead>
+                            <tr>
+                                <th width="50">#</th>
+                                <th>Tên khóa học</th>
+                                <th>Học viên</th>
+                                <th>Doanh thu</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                int rank = 1;
+                            }
+                            @foreach (var course in courseStats)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="course-rank @(rank <= 3 ? $"rank-{rank}" : "rank-other")">
+                                            @rank
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <a href="@Url.Action("EditCourse", "Teacher", new { id = course.CourseID })"
+                                           class="text-decoration-none text-dark fw-semibold">
+                                            @course.TenKhoaHoc
+                                        </a>
+                                    </td>
+                                    <td>@course.StudentCount</td>
+                                    <td>
+                                        <span class="revenue-badge">@course.Revenue.ToString("N0")₫</span>
+                                    </td>
+                                </tr>
+                                rank++;
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="text-muted text-center py-4">Chưa có dữ liệu</p>
+            }
+        </div>
+    </div>
+
+    <!-- Student Distribution -->
+    <div class="col-lg-4" data-aos="fade-up" data-aos-delay="300">
+        <div class="chart-section">
+            <h3 class="chart-title">
+                <i class="fas fa-chart-pie text-info"></i>
+                Phân bố học viên
+            </h3>
+            <div class="chart-container" style="height: 300px;">
+                <canvas id="studentDistributionChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Insights -->
+<div class="chart-section" data-aos="fade-up" data-aos-delay="400">
+    <h3 class="chart-title mb-4">
+        <i class="fas fa-lightbulb text-warning"></i>
+        Thông tin chi tiết
+    </h3>
+
+    <div class="insights-grid">
+        <div class="insight-card">
+            <div class="insight-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                <i class="fas fa-percentage"></i>
+            </div>
+            <div class="insight-title">Tỷ lệ hoàn thành</div>
+            <div class="insight-value">78%</div>
+            <div class="insight-description">Tỷ lệ học viên hoàn thành khóa học trung bình</div>
+        </div>
+
+        <div class="insight-card">
+            <div class="insight-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <i class="fas fa-star"></i>
+            </div>
+            <div class="insight-title">Đánh giá trung bình</div>
+            <div class="insight-value">4.5/5</div>
+            <div class="insight-description">Điểm đánh giá từ học viên</div>
+        </div>
+
+        <div class="insight-card">
+            <div class="insight-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="insight-title">Thời gian học TB</div>
+            <div class="insight-value">2.5h</div>
+            <div class="insight-description">Thời gian học trung bình mỗi tuần</div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Revenue Chart
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        const revenueChart = new Chart(revenueCtx, {
+            type: 'line',
+            data: {
+                labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'],
+                datasets: [{
+                    label: 'Doanh thu',
+                    data: [1200000, 1900000, 1500000, 2500000, 2200000, 3000000, 2800000],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString('vi-VN') + '₫';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Student Distribution Chart
+        const distributionCtx = document.getElementById('studentDistributionChart').getContext('2d');
+        const distributionChart = new Chart(distributionCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Đang học', 'Hoàn thành', 'Tạm dừng'],
+                datasets: [{
+                    data: [65, 25, 10],
+                    backgroundColor: [
+                        '#3b82f6',
+                        '#10b981',
+                        '#f59e0b'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15
+                        }
+                    }
+                }
+            }
+        });
+
+        function updateRevenueChart(period) {
+            $('.time-btn').removeClass('active');
+            event.target.classList.add('active');
+
+            // Update chart data based on period
+            toastr.info(`Đang cập nhật dữ liệu cho ${period}`);
+        }
+    </script>
+}
