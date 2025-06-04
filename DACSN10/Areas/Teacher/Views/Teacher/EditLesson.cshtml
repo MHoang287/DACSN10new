@@ -1,0 +1,296 @@
+﻿@model DACSN10.Models.Lesson
+@{
+    ViewData["Title"] = "Chỉnh sửa bài học";
+    Layout = "~/Areas/Teacher/Views/Shared/_TeacherLayout.cshtml";
+}
+
+<div class="container-fluid" data-aos="fade-up">
+    <!-- Breadcrumb -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="@Url.Action("Dashboard", "Teacher")">
+                            <i class="fas fa-home"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="@Url.Action("MyCourses", "Teacher")">Khóa học của tôi</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="@Url.Action("CourseLessons", "Teacher", new { courseId = ViewBag.Course.CourseID })">
+                            @ViewBag.Course.TenKhoaHoc
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active">Chỉnh sửa bài học</li>
+                </ol>
+            </nav>
+            <h1 class="page-title">
+                <i class="fas fa-edit text-primary"></i>
+                Chỉnh sửa bài học
+            </h1>
+        </div>
+        <a href="@Url.Action("CourseLessons", "Teacher", new { courseId = ViewBag.Course.CourseID })"
+           class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
+
+    <!-- Course Info Card -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-primary">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="course-icon me-3">
+                            <i class="fas fa-book-open text-primary fs-2"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title mb-1">@ViewBag.Course.TenKhoaHoc</h5>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-tag"></i> ID: @ViewBag.Course.CourseID
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Lesson Form -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-edit text-primary"></i>
+                        Thông tin bài học
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="EditLesson" method="post" id="editLessonForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="LessonID" />
+                        <input type="hidden" asp-for="CourseID" />
+
+                        <div class="row">
+                            <!-- Left Column -->
+                            <div class="col-md-8">
+                                <!-- Lesson Name -->
+                                <div class="mb-4">
+                                    <label asp-for="TenBaiHoc" class="form-label fw-bold">
+                                        <i class="fas fa-heading text-primary"></i>
+                                        Tên bài học <span class="text-danger">*</span>
+                                    </label>
+                                    <input asp-for="TenBaiHoc" class="form-control form-control-lg"
+                                           placeholder="Nhập tên bài học..." />
+                                    <span asp-validation-for="TenBaiHoc" class="text-danger"></span>
+                                </div>
+
+                                <!-- Lesson Content -->
+                                <div class="mb-4">
+                                    <label asp-for="NoiDung" class="form-label fw-bold">
+                                        <i class="fas fa-align-left text-primary"></i>
+                                        Nội dung bài học <span class="text-danger">*</span>
+                                    </label>
+                                    <textarea asp-for="NoiDung" class="form-control" rows="8"
+                                              placeholder="Mô tả chi tiết nội dung bài học..."></textarea>
+                                    <span asp-validation-for="NoiDung" class="text-danger"></span>
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle"></i>
+                                        Hỗ trợ Markdown để định dạng nội dung
+                                    </div>
+                                </div>
+
+                                <!-- Video URL -->
+                                <div class="mb-4">
+                                    <label asp-for="VideoUrl" class="form-label fw-bold">
+                                        <i class="fas fa-video text-primary"></i>
+                                        Đường dẫn video
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fab fa-youtube text-danger"></i>
+                                        </span>
+                                        <input asp-for="VideoUrl" class="form-control"
+                                               placeholder="https://www.youtube.com/watch?v=..." />
+                                    </div>
+                                    <span asp-validation-for="VideoUrl" class="text-danger"></span>
+                                    <div class="form-text">
+                                        <i class="fas fa-lightbulb"></i>
+                                        Hỗ trợ YouTube, Vimeo, hoặc link video trực tiếp
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Column -->
+                            <div class="col-md-4">
+                                <!-- Duration -->
+                                <div class="mb-4">
+                                    <label asp-for="ThoiLuong" class="form-label fw-bold">
+                                        <i class="fas fa-clock text-primary"></i>
+                                        Thời lượng (phút) <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <input asp-for="ThoiLuong" class="form-control" type="number"
+                                               min="1" max="999" placeholder="60" />
+                                        <span class="input-group-text">phút</span>
+                                    </div>
+                                    <span asp-validation-for="ThoiLuong" class="text-danger"></span>
+                                </div>
+
+                                <!-- Preview Card -->
+                                <div class="card bg-light border-0">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="card-title mb-0">
+                                            <i class="fas fa-eye"></i>
+                                            Xem trước
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="lesson-preview">
+                                            <div class="lesson-icon mb-2 text-center">
+                                                <i class="fas fa-play-circle text-primary fs-1"></i>
+                                            </div>
+                                            <h6 class="lesson-title text-center" id="previewTitle">
+                                                @Model.TenBaiHoc
+                                            </h6>
+                                            <div class="lesson-meta text-center text-muted">
+                                                <small>
+                                                    <i class="fas fa-clock"></i>
+                                                    <span id="previewDuration">@Model.ThoiLuong</span> phút
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="mt-4 d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="fas fa-save"></i>
+                                        Lưu thay đổi
+                                    </button>
+                                    <a href="@Url.Action("CourseLessons", "Teacher", new { courseId = ViewBag.Course.CourseID })"
+                                       class="btn btn-outline-secondary">
+                                        <i class="fas fa-times"></i>
+                                        Hủy bỏ
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Real-time preview update
+            $('#TenBaiHoc').on('input', function() {
+                const title = $(this).val() || 'Tên bài học';
+                $('#previewTitle').text(title);
+            });
+
+            $('#ThoiLuong').on('input', function() {
+                const duration = $(this).val() || '0';
+                $('#previewDuration').text(duration);
+            });
+
+            // Form validation
+            $('#editLessonForm').on('submit', function(e) {
+                const title = $('#TenBaiHoc').val().trim();
+                const content = $('#NoiDung').val().trim();
+                const duration = $('#ThoiLuong').val();
+
+                if (!title) {
+                    e.preventDefault();
+                    toastr.error('Vui lòng nhập tên bài học!');
+                    $('#TenBaiHoc').focus();
+                    return false;
+                }
+
+                if (!content) {
+                    e.preventDefault();
+                    toastr.error('Vui lòng nhập nội dung bài học!');
+                    $('#NoiDung').focus();
+                    return false;
+                }
+
+                if (!duration || duration <= 0) {
+                    e.preventDefault();
+                    toastr.error('Vui lòng nhập thời lượng hợp lệ!');
+                    $('#ThoiLuong').focus();
+                    return false;
+                }
+
+                // Show loading
+                const submitBtn = $(this).find('button[type="submit"]');
+                submitBtn.prop('disabled', true);
+                submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Đang lưu...');
+            });
+
+            // Video URL validation
+            $('#VideoUrl').on('blur', function() {
+                const url = $(this).val();
+                if (url && !isValidVideoUrl(url)) {
+                    toastr.warning('Đường dẫn video có thể không hợp lệ');
+                }
+            });
+
+            function isValidVideoUrl(url) {
+                const videoRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be|vimeo\.com|.*\.(mp4|webm|ogg)).*$/i;
+                return videoRegex.test(url);
+            }
+
+            // Initialize AOS animations
+            AOS.refresh();
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        .lesson-preview {
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .lesson-icon i {
+            transition: all 0.3s ease;
+        }
+
+        .lesson-preview:hover .lesson-icon i {
+            transform: scale(1.1);
+            color: var(--bs-primary) !important;
+        }
+
+        .course-icon {
+            flex-shrink: 0;
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .form-label.fw-bold {
+            color: #2c3e50;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .form-control:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+        }
+    </style>
+}

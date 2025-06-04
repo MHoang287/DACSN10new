@@ -1,0 +1,481 @@
+﻿@model DACSN10.Models.Assignment
+@{
+    ViewData["Title"] = "Chỉnh sửa bài tập";
+    Layout = "~/Areas/Teacher/Views/Shared/_TeacherLayout.cshtml";
+    var course = ViewBag.Course as DACSN10.Models.Course;
+}
+
+<div class="container-fluid" data-aos="fade-up">
+    <!-- Breadcrumb -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="@Url.Action("Dashboard", "Teacher")">
+                            <i class="fas fa-home"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="@Url.Action("MyCourses", "Teacher")">Khóa học của tôi</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="@Url.Action("CourseAssignments", "Teacher", new { courseId = course.CourseID })">
+                            Bài tập - @course.TenKhoaHoc
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active">Chỉnh sửa bài tập</li>
+                </ol>
+            </nav>
+            <h1 class="page-title">
+                <i class="fas fa-edit text-primary"></i>
+                Chỉnh sửa bài tập
+            </h1>
+        </div>
+        <a href="@Url.Action("CourseAssignments", "Teacher", new { courseId = course.CourseID })"
+           class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
+
+    <!-- Assignment Status -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-primary">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <div class="assignment-icon me-3">
+                                <i class="fas fa-file-alt text-primary fs-2"></i>
+                            </div>
+                            <div>
+                                <h5 class="card-title mb-1">@Model.TenBaiTap</h5>
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-book"></i> @course.TenKhoaHoc |
+                                    <i class="fas fa-paper-plane"></i> @Model.Submissions.Count bài nộp
+                                </p>
+                            </div>
+                        </div>
+                        <div class="assignment-status">
+                            @if (Model.HanNop < DateTime.Now)
+                            {
+                                <span class="badge bg-danger fs-6">
+                                    <i class="fas fa-clock"></i> Đã hết hạn
+                                </span>
+                            }
+                            else if (Model.HanNop <= DateTime.Now.AddDays(3))
+                            {
+                                <span class="badge bg-warning fs-6">
+                                    <i class="fas fa-exclamation-triangle"></i> Sắp hết hạn
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success fs-6">
+                                    <i class="fas fa-check"></i> Đang mở
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Edit Form -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-edit text-primary"></i>
+                        Chỉnh sửa thông tin
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="EditAssignment" method="post" id="editAssignmentForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="AssignmentID" />
+                        <input type="hidden" asp-for="CourseID" />
+
+                        <!-- Assignment Name -->
+                        <div class="mb-4">
+                            <label asp-for="TenBaiTap" class="form-label fw-bold">
+                                <i class="fas fa-heading text-primary"></i>
+                                Tên bài tập <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="TenBaiTap" class="form-control form-control-lg"
+                                   placeholder="Nhập tên bài tập..." />
+                            <span asp-validation-for="TenBaiTap" class="text-danger"></span>
+                        </div>
+
+                        <!-- Assignment Description -->
+                        <div class="mb-4">
+                            <label asp-for="MoTa" class="form-label fw-bold">
+                                <i class="fas fa-align-left text-primary"></i>
+                                Mô tả bài tập <span class="text-danger">*</span>
+                            </label>
+                            <textarea asp-for="MoTa" class="form-control" rows="8"
+                                      placeholder="Mô tả chi tiết yêu cầu, hướng dẫn làm bài..."></textarea>
+                            <span asp-validation-for="MoTa" class="text-danger"></span>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle"></i>
+                                Lưu ý: Thay đổi mô tả có thể ảnh hưởng đến học viên đã làm bài
+                            </div>
+                        </div>
+
+                        <!-- Due Date -->
+                        <div class="mb-4">
+                            <label asp-for="HanNop" class="form-label fw-bold">
+                                <i class="fas fa-calendar-alt text-primary"></i>
+                                Hạn nộp bài <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="HanNop" class="form-control" type="datetime-local" />
+                            <span asp-validation-for="HanNop" class="text-danger"></span>
+                            <div class="form-text">
+                                <i class="fas fa-exclamation-triangle text-warning"></i>
+                                Cẩn thận khi thay đổi hạn nộp nếu đã có học viên nộp bài
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="@Url.Action("CourseAssignments", "Teacher", new { courseId = course.CourseID })"
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Hủy bỏ
+                            </a>
+                            <div>
+                                <a href="@Url.Action("AssignmentSubmissions", "Teacher", new { assignmentId = Model.AssignmentID })"
+                                   class="btn btn-info me-2">
+                                    <i class="fas fa-paper-plane"></i>
+                                    Xem bài nộp (@Model.Submissions.Count)
+                                </a>
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-save"></i> Lưu thay đổi
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assignment Info -->
+        <div class="col-md-4">
+            <!-- Assignment Stats -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-bar"></i>
+                        Thống kê bài tập
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="stats-grid">
+                        <div class="stat-item text-center mb-3">
+                            <div class="stat-number text-info display-6">
+                                @Model.Submissions.Count
+                            </div>
+                            <div class="stat-label text-muted">Tổng bài nộp</div>
+                        </div>
+
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="stat-number text-success h4">
+                                    @Model.Submissions.Count(s => s.Diem.HasValue)
+                                </div>
+                                <div class="stat-label text-muted small">Đã chấm điểm</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-number text-warning h4">
+                                    @Model.Submissions.Count(s => !s.Diem.HasValue)
+                                </div>
+                                <div class="stat-label text-muted small">Chưa chấm điểm</div>
+                            </div>
+                        </div>
+
+                        @if (Model.Submissions.Any(s => s.Diem.HasValue))
+                        {
+                            <hr>
+                            <div class="text-center">
+                                <div class="stat-number text-primary h5">
+                                    @Model.Submissions.Where(s => s.Diem.HasValue).Average(s => s.Diem.Value).ToString("F1")
+                                </div>
+                                <div class="stat-label text-muted small">Điểm trung bình</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assignment Timeline -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-clock"></i>
+                        Thời gian
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline-info">
+                        <div class="info-item mb-3">
+                            <label class="fw-bold text-muted small">Hạn nộp:</label>
+                            <div class="fs-6 @(Model.HanNop < DateTime.Now ? "text-danger" : "text-dark")">
+                                @Model.HanNop.ToString("dd/MM/yyyy HH:mm")
+                            </div>
+                        </div>
+
+                        <div class="info-item mb-3">
+                            <label class="fw-bold text-muted small">Thời gian còn lại:</label>
+                            <div class="time-remaining">
+                                @{
+                                    var timeRemaining = Model.HanNop - DateTime.Now;
+                                    if (timeRemaining.TotalMinutes > 0)
+                                    {
+                                        if (timeRemaining.TotalDays >= 1)
+                                        {
+                                            <span class="text-success">
+                                                <i class="fas fa-check-circle"></i>
+                                                @((int)timeRemaining.TotalDays) ngày @(timeRemaining.Hours) giờ
+                                            </span>
+                                        }
+                                        else if (timeRemaining.TotalHours >= 1)
+                                        {
+                                            <span class="text-warning">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                                @((int)timeRemaining.TotalHours) giờ @(timeRemaining.Minutes) phút
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-danger">
+                                                <i class="fas fa-clock"></i>
+                                                @((int)timeRemaining.TotalMinutes) phút
+                                            </span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-danger">
+                                            <i class="fas fa-times-circle"></i>
+                                            Đã hết hạn
+                                        </span>
+                                    }
+                                }
+                            </div>
+                        </div>
+
+                        @if (Model.Submissions.Any())
+                        {
+                            <div class="info-item">
+                                <label class="fw-bold text-muted small">Bài nộp gần nhất:</label>
+                                <div class="text-info">
+                                    @Model.Submissions.OrderByDescending(s => s.NgayNop).First().NgayNop.ToString("dd/MM/yyyy HH:mm")
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt"></i>
+                        Thao tác nhanh
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="@Url.Action("AssignmentSubmissions", "Teacher", new { assignmentId = Model.AssignmentID })"
+                           class="btn btn-outline-info">
+                            <i class="fas fa-paper-plane"></i>
+                            Xem tất cả bài nộp
+                        </a>
+
+                        @if (Model.Submissions.Any(s => !s.Diem.HasValue))
+                        {
+                            <a href="@Url.Action("AssignmentSubmissions", "Teacher", new { assignmentId = Model.AssignmentID })"
+                               class="btn btn-outline-warning">
+                                <i class="fas fa-star-half-alt"></i>
+                                Chấm điểm (@Model.Submissions.Count(s => !s.Diem.HasValue) bài chưa chấm)
+                            </a>
+                        }
+
+                        <button class="btn btn-outline-danger" onclick="confirmDelete()">
+                            <i class="fas fa-trash"></i>
+                            Xóa bài tập
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Form validation
+            $('#editAssignmentForm').on('submit', function(e) {
+                const title = $('#TenBaiTap').val().trim();
+                const description = $('#MoTa').val().trim();
+                const dueDate = $('#HanNop').val();
+
+                if (!title) {
+                    e.preventDefault();
+                    toastr.error('Vui lòng nhập tên bài tập!');
+                    $('#TenBaiTap').focus();
+                    return false;
+                }
+
+                if (!description) {
+                    e.preventDefault();
+                    toastr.error('Vui lòng nhập mô tả bài tập!');
+                    $('#MoTa').focus();
+                    return false;
+                }
+
+                if (!dueDate) {
+                    e.preventDefault();
+                    toastr.error('Vui lòng chọn hạn nộp bài!');
+                    $('#HanNop').focus();
+                    return false;
+                }
+
+                // Warning if changing due date when submissions exist
+                const submissionCount = @Model.Submissions.Count;
+                const originalDueDate = '@Model.HanNop.ToString("yyyy-MM-ddTHH:mm")';
+
+                if (submissionCount > 0 && dueDate !== originalDueDate) {
+                    e.preventDefault();
+
+                    Swal.fire({
+                        title: 'Xác nhận thay đổi',
+                        text: `Có ${submissionCount} bài nộp. Bạn có chắc muốn thay đổi hạn nộp?`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Có, thay đổi',
+                        cancelButtonText: 'Hủy'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Show loading and submit
+                            const submitBtn = $(this).find('button[type="submit"]');
+                            submitBtn.prop('disabled', true);
+                            submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Đang lưu...');
+                            this.submit();
+                        }
+                    });
+                    return false;
+                }
+
+                // Show loading
+                const submitBtn = $(this).find('button[type="submit"]');
+                submitBtn.prop('disabled', true);
+                submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Đang lưu...');
+            });
+        });
+
+        function confirmDelete() {
+            const submissionCount = @Model.Submissions.Count;
+            let message = 'Bạn có chắc chắn muốn xóa bài tập này?';
+
+            if (submissionCount > 0) {
+                message += ` Có ${submissionCount} bài nộp sẽ bị xóa cùng!`;
+            }
+
+            Swal.fire({
+                title: 'Xác nhận xóa',
+                text: message,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Xóa',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post('@Url.Action("DeleteAssignment", "Teacher")', {
+                        id: @Model.AssignmentID,
+                        '__RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    })
+                    .done(function(response) {
+                        if (response.success) {
+                            toastr.success(response.message);
+                            setTimeout(() => {
+                                window.location.href = '@Url.Action("CourseAssignments", "Teacher", new { courseId = course.CourseID })';
+                            }, 1000);
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    })
+                    .fail(function() {
+                        toastr.error('Có lỗi xảy ra khi xóa bài tập!');
+                    });
+                }
+            });
+        }
+    </script>
+}
+
+@section Styles {
+    <style>
+        .assignment-icon {
+            flex-shrink: 0;
+        }
+
+        .assignment-status .badge {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .stats-grid .stat-item {
+            padding: 1rem 0;
+        }
+
+        .stat-number {
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        .info-item label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .time-remaining {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .form-label.fw-bold {
+            color: #2c3e50;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .form-control:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+        }
+    </style>
+}

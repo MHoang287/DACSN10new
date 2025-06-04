@@ -1,0 +1,438 @@
+﻿@model DACSN10.Models.Quiz
+@{
+    ViewData["Title"] = "Chỉnh sửa bài kiểm tra";
+    Layout = "~/Areas/Teacher/Views/Shared/_TeacherLayout.cshtml";
+}
+
+<div class="container-fluid" data-aos="fade-up">
+    <!-- Breadcrumb -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="@Url.Action("Dashboard", "Teacher")">
+                            <i class="fas fa-home"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="@Url.Action("MyCourses", "Teacher")">Khóa học của tôi</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="@Url.Action("CourseQuizzes", "Teacher", new { courseId = Model.CourseID })">
+                            @Model.Course.TenKhoaHoc
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active">Chỉnh sửa quiz</li>
+                </ol>
+            </nav>
+            <h1 class="page-title">
+                <i class="fas fa-edit text-primary"></i>
+                Chỉnh sửa bài kiểm tra: @Model.Title
+            </h1>
+        </div>
+        <a href="@Url.Action("CourseQuizzes", "Teacher", new { courseId = Model.CourseID })"
+           class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
+
+    <!-- Quiz Info -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-info">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h5 class="card-title text-info">
+                                <i class="fas fa-question-circle"></i>
+                                @Model.Title
+                            </h5>
+                            <p class="text-muted mb-0">
+                                Khóa học: <strong>@Model.Course.TenKhoaHoc</strong>
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="quiz-stats">
+                                <span class="badge bg-primary fs-6">
+                                    <i class="fas fa-list"></i>
+                                    @Model.Questions.Count câu hỏi
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Questions List -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list text-primary"></i>
+                        Danh sách câu hỏi
+                    </h5>
+                    <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addQuestionModal">
+                        <i class="fas fa-plus"></i> Thêm câu hỏi
+                    </button>
+                </div>
+                <div class="card-body">
+                    @if (Model.Questions.Any())
+                    {
+                        <div class="questions-list">
+                            @foreach (var question in Model.Questions.OrderBy(q => q.QuestionID))
+                            {
+                                <div class="question-item border rounded p-3 mb-3" data-question-id="@question.QuestionID">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="question-content flex-grow-1">
+                                            <h6 class="question-text fw-bold text-dark">
+                                                <span class="question-number badge bg-secondary me-2">
+                                                    @(Model.Questions.OrderBy(q => q.QuestionID).ToList().IndexOf(question) + 1)
+                                                </span>
+                                                @question.QuestionText
+                                            </h6>
+
+                                            <div class="options mt-2">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="option @(question.CorrectAnswer == "A" ? "correct-option" : "")">
+                                                            <strong>A.</strong> @question.OptionA
+                                                            @if (question.CorrectAnswer == "A")
+                                                            {
+                                                                <i class="fas fa-check-circle text-success ms-1"></i>
+                                                            }
+                                                        </div>
+                                                        <div class="option @(question.CorrectAnswer == "B" ? "correct-option" : "")">
+                                                            <strong>B.</strong> @question.OptionB
+                                                            @if (question.CorrectAnswer == "B")
+                                                            {
+                                                                <i class="fas fa-check-circle text-success ms-1"></i>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        @if (!string.IsNullOrEmpty(question.OptionC))
+                                                        {
+                                                            <div class="option @(question.CorrectAnswer == "C" ? "correct-option" : "")">
+                                                                <strong>C.</strong> @question.OptionC
+                                                                @if (question.CorrectAnswer == "C")
+                                                                {
+                                                                    <i class="fas fa-check-circle text-success ms-1"></i>
+                                                                }
+                                                            </div>
+                                                        }
+                                                        @if (!string.IsNullOrEmpty(question.OptionD))
+                                                        {
+                                                            <div class="option @(question.CorrectAnswer == "D" ? "correct-option" : "")">
+                                                                <strong>D.</strong> @question.OptionD
+                                                                @if (question.CorrectAnswer == "D")
+                                                                {
+                                                                    <i class="fas fa-check-circle text-success ms-1"></i>
+                                                                }
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="question-actions">
+                                            <button class="btn btn-sm btn-outline-danger delete-question"
+                                                    data-question-id="@question.QuestionID"
+                                                    title="Xóa câu hỏi">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-question-circle text-muted display-1"></i>
+                            <h4 class="text-muted mt-3">Chưa có câu hỏi nào</h4>
+                            <p class="text-muted">Hãy thêm câu hỏi đầu tiên cho bài kiểm tra này</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Settings -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-cog"></i>
+                        Cài đặt bài kiểm tra
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="quiz-info">
+                        <div class="info-item mb-3">
+                            <label class="fw-bold text-muted">Tổng số câu hỏi:</label>
+                            <div class="fs-4 text-primary fw-bold">
+                                @Model.Questions.Count câu
+                            </div>
+                        </div>
+
+                        <div class="info-item mb-3">
+                            <label class="fw-bold text-muted">Thời gian ước tính:</label>
+                            <div class="text-info">
+                                <i class="fas fa-clock"></i>
+                                @(Model.Questions.Count * 2) phút
+                            </div>
+                        </div>
+
+                        <div class="info-item mb-3">
+                            <label class="fw-bold text-muted">Trạng thái:</label>
+                            <div>
+                                @if (Model.Questions.Count > 0)
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check"></i> Sẵn sàng
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-exclamation-triangle"></i> Chưa hoàn thành
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addQuestionModal">
+                            <i class="fas fa-plus"></i> Thêm câu hỏi
+                        </button>
+                        <a href="@Url.Action("CourseQuizzes", "Teacher", new { courseId = Model.CourseID })"
+                           class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Quay lại danh sách
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Question Modal -->
+<div class="modal fade" id="addQuestionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle"></i>
+                    Thêm câu hỏi mới
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addQuestionForm">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-question"></i>
+                            Câu hỏi <span class="text-danger">*</span>
+                        </label>
+                        <textarea name="QuestionText" class="form-control" rows="3"
+                                  placeholder="Nhập nội dung câu hỏi..." required></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Đáp án A <span class="text-danger">*</span></label>
+                                <input type="text" name="OptionA" class="form-control"
+                                       placeholder="Nhập đáp án A..." required />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Đáp án B <span class="text-danger">*</span></label>
+                                <input type="text" name="OptionB" class="form-control"
+                                       placeholder="Nhập đáp án B..." required />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Đáp án C</label>
+                                <input type="text" name="OptionC" class="form-control"
+                                       placeholder="Nhập đáp án C (tùy chọn)..." />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Đáp án D</label>
+                                <input type="text" name="OptionD" class="form-control"
+                                       placeholder="Nhập đáp án D (tùy chọn)..." />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-check-circle text-success"></i>
+                            Đáp án đúng <span class="text-danger">*</span>
+                        </label>
+                        <select name="CorrectAnswer" class="form-select" required>
+                            <option value="">-- Chọn đáp án đúng --</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Hủy
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Thêm câu hỏi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Add question
+            $('#addQuestionForm').on('submit', function(e) {
+                e.preventDefault();
+
+                const formData = {
+                    QuestionText: $('textarea[name="QuestionText"]').val(),
+                    OptionA: $('input[name="OptionA"]').val(),
+                    OptionB: $('input[name="OptionB"]').val(),
+                    OptionC: $('input[name="OptionC"]').val(),
+                    OptionD: $('input[name="OptionD"]').val(),
+                    CorrectAnswer: $('select[name="CorrectAnswer"]').val(),
+                    '__RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                };
+
+                $.post('@Url.Action("AddQuestion", "Teacher", new { quizId = Model.QuizID })', formData)
+                    .done(function(response) {
+                        if (response.success) {
+                            toastr.success(response.message);
+                            $('#addQuestionModal').modal('hide');
+                            location.reload();
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    })
+                    .fail(function() {
+                        toastr.error('Có lỗi xảy ra khi thêm câu hỏi!');
+                    });
+            });
+
+            // Delete question
+            $('.delete-question').on('click', function() {
+                const questionId = $(this).data('question-id');
+                const questionItem = $(this).closest('.question-item');
+
+                Swal.fire({
+                    title: 'Xác nhận xóa',
+                    text: 'Bạn có chắc chắn muốn xóa câu hỏi này?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Xóa',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.post('@Url.Action("DeleteQuestion", "Teacher")', {
+                            id: questionId,
+                            '__RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        })
+                        .done(function(response) {
+                            if (response.success) {
+                                toastr.success(response.message);
+                                questionItem.fadeOut(300, function() {
+                                    $(this).remove();
+                                    updateQuestionNumbers();
+                                });
+                            } else {
+                                toastr.error(response.message);
+                            }
+                        })
+                        .fail(function() {
+                            toastr.error('Có lỗi xảy ra khi xóa câu hỏi!');
+                        });
+                    }
+                });
+            });
+
+            // Update question numbers after deletion
+            function updateQuestionNumbers() {
+                $('.question-number').each(function(index) {
+                    $(this).text(index + 1);
+                });
+            }
+
+            // Clear modal form when closed
+            $('#addQuestionModal').on('hidden.bs.modal', function() {
+                $('#addQuestionForm')[0].reset();
+            });
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        .question-item {
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+
+            .question-item:hover {
+                box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+                transform: translateY(-2px);
+            }
+
+        .option {
+            padding: 0.5rem 0;
+            color: #6c757d;
+        }
+
+        .correct-option {
+            color: #198754;
+            font-weight: 600;
+        }
+
+        .question-number {
+            font-size: 0.75rem;
+        }
+
+        .quiz-stats .badge {
+            padding: 0.5rem 1rem;
+        }
+
+        .info-item label {
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0;
+        }
+    </style>
+}

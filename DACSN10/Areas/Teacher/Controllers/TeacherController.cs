@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace DACSN10.Controllers
 {
+    [Area("Teacher")]
     [Authorize(Roles = RoleNames.Teacher)]
     public class TeacherController : Controller
     {

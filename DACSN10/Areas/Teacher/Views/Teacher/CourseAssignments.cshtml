@@ -1,0 +1,425 @@
+﻿@model IEnumerable<DACSN10.Models.Assignment>
+@{
+    ViewData["Title"] = "Quản lý bài tập";
+    Layout = "~/Areas/Teacher/Views/Shared/_TeacherLayout.cshtml";
+    var course = ViewBag.Course as DACSN10.Models.Course;
+}
+
+<div class="container-fluid" data-aos="fade-up">
+    <!-- Breadcrumb -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="@Url.Action("Dashboard", "Teacher")">
+                            <i class="fas fa-home"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="@Url.Action("MyCourses", "Teacher")">Khóa học của tôi</a>
+                    </li>
+                    <li class="breadcrumb-item active">Bài tập - @course.TenKhoaHoc</li>
+                </ol>
+            </nav>
+            <h1 class="page-title">
+                <i class="fas fa-tasks text-primary"></i>
+                Quản lý bài tập
+            </h1>
+        </div>
+        <div class="page-actions">
+            <a href="@Url.Action("CreateAssignment", "Teacher", new { courseId = course.CourseID })"
+               class="btn btn-success me-2">
+                <i class="fas fa-plus"></i> Tạo bài tập mới
+            </a>
+            <a href="@Url.Action("MyCourses", "Teacher")" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Quay lại
+            </a>
+        </div>
+    </div>
+
+    <!-- Course Info -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-primary">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <div class="course-icon me-3">
+                                <i class="fas fa-book-open text-primary fs-2"></i>
+                            </div>
+                            <div>
+                                <h5 class="card-title mb-1">@course.TenKhoaHoc</h5>
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-tag"></i> ID: @course.CourseID |
+                                    <i class="fas fa-tasks"></i> @Model.Count() bài tập
+                                </p>
+                            </div>
+                        </div>
+                        <div class="course-stats">
+                            <div class="stat-item text-center">
+                                <div class="stat-number text-primary">@Model.Count()</div>
+                                <div class="stat-label">Tổng bài tập</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assignments List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list text-primary"></i>
+                        Danh sách bài tập
+                    </h5>
+                    <div class="header-actions">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-sm btn-outline-primary active" id="gridView">
+                                <i class="fas fa-th-large"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="listView">
+                                <i class="fas fa-list"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (Model.Any())
+                    {
+                        <!-- Grid View -->
+                        <div id="gridViewContent" class="row">
+                            @foreach (var assignment in Model)
+                            {
+                                <div class="col-md-6 col-lg-4 mb-4" data-aos="fade-up" data-aos-delay="@(Model.ToList().IndexOf(assignment) * 100)">
+                                    <div class="assignment-card h-100">
+                                        <div class="card h-100 border-0 shadow-sm">
+                                            <div class="card-header bg-gradient-primary text-white">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <h6 class="card-title mb-0 text-truncate">
+                                                        <i class="fas fa-file-alt"></i>
+                                                        @assignment.TenBaiTap
+                                                    </h6>
+                                                    <div class="dropdown">
+                                                        <button class="btn btn-sm btn-outline-light" data-bs-toggle="dropdown">
+                                                            <i class="fas fa-ellipsis-v"></i>
+                                                        </button>
+                                                        <ul class="dropdown-menu">
+                                                            <li>
+                                                                <a class="dropdown-item" href="@Url.Action("EditAssignment", "Teacher", new { id = assignment.AssignmentID })">
+                                                                    <i class="fas fa-edit"></i> Chỉnh sửa
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a class="dropdown-item" href="@Url.Action("AssignmentSubmissions", "Teacher", new { assignmentId = assignment.AssignmentID })">
+                                                                    <i class="fas fa-paper-plane"></i> Bài nộp
+                                                                </a>
+                                                            </li>
+                                                            <li><hr class="dropdown-divider"></li>
+                                                            <li>
+                                                                <a class="dropdown-item text-danger delete-assignment" href="#"
+                                                                   data-assignment-id="@assignment.AssignmentID">
+                                                                    <i class="fas fa-trash"></i> Xóa
+                                                                </a>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="card-body">
+                                                <p class="card-text text-muted mb-3">
+                                                    @(assignment.MoTa.Length > 100 ? assignment.MoTa.Substring(0, 100) + "..." : assignment.MoTa)
+                                                </p>
+
+                                                <div class="assignment-meta">
+                                                    <div class="meta-item mb-2">
+                                                        <i class="fas fa-calendar-alt text-warning"></i>
+                                                        <span class="ms-1">
+                                                            Hạn nộp: <strong>@assignment.HanNop.ToString("dd/MM/yyyy HH:mm")</strong>
+                                                        </span>
+                                                    </div>
+
+                                                    <div class="meta-item mb-2">
+                                                        <i class="fas fa-paper-plane text-info"></i>
+                                                        <span class="ms-1">
+                                                            @assignment.Submissions.Count bài nộp
+                                                        </span>
+                                                    </div>
+
+                                                    <div class="meta-item">
+                                                        @if (assignment.HanNop < DateTime.Now)
+                                                        {
+                                                            <span class="badge bg-danger">
+                                                                <i class="fas fa-clock"></i> Đã hết hạn
+                                                            </span>
+                                                        }
+                                                        else if (assignment.HanNop <= DateTime.Now.AddDays(3))
+                                                        {
+                                                            <span class="badge bg-warning">
+                                                                <i class="fas fa-exclamation-triangle"></i> Sắp hết hạn
+                                                            </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge bg-success">
+                                                                <i class="fas fa-check"></i> Đang mở
+                                                            </span>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="card-footer bg-light">
+                                                <div class="d-flex justify-content-between">
+                                                    <a href="@Url.Action("EditAssignment", "Teacher", new { id = assignment.AssignmentID })"
+                                                       class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-edit"></i> Sửa
+                                                    </a>
+                                                    <a href="@Url.Action("AssignmentSubmissions", "Teacher", new { assignmentId = assignment.AssignmentID })"
+                                                       class="btn btn-sm btn-info">
+                                                        <i class="fas fa-paper-plane"></i>
+                                                        Bài nộp (@assignment.Submissions.Count)
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- List View (Hidden by default) -->
+                        <div id="listViewContent" class="d-none">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th><i class="fas fa-hashtag"></i> STT</th>
+                                            <th><i class="fas fa-file-alt"></i> Tên bài tập</th>
+                                            <th><i class="fas fa-calendar-alt"></i> Hạn nộp</th>
+                                            <th><i class="fas fa-paper-plane"></i> Bài nộp</th>
+                                            <th><i class="fas fa-check-circle"></i> Trạng thái</th>
+                                            <th><i class="fas fa-cogs"></i> Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var assignment in Model.Select((item, index) => new { item, index }))
+                                        {
+                                            <tr>
+                                                <td>@(assignment.index + 1)</td>
+                                                <td>
+                                                    <div>
+                                                        <strong>@assignment.item.TenBaiTap</strong>
+                                                        <div class="text-muted small">
+                                                            @(assignment.item.MoTa.Length > 50 ? assignment.item.MoTa.Substring(0, 50) + "..." : assignment.item.MoTa)
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span class="@(assignment.item.HanNop < DateTime.Now ? "text-danger" : "text-dark")">
+                                                        @assignment.item.HanNop.ToString("dd/MM/yyyy")
+                                                        <br>
+                                                        <small>@assignment.item.HanNop.ToString("HH:mm")</small>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-info">
+                                                        @assignment.item.Submissions.Count
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    @if (assignment.item.HanNop < DateTime.Now)
+                                                    {
+                                                        <span class="badge bg-danger">Đã hết hạn</span>
+                                                    }
+                                                    else if (assignment.item.HanNop <= DateTime.Now.AddDays(3))
+                                                    {
+                                                        <span class="badge bg-warning">Sắp hết hạn</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-success">Đang mở</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group" role="group">
+                                                        <a href="@Url.Action("EditAssignment", "Teacher", new { id = assignment.item.AssignmentID })"
+                                                           class="btn btn-sm btn-outline-primary" title="Chỉnh sửa">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        <a href="@Url.Action("AssignmentSubmissions", "Teacher", new { assignmentId = assignment.item.AssignmentID })"
+                                                           class="btn btn-sm btn-outline-info" title="Xem bài nộp">
+                                                            <i class="fas fa-paper-plane"></i>
+                                                        </a>
+                                                        <button class="btn btn-sm btn-outline-danger delete-assignment"
+                                                                data-assignment-id="@assignment.item.AssignmentID" title="Xóa">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state text-center py-5">
+                            <i class="fas fa-tasks text-muted display-1"></i>
+                            <h4 class="text-muted mt-3">Chưa có bài tập nào</h4>
+                            <p class="text-muted mb-4">Hãy tạo bài tập đầu tiên cho khóa học này</p>
+                            <a href="@Url.Action("CreateAssignment", "Teacher", new { courseId = course.CourseID })"
+                               class="btn btn-success">
+                                <i class="fas fa-plus"></i> Tạo bài tập đầu tiên
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // View toggle
+            $('#gridView, #listView').on('click', function() {
+                const isGridView = $(this).attr('id') === 'gridView';
+
+                // Toggle active state
+                $('#gridView, #listView').removeClass('active');
+                $(this).addClass('active');
+
+                // Toggle content
+                if (isGridView) {
+                    $('#gridViewContent').removeClass('d-none');
+                    $('#listViewContent').addClass('d-none');
+                } else {
+                    $('#gridViewContent').addClass('d-none');
+                    $('#listViewContent').removeClass('d-none');
+                }
+
+                // Save preference
+                localStorage.setItem('assignmentViewType', isGridView ? 'grid' : 'list');
+            });
+
+            // Restore view preference
+            const savedViewType = localStorage.getItem('assignmentViewType') || 'grid';
+            if (savedViewType === 'list') {
+                $('#listView').click();
+            }
+
+            // Delete assignment
+            $('.delete-assignment').on('click', function(e) {
+                e.preventDefault();
+                const assignmentId = $(this).data('assignment-id');
+
+                Swal.fire({
+                    title: 'Xác nhận xóa',
+                    text: 'Bạn có chắc chắn muốn xóa bài tập này? Tất cả bài nộp sẽ bị xóa!',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Xóa',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.post('@Url.Action("DeleteAssignment", "Teacher")', {
+                            id: assignmentId,
+                            '__RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        })
+                        .done(function(response) {
+                            if (response.success) {
+                                toastr.success(response.message);
+                                setTimeout(() => location.reload(), 1000);
+                            } else {
+                                toastr.error(response.message);
+                            }
+                        })
+                        .fail(function() {
+                            toastr.error('Có lỗi xảy ra khi xóa bài tập!');
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        .assignment-card {
+            transition: all 0.3s ease;
+        }
+
+            .assignment-card:hover {
+                transform: translateY(-5px);
+            }
+
+            .assignment-card .card {
+                border: 1px solid #e3e6f0;
+            }
+
+                .assignment-card .card:hover {
+                    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+                }
+
+        .bg-gradient-primary {
+            background: linear-gradient(45deg, #3b82f6, #1d4ed8);
+        }
+
+        .meta-item {
+            font-size: 0.875rem;
+        }
+
+        .course-icon {
+            flex-shrink: 0;
+        }
+
+        .stat-item {
+            padding: 0 1rem;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .empty-state {
+            padding: 3rem 0;
+        }
+
+        .table th {
+            border-top: none;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .btn-group .btn {
+            border-radius: 0.375rem !important;
+            margin-right: 0.25rem;
+        }
+
+            .btn-group .btn:last-child {
+                margin-right: 0;
+            }
+    </style>
+}

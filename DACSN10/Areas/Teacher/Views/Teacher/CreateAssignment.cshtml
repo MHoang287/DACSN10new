@@ -1,0 +1,446 @@
+﻿@model DACSN10.Models.Assignment
+@{
+    ViewData["Title"] = "Tạo bài tập mới";
+    Layout = "~/Areas/Teacher/Views/Shared/_TeacherLayout.cshtml";
+    var course = ViewBag.Course as DACSN10.Models.Course;
+}
+
+<div class="container-fluid" data-aos="fade-up">
+    <!-- Breadcrumb -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="@Url.Action("Dashboard", "Teacher")">
+                            <i class="fas fa-home"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="@Url.Action("MyCourses", "Teacher")">Khóa học của tôi</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="@Url.Action("CourseAssignments", "Teacher", new { courseId = course.CourseID })">
+                            Bài tập - @course.TenKhoaHoc
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active">Tạo bài tập mới</li>
+                </ol>
+            </nav>
+            <h1 class="page-title">
+                <i class="fas fa-plus-circle text-success"></i>
+                Tạo bài tập mới
+            </h1>
+        </div>
+        <a href="@Url.Action("CourseAssignments", "Teacher", new { courseId = course.CourseID })"
+           class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
+
+    <!-- Course Info -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-success">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="course-icon me-3">
+                            <i class="fas fa-book-open text-success fs-2"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title mb-1">@course.TenKhoaHoc</h5>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-tag"></i> ID: @course.CourseID
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Assignment Form -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-file-alt text-success"></i>
+                        Thông tin bài tập
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="CreateAssignment" method="post" id="createAssignmentForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="CourseID" />
+
+                        <!-- Assignment Name -->
+                        <div class="mb-4">
+                            <label asp-for="TenBaiTap" class="form-label fw-bold">
+                                <i class="fas fa-heading text-success"></i>
+                                Tên bài tập <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="TenBaiTap" class="form-control form-control-lg"
+                                   placeholder="Nhập tên bài tập..." />
+                            <span asp-validation-for="TenBaiTap" class="text-danger"></span>
+                        </div>
+
+                        <!-- Assignment Description -->
+                        <div class="mb-4">
+                            <label asp-for="MoTa" class="form-label fw-bold">
+                                <i class="fas fa-align-left text-success"></i>
+                                Mô tả bài tập <span class="text-danger">*</span>
+                            </label>
+                            <textarea asp-for="MoTa" class="form-control" rows="8"
+                                      placeholder="Mô tả chi tiết yêu cầu, hướng dẫn làm bài..."></textarea>
+                            <span asp-validation-for="MoTa" class="text-danger"></span>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle"></i>
+                                Hãy mô tả rõ ràng yêu cầu, tiêu chí chấm điểm và hướng dẫn nộp bài
+                            </div>
+                        </div>
+
+                        <!-- Due Date -->
+                        <div class="mb-4">
+                            <label asp-for="HanNop" class="form-label fw-bold">
+                                <i class="fas fa-calendar-alt text-success"></i>
+                                Hạn nộp bài <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="HanNop" class="form-control" type="datetime-local" />
+                            <span asp-validation-for="HanNop" class="text-danger"></span>
+                            <div class="form-text">
+                                <i class="fas fa-clock"></i>
+                                Thời gian hiện tại: <span id="currentTime"></span>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="@Url.Action("CourseAssignments", "Teacher", new { courseId = course.CourseID })"
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Hủy bỏ
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-save"></i> Tạo bài tập
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assignment Tips -->
+        <div class="col-md-4">
+            <!-- Tips Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-lightbulb"></i>
+                        Gợi ý tạo bài tập hiệu quả
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="tips-list">
+                        <div class="tip-item mb-3">
+                            <div class="tip-icon">
+                                <i class="fas fa-check-circle text-success"></i>
+                            </div>
+                            <div class="tip-content">
+                                <strong>Tên bài tập rõ ràng:</strong>
+                                <small class="text-muted d-block">
+                                    Đặt tên ngắn gọn, dễ hiểu và thể hiện nội dung chính
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="tip-item mb-3">
+                            <div class="tip-icon">
+                                <i class="fas fa-file-alt text-primary"></i>
+                            </div>
+                            <div class="tip-content">
+                                <strong>Mô tả chi tiết:</strong>
+                                <small class="text-muted d-block">
+                                    Bao gồm yêu cầu, định dạng nộp bài, tiêu chí chấm điểm
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="tip-item mb-3">
+                            <div class="tip-icon">
+                                <i class="fas fa-calendar-check text-warning"></i>
+                            </div>
+                            <div class="tip-content">
+                                <strong>Thời gian hợp lý:</strong>
+                                <small class="text-muted d-block">
+                                    Đặt hạn nộp phù hợp với độ khó của bài tập
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="tip-item mb-3">
+                            <div class="tip-icon">
+                                <i class="fas fa-star text-warning"></i>
+                            </div>
+                            <div class="tip-content">
+                                <strong>Tiêu chí đánh giá:</strong>
+                                <small class="text-muted d-block">
+                                    Nêu rõ thang điểm và tiêu chí chấm bài
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Card -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-eye"></i>
+                        Xem trước bài tập
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="assignment-preview">
+                        <div class="preview-icon text-center mb-3">
+                            <i class="fas fa-file-alt text-success display-4"></i>
+                        </div>
+
+                        <h6 class="preview-title text-center mb-3" id="previewTitle">
+                            Tên bài tập sẽ hiển thị ở đây
+                        </h6>
+
+                        <div class="preview-meta">
+                            <div class="meta-item mb-2">
+                                <i class="fas fa-book text-primary"></i>
+                                <span class="ms-2">@course.TenKhoaHoc</span>
+                            </div>
+
+                            <div class="meta-item mb-2">
+                                <i class="fas fa-calendar-alt text-warning"></i>
+                                <span class="ms-2" id="previewDueDate">Chưa đặt hạn nộp</span>
+                            </div>
+
+                            <div class="meta-item">
+                                <i class="fas fa-clock text-info"></i>
+                                <span class="ms-2" id="timeRemaining">--</span>
+                            </div>
+                        </div>
+
+                        <div class="preview-description mt-3">
+                            <strong>Mô tả:</strong>
+                            <div class="text-muted" id="previewDescription">
+                                Mô tả bài tập sẽ hiển thị ở đây...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Update current time
+            function updateCurrentTime() {
+                const now = new Date();
+                const formatted = now.toLocaleString('vi-VN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                $('#currentTime').text(formatted);
+            }
+
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000);
+
+            // Set default due date (7 days from now)
+            if (!$('#HanNop').val()) {
+                const defaultDate = new Date();
+                defaultDate.setDate(defaultDate.getDate() + 7);
+                defaultDate.setHours(23, 59, 0, 0);
+
+                const formatted = defaultDate.toISOString().slice(0, 16);
+                $('#HanNop').val(formatted);
+                updatePreviewDueDate();
+            }
+
+            // Real-time preview updates
+            $('#TenBaiTap').on('input', function() {
+                const title = $(this).val().trim() || 'Tên bài tập sẽ hiển thị ở đây';
+                $('#previewTitle').text(title);
+            });
+
+            $('#MoTa').on('input', function() {
+                const description = $(this).val().trim() || 'Mô tả bài tập sẽ hiển thị ở đây...';
+                const truncated = description.length > 100 ? description.substring(0, 100) + '...' : description;
+                $('#previewDescription').text(truncated);
+            });
+
+            $('#HanNop').on('change', updatePreviewDueDate);
+
+            function updatePreviewDueDate() {
+                const dueDateValue = $('#HanNop').val();
+                if (dueDateValue) {
+                    const dueDate = new Date(dueDateValue);
+                    const formatted = dueDate.toLocaleString('vi-VN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    $('#previewDueDate').text(formatted);
+
+                    // Calculate time remaining
+                    const now = new Date();
+                    const timeDiff = dueDate - now;
+
+                    if (timeDiff > 0) {
+                        const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+                        const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+                        let timeText = '';
+                        if (days > 0) {
+                            timeText = `${days} ngày ${hours} giờ`;
+                        } else if (hours > 0) {
+                            timeText = `${hours} giờ`;
+                        } else {
+                            timeText = 'Dưới 1 giờ';
+                        }
+                        $('#timeRemaining').text(`Còn ${timeText}`);
+                    } else {
+                        $('#timeRemaining').text('Đã quá hạn').addClass('text-danger');
+                    }
+                } else {
+                    $('#previewDueDate').text('Chưa đặt hạn nộp');
+                    $('#timeRemaining').text('--');
+                }
+            }
+
+            // Form validation
+            $('#createAssignmentForm').on('submit', function(e) {
+                const title = $('#TenBaiTap').val().trim();
+                const description = $('#MoTa').val().trim();
+                const dueDate = $('#HanNop').val();
+
+                if (!title) {
+                    e.preventDefault();
+                    toastr.error('Vui lòng nhập tên bài tập!');
+                    $('#TenBaiTap').focus();
+                    return false;
+                }
+
+                if (!description) {
+                    e.preventDefault();
+                    toastr.error('Vui lòng nhập mô tả bài tập!');
+                    $('#MoTa').focus();
+                    return false;
+                }
+
+                if (!dueDate) {
+                    e.preventDefault();
+                    toastr.error('Vui lòng chọn hạn nộp bài!');
+                    $('#HanNop').focus();
+                    return false;
+                }
+
+                // Check if due date is in the future
+                const dueDateObj = new Date(dueDate);
+                const now = new Date();
+
+                if (dueDateObj <= now) {
+                    e.preventDefault();
+                    toastr.error('Hạn nộp bài phải sau thời điểm hiện tại!');
+                    $('#HanNop').focus();
+                    return false;
+                }
+
+                // Show loading
+                const submitBtn = $(this).find('button[type="submit"]');
+                submitBtn.prop('disabled', true);
+                submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Đang tạo...');
+            });
+
+            // Initialize preview
+            updatePreviewDueDate();
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        .tip-item {
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .tip-icon {
+            flex-shrink: 0;
+            margin-right: 0.75rem;
+            margin-top: 0.125rem;
+        }
+
+        .tip-content {
+            flex-grow: 1;
+        }
+
+        .assignment-preview {
+            text-align: center;
+        }
+
+        .preview-icon i {
+            transition: all 0.3s ease;
+        }
+
+        .assignment-preview:hover .preview-icon i {
+            transform: scale(1.1);
+            color: var(--bs-success) !important;
+        }
+
+        .meta-item {
+            text-align: left;
+            font-size: 0.875rem;
+        }
+
+        .preview-description {
+            text-align: left;
+            font-size: 0.875rem;
+        }
+
+        .course-icon {
+            flex-shrink: 0;
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .form-label.fw-bold {
+            color: #2c3e50;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .form-control:focus {
+            border-color: #198754;
+            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 0.5rem 1rem rgba(25, 135, 84, 0.25);
+        }
+    </style>
+}

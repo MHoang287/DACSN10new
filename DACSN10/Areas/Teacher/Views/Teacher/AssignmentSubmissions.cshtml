@@ -1,0 +1,522 @@
+﻿@using System.IO
+@model DACSN10.Models.Assignment
+@{
+    ViewData["Title"] = "Bài nộp - " + Model.TenBaiTap;
+    Layout = "~/Areas/Teacher/Views/Shared/_TeacherLayout.cshtml";
+}
+
+<div class="container-fluid" data-aos="fade-up">
+    <!-- Breadcrumb -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="@Url.Action("Dashboard", "Teacher")">
+                            <i class="fas fa-home"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="@Url.Action("MyCourses", "Teacher")">Khóa học của tôi</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="@Url.Action("CourseAssignments", "Teacher", new { courseId = Model.CourseID })">
+                            Bài tập - @Model.Course.TenKhoaHoc
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active">Bài nộp</li>
+                </ol>
+            </nav>
+            <h1 class="page-title">
+                <i class="fas fa-paper-plane text-info"></i>
+                Bài nộp: @Model.TenBaiTap
+            </h1>
+        </div>
+        <a href="@Url.Action("CourseAssignments", "Teacher", new { courseId = Model.CourseID })" 
+           class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
+
+    <!-- Assignment Info -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-info">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h5 class="card-title text-info mb-2">
+                                <i class="fas fa-file-alt"></i>
+                                @Model.TenBaiTap
+                            </h5>
+                            <p class="text-muted mb-2">@Model.MoTa</p>
+                            <div class="assignment-meta">
+                                <span class="badge bg-secondary me-2">
+                                    <i class="fas fa-book"></i> @Model.Course.TenKhoaHoc
+                                </span>
+                                <span class="badge @(Model.HanNop < DateTime.Now ? "bg-danger" : "bg-success")">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    Hạn nộp: @Model.HanNop.ToString("dd/MM/yyyy HH:mm")
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="submission-stats">
+                                <div class="stat-item">
+                                    <div class="stat-number text-primary display-6">@Model.Submissions.Count</div>
+                                    <div class="stat-label text-muted">Tổng bài nộp</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-paper-plane display-4 mb-3"></i>
+                    <h3 class="card-title">@Model.Submissions.Count</h3>
+                    <p class="card-text">Tổng bài nộp</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-check-circle display-4 mb-3"></i>
+                    <h3 class="card-title">@Model.Submissions.Count(s => s.Diem.HasValue)</h3>
+                    <p class="card-text">Đã chấm điểm</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock display-4 mb-3"></i>
+                    <h3 class="card-title">@Model.Submissions.Count(s => !s.Diem.HasValue)</h3>
+                    <p class="card-text">Chưa chấm điểm</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-star display-4 mb-3"></i>
+                    <h3 class="card-title">
+                        @(Model.Submissions.Any(s => s.Diem.HasValue) ? 
+                          Model.Submissions.Where(s => s.Diem.HasValue).Average(s => s.Diem.Value).ToString("F1") : 
+                          "N/A")
+                    </h3>
+                    <p class="card-text">Điểm TB</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submissions Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list text-info"></i>
+                        Danh sách bài nộp
+                    </h5>
+                    <div class="header-actions">
+                        <div class="input-group" style="width: 300px;">
+                            <input type="text" class="form-control" id="searchInput" 
+                                   placeholder="Tìm kiếm học viên...">
+                            <button class="btn btn-outline-secondary" type="button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (Model.Submissions.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="submissionsTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th><i class="fas fa-hashtag"></i> STT</th>
+                                        <th><i class="fas fa-user"></i> Học viên</th>
+                                        <th><i class="fas fa-calendar"></i> Ngày nộp</th>
+                                        <th><i class="fas fa-file"></i> File nộp</th>
+                                        <th><i class="fas fa-star"></i> Điểm</th>
+                                        <th><i class="fas fa-check-circle"></i> Trạng thái</th>
+                                        <th><i class="fas fa-cogs"></i> Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var submission in Model.Submissions.OrderByDescending(s => s.NgayNop).Select((item, index) => new { item, index }))
+                                    {
+                                        <tr data-student-name="@submission.item.User.HoTen.ToLower()">
+                                            <td>@(submission.index + 1)</td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <img src="https://ui-avatars.com/api/?name=@submission.item.User.HoTen&background=random&color=fff&bold=true&size=32" 
+                                                         alt="@submission.item.User.HoTen" 
+                                                         class="rounded-circle me-2" 
+                                                         width="32" height="32">
+                                                    <div>
+                                                        <strong>@submission.item.User.HoTen</strong>
+                                                        <div class="text-muted small">@submission.item.User.Email</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="@(submission.item.NgayNop > Model.HanNop ? "text-danger" : "text-success")">
+                                                    @submission.item.NgayNop.ToString("dd/MM/yyyy")
+                                                    <br>
+                                                    <small>@submission.item.NgayNop.ToString("HH:mm")</small>
+                                                </span>
+                                                @if (submission.item.NgayNop > Model.HanNop)
+                                                {
+                                                    <span class="badge bg-danger ms-1">Trễ hạn</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(submission.item.FileNop))
+                                                {
+                                                    <a href="#" class="btn btn-sm btn-outline-primary download-file" 
+                                                        data-file="@submission.item.FileNop" title="Tải xuống">
+                                                        <i class="fas fa-download"></i>
+                                                        @(System.IO.Path.GetFileName(submission.item.FileNop))
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Chưa có file</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (submission.item.Diem.HasValue)
+                                                {
+                                                    <span class="badge bg-success fs-6">
+                                                        @submission.item.Diem.Value.ToString("F1")/10
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">Chưa chấm</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (submission.item.Diem.HasValue)
+                                                {
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-check"></i> Đã chấm điểm
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-warning">
+                                                        <i class="fas fa-clock"></i> Chờ chấm điểm
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <button class="btn btn-sm btn-success grade-submission" 
+                                                            data-submission-id="@submission.item.SubmissionID"
+                                                            data-student-name="@submission.item.User.HoTen"
+                                                            data-current-grade="@(submission.item.Diem?.ToString("F1") ?? "")"
+                                                            title="Chấm điểm">
+                                                        <i class="fas fa-star"></i>
+                                                    </button>
+                                                    @if (!string.IsNullOrEmpty(submission.item.FileNop))
+                                                    {
+                                                        <button class="btn btn-sm btn-info view-file" 
+                                                                data-file="@submission.item.FileNop"
+                                                                title="Xem file">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-inbox text-muted display-1"></i>
+                            <h4 class="text-muted mt-3">Chưa có bài nộp nào</h4>
+                            <p class="text-muted">Học viên chưa nộp bài tập này</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Grade Submission Modal -->
+<div class="modal fade" id="gradeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-star"></i>
+                    Chấm điểm bài tập
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="gradeForm">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Học viên:</label>
+                        <div id="studentName" class="form-control-plaintext"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="gradeInput" class="form-label fw-bold">
+                            Điểm <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="number" id="gradeInput" class="form-control" 
+                                   min="0" max="10" step="0.1" placeholder="0.0" required>
+                            <span class="input-group-text">/10</span>
+                        </div>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i>
+                            Nhập điểm từ 0 đến 10 (có thể sử dụng số thập phân)
+                        </div>
+                    </div>
+
+                    <div class="grade-scale mb-3">
+                        <label class="form-label fw-bold">Thang điểm tham khảo:</label>
+                        <div class="row text-center">
+                            <div class="col grade-item" data-grade="9">
+                                <div class="grade-box bg-success text-white">9-10</div>
+                                <small>Xuất sắc</small>
+                            </div>
+                            <div class="col grade-item" data-grade="8">
+                                <div class="grade-box bg-primary text-white">8-8.9</div>
+                                <small>Giỏi</small>
+                            </div>
+                            <div class="col grade-item" data-grade="7">
+                                <div class="grade-box bg-info text-white">7-7.9</div>
+                                <small>Khá</small>
+                            </div>
+                            <div class="col grade-item" data-grade="6">
+                                <div class="grade-box bg-warning text-dark">6-6.9</div>
+                                <small>TB Khá</small>
+                            </div>
+                            <div class="col grade-item" data-grade="5">
+                                <div class="grade-box bg-secondary text-white">5-5.9</div>
+                                <small>TB</small>
+                            </div>
+                            <div class="col grade-item" data-grade="4">
+                                <div class="grade-box bg-danger text-white">0-4.9</div>
+                                <small>Yếu</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Hủy
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Lưu điểm
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            let currentSubmissionId = null;
+
+            // Search functionality
+            $('#searchInput').on('keyup', function() {
+                const searchTerm = $(this).val().toLowerCase();
+                $('#submissionsTable tbody tr').each(function() {
+                    const studentName = $(this).data('student-name');
+                    if (studentName.includes(searchTerm)) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            });
+
+            // Grade submission
+            $('.grade-submission').on('click', function() {
+                currentSubmissionId = $(this).data('submission-id');
+                const studentName = $(this).data('student-name');
+                const currentGrade = $(this).data('current-grade');
+
+                $('#studentName').text(studentName);
+                $('#gradeInput').val(currentGrade);
+                $('#gradeModal').modal('show');
+            });
+
+            // Grade scale quick select
+            $('.grade-item').on('click', function() {
+                const grade = $(this).data('grade');
+                $('#gradeInput').val(grade);
+                
+                // Visual feedback
+                $('.grade-item').removeClass('selected');
+                $(this).addClass('selected');
+            });
+
+            // Submit grade
+            $('#gradeForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                const grade = parseFloat($('#gradeInput').val());
+                
+                if (isNaN(grade) || grade < 0 || grade > 10) {
+                    toastr.error('Điểm phải từ 0 đến 10!');
+                    return;
+                }
+
+                $.post('@Url.Action("GradeSubmission", "Teacher")', {
+                    submissionId: currentSubmissionId,
+                    grade: grade,
+                    '__RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                })
+                .done(function(response) {
+                    if (response.success) {
+                        toastr.success(response.message);
+                        $('#gradeModal').modal('hide');
+                        location.reload();
+                    } else {
+                        toastr.error(response.message);
+                    }
+                })
+                .fail(function() {
+                    toastr.error('Có lỗi xảy ra khi chấm điểm!');
+                });
+            });
+
+            // Download file
+            $('.download-file').on('click', function(e) {
+                e.preventDefault();
+                const fileName = $(this).data('file');
+                toastr.info('Đang tải xuống file: ' + fileName);
+                // Add actual download logic here
+            });
+
+            // View file
+            $('.view-file').on('click', function() {
+                const fileName = $(this).data('file');
+                toastr.info('Xem file: ' + fileName);
+                // Add file viewing logic here
+            });
+
+            // Clear modal when closed
+            $('#gradeModal').on('hidden.bs.modal', function() {
+                $('#gradeForm')[0].reset();
+                $('.grade-item').removeClass('selected');
+                currentSubmissionId = null;
+            });
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        .submission-stats .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-weight: bold;
+            line-height: 1;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        
+        .assignment-meta .badge {
+            font-size: 0.875rem;
+        }
+        
+        .grade-scale .grade-item {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+        }
+        
+        .grade-scale .grade-item:hover,
+        .grade-scale .grade-item.selected {
+            background-color: #f8f9fa;
+            transform: translateY(-2px);
+            box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+        }
+
+        .grade-box {
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .table th {
+            border-top: none;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .btn-group .btn {
+            border-radius: 0.375rem !important;
+            margin-right: 0.25rem;
+        }
+
+            .btn-group .btn:last-child {
+                margin-right: 0;
+            }
+
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .table-responsive {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .bg-primary {
+            background-color: #3b82f6 !important;
+        }
+
+        .bg-success {
+            background-color: #10b981 !important;
+        }
+
+        .bg-warning {
+            background-color: #f59e0b !important;
+        }
+
+        .bg-info {
+            background-color: #06b6d4 !important;
+        }
+    </style>
+}
