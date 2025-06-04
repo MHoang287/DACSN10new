@@ -20,8 +20,26 @@
     </nav>
 </div>
 
+<!-- Debug User Info -->
+@{
+    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    var userName = User.Identity?.Name;
+    var isAuthenticated = User.Identity?.IsAuthenticated;
+}
+
+<!-- Debug thông tin user -->
+<script>
+    console.log('=== USER DEBUG INFO ===');
+    console.log('Current User ID: @currentUserId');
+    console.log('User Name: @userName');
+    console.log('Is Authenticated: @isAuthenticated');
+    console.log('All Claims:', '@string.Join(", ", User.Claims.Select(c => c.Type + ":" + c.Value))');
+</script>
+
 <div class="create-course-container">
-    <form asp-action="CreateCourse" method="post" id="createCourseForm">
+    <form asp-controller="Teacher" asp-action="CreateCourse" method="post" id="createCourseForm">
+        @Html.AntiForgeryToken()
+
         <!-- Basic Information -->
         <div class="form-card" data-aos="fade-up">
             <h3 class="section-title">
@@ -31,15 +49,15 @@
 
             <div class="info-box">
                 <i class="fas fa-lightbulb"></i>
-                <p>Khóa học của bạn sẽ được admin xem xét trước khi xuất bản. Hãy cung cấp thông tin chi tiết và chính xác.</p>
+                <p>Khóa học của bạn sẽ được admin xem xét trước khi xuất bản. Hãy cung cấp thông tin chi tiết và chính xác để tăng cơ hội được duyệt.</p>
             </div>
 
             <div class="form-section">
                 <div class="mb-4">
-                    <label asp-for="TenKhoaHoc" class="form-label">
+                    <label for="TenKhoaHoc" class="form-label">
                         Tên khóa học <span class="required">*</span>
                     </label>
-                    <input asp-for="TenKhoaHoc" class="form-control" placeholder="VD: Lập trình Web với ASP.NET Core" maxlength="200" />
+                    <input asp-for="TenKhoaHoc" id="TenKhoaHoc" name="TenKhoaHoc" class="form-control" placeholder="VD: Lập trình Web với ASP.NET Core" maxlength="200" />
                     <div class="char-counter">
                         <span id="titleCharCount">0</span>/200
                     </div>
@@ -47,11 +65,11 @@
                 </div>
 
                 <div class="mb-4">
-                    <label asp-for="MoTa" class="form-label">
+                    <label for="MoTa" class="form-label">
                         Mô tả khóa học <span class="required">*</span>
                     </label>
-                    <textarea asp-for="MoTa" class="form-control"
-                              placeholder="Mô tả chi tiết về khóa học, nội dung sẽ học, đối tượng phù hợp..."
+                    <textarea asp-for="MoTa" id="MoTa" name="MoTa" class="form-control"
+                              placeholder="Mô tả chi tiết về khóa học, nội dung sẽ học, đối tượng phù hợp, kiến thức đạt được sau khóa học..."
                               maxlength="1000"></textarea>
                     <div class="char-counter">
                         <span id="descCharCount">0</span>/1000
@@ -61,25 +79,33 @@
 
                 <div class="row">
                     <div class="col-md-6 mb-4">
-                        <label asp-for="Gia" class="form-label">
+                        <label for="Gia" class="form-label">
                             Giá khóa học <span class="required">*</span>
                         </label>
                         <div class="price-input-group">
-                            <input asp-for="Gia" type="number" class="form-control" placeholder="0" min="0" step="1000" />
+                            <input asp-for="Gia" id="Gia" name="Gia" type="number" class="form-control" placeholder="0" min="0" step="1000" />
                             <span class="currency-symbol">VNĐ</span>
                         </div>
-                        <small class="text-muted">Để 0 nếu muốn khóa học miễn phí</small>
+                        <small class="text-muted">Nhập 0 nếu muốn khóa học miễn phí</small>
                         <span asp-validation-for="Gia" class="validation-error"></span>
                     </div>
 
                     <div class="col-md-6 mb-4">
-                        <label asp-for="TrangThai" class="form-label">
-                            Trạng thái <span class="required">*</span>
+                        <label class="form-label">
+                            Trạng thái khóa học
                         </label>
-                        <select asp-for="TrangThai" class="form-select" disabled>
-                            <option value="Pending" selected>Chờ duyệt</option>
-                        </select>
-                        <small class="text-muted">Khóa học mới sẽ ở trạng thái chờ duyệt</small>
+                        <div class="form-control-static">
+                            <span class="badge bg-warning">
+                                <i class="fas fa-clock"></i> Chờ duyệt
+                            </span>
+                        </div>
+                        <small class="text-muted">Khóa học mới sẽ được admin xem xét và duyệt trước khi xuất bản</small>
+                        <!-- Hidden field for TrangThai -->
+                        <input type="hidden" name="TrangThai" value="Pending" />
+                        <!-- Hidden field for UserID - lấy từ User hiện tại -->
+                        <input type="hidden" name="UserID" value="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" />
+                        <!-- Hidden field for NgayTao -->
+                        <input type="hidden" name="NgayTao" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss")" />
                     </div>
                 </div>
             </div>
@@ -92,43 +118,99 @@
                 Danh mục khóa học
             </h3>
 
-            <p class="text-muted mb-3">Chọn các danh mục phù hợp với nội dung khóa học (tối đa 3 danh mục)</p>
+            <p class="text-muted mb-3">
+                Chọn các danh mục phù hợp với nội dung khóa học để học viên dễ dàng tìm thấy.
+                <strong>Không bắt buộc</strong> - bạn có thể bỏ qua và thêm danh mục sau khi khóa học được duyệt.
+                <br><small class="text-info"><i class="fas fa-info-circle"></i> Tối đa 3 danh mục để tối ưu hiển thị</small>
+            </p>
 
-            <div class="categories-container">
-                @if (ViewBag.Categories != null)
-                {
+            @if (ViewBag.Categories != null && ((SelectList)ViewBag.Categories).Any())
+            {
+                <div class="categories-container">
                     @foreach (var category in ViewBag.Categories as SelectList)
                     {
                         <div class="category-item">
                             <input type="checkbox"
                                    id="category_@category.Value"
                                    name="selectedCategories"
-                                   value="@category.Value" />
-                            <label for="category_@category.Value">@category.Text</label>
+                                   value="@category.Value"
+                                   class="form-check-input" />
+                            <label for="category_@category.Value" class="form-check-label">
+                                @category.Text
+                            </label>
                         </div>
                     }
-                }
-            </div>
+                </div>
+                <div class="mt-2">
+                    <small class="text-muted">
+                        <span id="selectedCategoryCount">0</span> danh mục đã chọn
+                    </small>
+                </div>
+            }
+            else
+            {
+                <div class="info-box" style="border-color: #fbbf24; background: #fef3c7;">
+                    <i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i>
+                    <p style="color: #92400e;">
+                        Hiện tại chưa có danh mục nào trong hệ thống. Bạn vẫn có thể tạo khóa học bình thường và admin sẽ thêm danh mục phù hợp sau khi duyệt.
+                    </p>
+                </div>
+            }
         </div>
 
-        <!-- Preview -->
+        <!-- Preview Section -->
         <div class="form-card" data-aos="fade-up" data-aos-delay="200">
             <h3 class="section-title">
                 <i class="fas fa-eye"></i>
-                Xem trước
+                Xem trước khóa học
             </h3>
 
-            <div class="preview-section">
-                <div class="preview-title">Tên khóa học</div>
-                <div class="preview-content" id="previewTitle">
-                    <span class="text-muted">Chưa nhập tên khóa học</span>
-                </div>
-            </div>
+            <p class="text-muted mb-3">Đây là cách khóa học của bạn sẽ hiển thị với học viên</p>
 
-            <div class="preview-section">
-                <div class="preview-title">Mô tả</div>
-                <div class="preview-content" id="previewDescription">
-                    <span class="text-muted">Chưa nhập mô tả</span>
+            <div class="preview-card" style="border: 2px solid #e2e8f0; border-radius: 10px; padding: 1.5rem; background: #f8fafc;">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="preview-section">
+                            <h4 class="preview-title" id="previewTitle" style="color: #1e293b; margin-bottom: 0.75rem; font-size: 1.25rem;">
+                                <span class="text-muted" style="font-style: italic;">Tên khóa học sẽ hiển thị ở đây...</span>
+                            </h4>
+                        </div>
+
+                        <div class="preview-section">
+                            <div class="preview-content" id="previewDescription" style="color: #64748b; line-height: 1.6; margin-bottom: 1rem;">
+                                <span class="text-muted" style="font-style: italic;">Mô tả khóa học sẽ hiển thị ở đây...</span>
+                            </div>
+                        </div>
+
+                        <div class="preview-section">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="preview-price" id="previewPrice" style="font-size: 1.5rem; font-weight: 600; color: #059669;">
+                                    <span class="text-muted">Chưa nhập giá</span>
+                                </div>
+                                <div class="preview-status">
+                                    <span class="badge bg-warning" style="font-size: 0.75rem;">
+                                        <i class="fas fa-clock"></i> Chờ duyệt
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="preview-section" id="previewCategoriesSection" style="display: none;">
+                            <div class="mt-2">
+                                <small class="text-muted">Danh mục: </small>
+                                <span id="previewCategories"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 text-center">
+                        <div class="preview-image" style="background: #e2e8f0; border-radius: 8px; height: 120px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-image" style="font-size: 2rem; color: #94a3b8;"></i>
+                            <br>
+                            <small class="text-muted">Ảnh khóa học</small>
+                        </div>
+                        <small class="text-muted mt-2 d-block">Bạn có thể thêm ảnh sau khi tạo khóa học</small>
+                    </div>
                 </div>
             </div>
         </div>
@@ -136,11 +218,11 @@
         <!-- Form Actions -->
         <div class="form-actions">
             <a href="@Url.Action("MyCourses", "Teacher")" class="btn-cancel">
-                <i class="fas fa-times"></i>
-                Hủy bỏ
+                <i class="fas fa-arrow-left"></i>
+                Quay lại
             </a>
-            <button type="submit" class="btn-submit">
-                <i class="fas fa-save"></i>
+            <button type="submit" class="btn-submit" id="submitBtn">
+                <i class="fas fa-plus-circle"></i>
                 Tạo khóa học
             </button>
         </div>
@@ -151,7 +233,8 @@
 <div class="loading-overlay" id="loadingOverlay">
     <div class="loading-spinner">
         <div class="spinner"></div>
-        <p>Đang tạo khóa học...</p>
+        <p><strong>Đang tạo khóa học...</strong></p>
+        <small class="text-muted">Vui lòng không đóng trang này</small>
     </div>
 </div>
 
@@ -160,54 +243,286 @@
 
     <script>
         $(document).ready(function() {
-            // Character counters
-            $('#TenKhoaHoc').on('input', function() {
+            let isSubmitting = false;
+
+            // Debug: Check if fields exist - sử dụng nhiều selector khác nhau
+            console.log('=== DEBUGGING FIELD SELECTORS ===');
+            console.log('asp-for TenKhoaHoc:', $('input[asp-for="TenKhoaHoc"]').length);
+            console.log('name TenKhoaHoc:', $('input[name="TenKhoaHoc"]').length);
+            console.log('id TenKhoaHoc:', $('#TenKhoaHoc').length);
+            console.log('All input fields:', $('input[type="text"]').length);
+
+            // Log tất cả các input để tìm đúng selector
+            $('input').each(function(index) {
+                console.log('Input ' + index + ':', {
+                    id: this.id,
+                    name: this.name,
+                    type: this.type,
+                    value: this.value
+                });
+            });
+
+            $('textarea').each(function(index) {
+                console.log('Textarea ' + index + ':', {
+                    id: this.id,
+                    name: this.name,
+                    value: this.value
+                });
+            });
+
+            // Universal event binding - sử dụng ID selector cho chắc chắn
+            $(document).on('input', '#TenKhoaHoc', function() {
                 const length = $(this).val().length;
+                const value = $(this).val().trim();
                 $('#titleCharCount').text(length);
-                $('#previewTitle').html($(this).val() || '<span class="text-muted">Chưa nhập tên khóa học</span>');
+
+                if (value) {
+                    $('#previewTitle').html(value);
+                } else {
+                    $('#previewTitle').html('<span class="text-muted" style="font-style: italic;">Tên khóa học sẽ hiển thị ở đây...</span>');
+                }
+                console.log('TenKhoaHoc updated:', value, 'Length:', length);
             });
 
-            $('#MoTa').on('input', function() {
+            $(document).on('input', '#MoTa', function() {
                 const length = $(this).val().length;
+                const value = $(this).val().trim();
                 $('#descCharCount').text(length);
-                $('#previewDescription').html($(this).val().replace(/\n/g, '<br>') || '<span class="text-muted">Chưa nhập mô tả</span>');
+
+                if (value) {
+                    $('#previewDescription').html(value.replace(/\n/g, '<br>'));
+                } else {
+                    $('#previewDescription').html('<span class="text-muted" style="font-style: italic;">Mô tả khóa học sẽ hiển thị ở đây...</span>');
+                }
+                console.log('MoTa updated:', value, 'Length:', length);
             });
 
-            // Category selection limit
+            $(document).on('input', '#Gia', function() {
+                const price = parseInt($(this).val()) || 0;
+                if (price === 0) {
+                    $('#previewPrice').html('<span class="badge bg-success" style="font-size: 1rem; padding: 0.5rem 1rem;">MIỄN PHÍ</span>');
+                } else {
+                    const formattedPrice = new Intl.NumberFormat('vi-VN', {
+                        style: 'currency',
+                        currency: 'VND',
+                        minimumFractionDigits: 0
+                    }).format(price);
+                    $('#previewPrice').html(formattedPrice).css('color', '#059669');
+                }
+                console.log('Gia updated:', $(this).val());
+            });
+
+            // Category selection and preview
             $('input[name="selectedCategories"]').on('change', function() {
-                const checkedCount = $('input[name="selectedCategories"]:checked').length;
+                const checkedBoxes = $('input[name="selectedCategories"]:checked');
+                const checkedCount = checkedBoxes.length;
+
+                // Update counter
+                $('#selectedCategoryCount').text(checkedCount);
+
+                // Limit to 3 categories
                 if (checkedCount > 3) {
                     $(this).prop('checked', false);
-                    toastr.warning('Chỉ được chọn tối đa 3 danh mục');
+                    showMessage('Chỉ được chọn tối đa 3 danh mục', 'warning');
+                    return;
+                }
+
+                // Update preview
+                if (checkedCount > 0) {
+                    const categories = [];
+                    checkedBoxes.each(function() {
+                        const label = $('label[for="' + $(this).attr('id') + '"]').text();
+                        categories.push('<span class="badge bg-primary me-1">' + label + '</span>');
+                    });
+                    $('#previewCategories').html(categories.join(' '));
+                    $('#previewCategoriesSection').show();
+                } else {
+                    $('#previewCategoriesSection').hide();
                 }
             });
 
-            // Form submission
+            // Enhanced form validation
             $('#createCourseForm').on('submit', function(e) {
-                e.preventDefault();
-
-                // Validate
-                if (!$('#TenKhoaHoc').val().trim()) {
-                    toastr.error('Vui lòng nhập tên khóa học');
-                    $('#TenKhoaHoc').focus();
-                    return;
+                // Prevent double submission
+                if (isSubmitting) {
+                    e.preventDefault();
+                    return false;
                 }
 
-                if (!$('#MoTa').val().trim()) {
-                    toastr.error('Vui lòng nhập mô tả khóa học');
-                    $('#MoTa').focus();
-                    return;
+                // Option to skip client validation for testing
+                const skipValidation = true; // ALWAYS skip client validation để test server
+
+                if (skipValidation) {
+                    // Show loading and submit
+                    isSubmitting = true;
+                    $('#loadingOverlay').fadeIn();
+                    $('#submitBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Đang tạo khóa học...');
+
+                    // Log form data trước khi submit
+                    console.log('=== FORM SUBMISSION DEBUG ===');
+                    var formData = new FormData(this);
+                    for (var pair of formData.entries()) {
+                        console.log(pair[0] + ': ' + pair[1]);
+                    }
+
+                    // Check required hidden fields
+                    const userIdValue = $('input[name="UserID"]').val();
+                    const trangThaiValue = $('input[name="TrangThai"]').val();
+
+                    console.log('UserID field value:', userIdValue);
+                    console.log('TrangThai field value:', trangThaiValue);
+
+                    if (!userIdValue) {
+                        console.error('UserID is empty!');
+                        showMessage('Lỗi: Không xác định được user hiện tại. Vui lòng đăng nhập lại.', 'error');
+                        $('#loadingOverlay').hide();
+                        $('#submitBtn').prop('disabled', false).html('<i class="fas fa-plus-circle"></i> Tạo khóa học');
+                        return false;
+                    }
+
+                    return true;
                 }
 
-                // Show loading
-                $('#loadingOverlay').css('display', 'flex');
+                // Reset validation states
+                $('.form-control').removeClass('is-invalid');
+                $('.validation-error').empty();
 
-                // Submit form
-                this.submit();
+                let isValid = true;
+                let firstErrorField = null;
+                let errors = [];
+
+                // Get field values - sử dụng ID selector
+                const courseNameField = $('#TenKhoaHoc');
+                const descriptionField = $('#MoTa');
+                const priceField = $('#Gia');
+
+                // Debug logging với thông tin chi tiết hơn
+                console.log('=== VALIDATION DEBUG ===');
+                console.log('Course name field found:', courseNameField.length, 'Selector used:', courseNameField.selector);
+                console.log('Description field found:', descriptionField.length, 'Selector used:', descriptionField.selector);
+                console.log('Price field found:', priceField.length, 'Selector used:', priceField.selector);
+                console.log('Course name value:', courseNameField.val());
+                console.log('Description value:', descriptionField.val());
+                console.log('Price value:', priceField.val());
+
+                // Validate course name - relaxed validation
+                const courseName = courseNameField.val() ? courseNameField.val().trim() : '';
+                if (!courseName) {
+                    isValid = false;
+                    courseNameField.addClass('is-invalid');
+                    firstErrorField = firstErrorField || courseNameField;
+                    errors.push('Tên khóa học là bắt buộc');
+                } else if (courseName.length < 3) {
+                    isValid = false;
+                    courseNameField.addClass('is-invalid');
+                    firstErrorField = firstErrorField || courseNameField;
+                    errors.push('Tên khóa học phải có ít nhất 3 ký tự');
+                }
+
+                // Validate description - relaxed validation
+                const description = descriptionField.val() ? descriptionField.val().trim() : '';
+                if (!description) {
+                    isValid = false;
+                    descriptionField.addClass('is-invalid');
+                    firstErrorField = firstErrorField || descriptionField;
+                    errors.push('Mô tả khóa học là bắt buộc');
+                } else if (description.length < 5) {
+                    isValid = false;
+                    descriptionField.addClass('is-invalid');
+                    firstErrorField = firstErrorField || descriptionField;
+                    errors.push('Mô tả khóa học phải có ít nhất 5 ký tự');
+                }
+
+                // Validate price - cho phép 0 cho khóa học miễn phí
+                const price = priceField.val() ? priceField.val() : '';
+                const priceNum = parseFloat(price);
+                if (price === '' || isNaN(priceNum) || priceNum < 0) {
+                    isValid = false;
+                    priceField.addClass('is-invalid');
+                    firstErrorField = firstErrorField || priceField;
+                    errors.push('Giá khóa học không hợp lệ (phải là số >= 0, có thể là 0 cho miễn phí)');
+                }
+
+                // If validation fails
+                if (!isValid) {
+                    e.preventDefault();
+
+                    if (firstErrorField) {
+                        firstErrorField.focus();
+                        $('html, body').animate({
+                            scrollTop: firstErrorField.offset().top - 100
+                        }, 500);
+                    }
+
+                    showMessage('Vui lòng kiểm tra lại thông tin: ' + errors.join(', '), 'error');
+                    return false;
+                }
+
+                // Show loading and disable submit button
+                isSubmitting = true;
+                $('#loadingOverlay').fadeIn();
+                $('#submitBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Đang tạo khóa học...');
+
+                // Show success message
+                showMessage('Đang gửi thông tin khóa học...', 'info');
+
+                return true;
             });
+
+            // Message display function
+            function showMessage(message, type) {
+                if (typeof toastr !== 'undefined') {
+                    toastr[type](message);
+                } else {
+                    alert(message);
+                }
+            }
+
+            // Reset submission state if there are server-side errors
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <text>
+                    isSubmitting = false;
+                    $('#loadingOverlay').hide();
+                    $('#submitBtn').prop('disabled', false).html('<i class="fas fa-plus-circle"></i> Tạo khóa học');
+
+                    // Log chi tiết các lỗi validation từ server
+                    console.log('=== SERVER VALIDATION ERRORS ===');
+                @foreach (var modelError in ViewData.ModelState)
+                {
+                    foreach (var error in modelError.Value.Errors)
+                    {
+                        <text>console.log('@modelError.Key: @Html.Raw(error.ErrorMessage)');</text>
+                    }
+                }
+
+                    showMessage('Có lỗi validation từ server. Kiểm tra Console để xem chi tiết.', 'error');
+            </text>
+        }
+
+            // Initialize form with existing values
+            setTimeout(function() {
+                $('#TenKhoaHoc').trigger('input');
+                $('#MoTa').trigger('input');
+                $('#Gia').trigger('input');
+                $('input[name="selectedCategories"]').trigger('change');
+                console.log('Form initialized');
+            }, 100);
 
             // Initialize tooltips
-            $('[data-bs-toggle="tooltip"]').tooltip();
+            if (typeof $().tooltip === 'function') {
+                $('[data-bs-toggle="tooltip"]').tooltip();
+            }
+
+            // Auto-save draft functionality (optional)
+            let draftTimeout;
+            $('input, textarea').on('input', function() {
+                clearTimeout(draftTimeout);
+                draftTimeout = setTimeout(function() {
+                    // Could implement draft saving here
+                    console.log('Draft could be saved here');
+                }, 2000);
+            });
         });
     </script>
 }

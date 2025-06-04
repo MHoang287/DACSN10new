@@ -15,11 +15,13 @@ namespace DACSN10.Controllers
     {
         private readonly AppDbContext _context;
         private readonly UserManager<User> _userManager;
+        private readonly ILogger<AdminController> _logger;
 
-        public AdminController(AppDbContext context, UserManager<User> userManager)
+        public AdminController(AppDbContext context, UserManager<User> userManager, ILogger<AdminController> logger)
         {
             _context = context;
             _userManager = userManager;
+            _logger = logger;
         }
 
         #region Dashboard
@@ -1041,42 +1043,73 @@ namespace DACSN10.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ApprovePayment(int id)
         {
-            var payment = await _context.Payments
-                .Include(p => p.Course)
-                    .ThenInclude(c => c.User) // Include for safety
-                .FirstOrDefaultAsync(p => p.PaymentID == id);
-
-            if (payment == null)
-            {
-                return Json(new { success = false, message = "Không tìm thấy giao dịch." });
-            }
-
             try
             {
+                var payment = await _context.Payments
+                    .Include(p => p.Course)
+                    .Include(p => p.User)
+                    .FirstOrDefaultAsync(p => p.PaymentID == id);
+
+                if (payment == null)
+                {
+                    return Json(new { success = false, message = "Không tìm thấy giao dịch." });
+                }
+
+                // Kiểm tra trạng thái hiện tại
+                if (payment.Status == PaymentStatus.Success)
+                {
+                    return Json(new { success = false, message = "Giao dịch đã được duyệt trước đó." });
+                }
+
+                if (payment.Status == PaymentStatus.Rejected)
+                {
+                    return Json(new { success = false, message = "Không thể duyệt giao dịch đã bị từ chối." });
+                }
+
+                // Cập nhật trạng thái payment
                 payment.Status = PaymentStatus.Success;
 
-                // Create enrollment
+                // Kiểm tra và tạo enrollment nếu chưa có
                 var existingEnrollment = await _context.Enrollments
                     .FirstOrDefaultAsync(e => e.UserID == payment.UserID && e.CourseID == payment.CourseID);
 
                 if (existingEnrollment == null)
                 {
-                    _context.Enrollments.Add(new Enrollment
+                    var enrollment = new Enrollment
                     {
                         UserID = payment.UserID,
                         CourseID = payment.CourseID,
                         EnrollDate = DateTime.Now,
                         TrangThai = "Active",
                         Progress = 0
-                    });
+                    };
+
+                    _context.Enrollments.Add(enrollment);
+                }
+                else if (existingEnrollment.TrangThai != "Active")
+                {
+                    // Kích hoạt lại enrollment nếu bị tạm ngưng
+                    existingEnrollment.TrangThai = "Active";
                 }
 
                 await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "Duyệt thanh toán thành công!" });
+
+                return Json(new
+                {
+                    success = true,
+                    message = "Duyệt thanh toán thành công!",
+                    paymentId = id,
+                    newStatus = "Success"
+                });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Lỗi khi duyệt: " + ex.Message });
+                // Log error (nếu có logging system)
+                return Json(new
+                {
+                    success = false,
+                    message = "Lỗi khi duyệt thanh toán: " + ex.Message
+                });
             }
         }
 

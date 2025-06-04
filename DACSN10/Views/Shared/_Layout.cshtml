@@ -1,5 +1,4 @@
-﻿﻿
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
@@ -29,7 +28,7 @@
         <!-- Modern Glassmorphism Navigation -->
         <nav class="navbar navbar-expand-lg sticky-top">
             <div class="container-fluid px-4">
-                <!-- Compact Brand Logo -->
+                <!-- Enhanced Brand Logo -->
                 <a class="navbar-brand d-flex align-items-center text-decoration-none" href="/">
                     <div class="brand-icon-wrapper">
                         <i class="fas fa-graduation-cap brand-icon"></i>
@@ -46,70 +45,144 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
-                <!-- Navbar Items -->
+                <!-- Enhanced Navbar Items -->
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0 align-items-center flex-nowrap">
                         <li class="nav-item">
-                            <a class="nav-link" href="/"><i class="fas fa-home"></i>Trang&nbsp;chủ</a>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")" href="/">
+                                <i class="fas fa-home"></i>Trang&nbsp;chủ
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="@Url.Action("Index", "Course")"><i class="fas fa-book-open"></i>Tất&nbsp;cả&nbsp;khóa&nbsp;học</a>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Course" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")"
+                               href="@Url.Action("Index", "Course")">
+                                <i class="fas fa-book-open"></i>Tất&nbsp;cả&nbsp;khóa&nbsp;học
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="@Url.Action("PopularCourses", "Course")"><i class="fas fa-fire"></i>Phổ&nbsp;biến</a>
+                            <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "PopularCourses" ? "active" : "")"
+                               href="@Url.Action("PopularCourses", "Course")">
+                                <i class="fas fa-fire"></i>Phổ&nbsp;biến
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="@Url.Action("NewCourses", "Course")"><i class="fas fa-star"></i>Mới&nbsp;nhất</a>
+                            <a class="nav-link" href="/User/SearchTeacher">
+                                <i class="fas fa-chalkboard-teacher"></i>Tìm&nbsp;giảng&nbsp;viên
+                            </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/User/SearchTeacher"><i class="fas fa-chalkboard-teacher"></i>Tìm&nbsp;giảng&nbsp;viên</a>
-                        </li>
+
+                        <!-- Enhanced Teacher Dropdown -->
                         @if (User.IsInRole("Teacher"))
                         {
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="teacherDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <a class="nav-link dropdown-toggle teacher-nav-link @(ViewContext.RouteData.Values["area"]?.ToString() == "Teacher" ? "active" : "")"
+                                   href="#" id="teacherDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     <i class="fas fa-chalkboard-teacher"></i>Giảng&nbsp;viên
                                 </a>
-                                <ul class="dropdown-menu" aria-labelledby="teacherDropdown">
+                                <ul class="dropdown-menu teacher-dropdown" aria-labelledby="teacherDropdown">
+                                    <!-- Dashboard Section -->
+                                    <li class="dropdown-header">
+                                        <i class="fas fa-tachometer-alt me-2 text-primary"></i>Bảng điều khiển
+                                    </li>
                                     <li>
-                                        <a class="dropdown-item" asp-area="Teacher" asp-controller="Course" asp-action="Index">
-                                            <i class="fas fa-th-list me-2"></i> Quản&nbsp;lý&nbsp;khóa&nbsp;học
+                                        <a class="dropdown-item" asp-area="Teacher" asp-controller="Teacher" asp-action="Dashboard">
+                                            <i class="fas fa-home me-2"></i>Dashboard
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item" asp-area="Teacher" asp-controller="Course" asp-action="Create">
-                                            <i class="fas fa-plus-circle me-2"></i> Tạo&nbsp;khóa&nbsp;học&nbsp;mới
-                                        </a>
-                                    </li>
-                                    <li><hr class="dropdown-divider" /></li>
-                                    <li>
-                                        <a class="dropdown-item" asp-area="Teacher" asp-controller="Course" asp-action="Students">
-                                            <i class="fas fa-users me-2"></i> Học&nbsp;viên&nbsp;đăng&nbsp;ký
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" asp-area="Teacher" asp-controller="Course" asp-action="Followers">
-                                            <i class="fas fa-user-friends me-2"></i> Người&nbsp;theo&nbsp;dõi
+                                        <a class="dropdown-item" asp-area="Teacher" asp-controller="Teacher" asp-action="Statistics">
+                                            <i class="fas fa-chart-bar me-2"></i>Thống&nbsp;kê&nbsp;tổng&nbsp;quan
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider" /></li>
+
+                                    <!-- Course Management Section -->
+                                    <li class="dropdown-header">
+                                        <i class="fas fa-book-open me-2 text-success"></i>Quản lý khóa học
+                                    </li>
                                     <li>
-                                        <a class="dropdown-item" asp-area="Teacher" asp-controller="Course" asp-action="CreateQuiz">
-                                            <i class="fas fa-question-circle me-2"></i> Tạo&nbsp;bài&nbsp;kiểm&nbsp;tra
+                                        <a class="dropdown-item" asp-area="Teacher" asp-controller="Teacher" asp-action="MyCourses">
+                                            <i class="fas fa-th-list me-2"></i>Khóa&nbsp;học&nbsp;của&nbsp;tôi
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item" asp-area="Teacher" asp-controller="Course" asp-action="EnrollmentStats">
-                                            <i class="fas fa-chart-bar me-2"></i> Thống&nbsp;kê&nbsp;khóa&nbsp;học
+                                        <a class="dropdown-item" asp-area="Teacher" asp-controller="Teacher" asp-action="CreateCourse">
+                                            <i class="fas fa-plus-circle me-2"></i>Tạo&nbsp;khóa&nbsp;học&nbsp;mới
+                                        </a>
+                                    </li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#" onclick="showCourseSelectionModal('lessons')">
+                                            <i class="fas fa-play me-2"></i>Quản&nbsp;lý&nbsp;bài&nbsp;học
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider" /></li>
+
+                                    <!-- Student Management Section -->
+                                    <li class="dropdown-header">
+                                        <i class="fas fa-users me-2 text-info"></i>Quản lý học viên
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-area="Teacher" asp-controller="Teacher" asp-action="MyStudents">
+                                            <i class="fas fa-user-graduate me-2"></i>Học&nbsp;viên&nbsp;của&nbsp;tôi
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-area="Teacher" asp-controller="Teacher" asp-action="MyFollowers">
+                                            <i class="fas fa-user-friends me-2"></i>Người&nbsp;theo&nbsp;dõi
+                                        </a>
+                                    </li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#" onclick="showCourseSelectionModal('students')">
+                                            <i class="fas fa-users-cog me-2"></i>Học&nbsp;viên&nbsp;theo&nbsp;khóa&nbsp;học
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider" /></li>
+
+                                    <!-- Assessment Section -->
+                                    <li class="dropdown-header">
+                                        <i class="fas fa-tasks me-2 text-warning"></i>Bài tập & Kiểm tra
+                                    </li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#" onclick="showCourseSelectionModal('quiz')">
+                                            <i class="fas fa-question-circle me-2"></i>Quản&nbsp;lý&nbsp;bài&nbsp;kiểm&nbsp;tra
+                                        </a>
+                                    </li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#" onclick="showCourseSelectionModal('assignment')">
+                                            <i class="fas fa-clipboard-list me-2"></i>Quản&nbsp;lý&nbsp;bài&nbsp;tập
+                                        </a>
+                                    </li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#" onclick="showCourseSelectionModal('submissions')">
+                                            <i class="fas fa-file-upload me-2"></i>Bài&nbsp;nộp&nbsp;học&nbsp;viên
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider" /></li>
+
+                                    <!-- Reports Section -->
+                                    <li class="dropdown-header">
+                                        <i class="fas fa-chart-line me-2 text-secondary"></i>Báo cáo & Phân tích
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-area="Teacher" asp-controller="Teacher" asp-action="TeacherReports">
+                                            <i class="fas fa-chart-pie me-2"></i>Báo&nbsp;cáo&nbsp;chi&nbsp;tiết
+                                        </a>
+                                    </li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#" onclick="showCourseStatsModal()">
+                                            <i class="fas fa-analytics me-2"></i>Thống&nbsp;kê&nbsp;khóa&nbsp;học
                                         </a>
                                     </li>
                                 </ul>
                             </li>
                         }
+
+                        <!-- Enhanced Admin Dropdown -->
                         @if (User.IsInRole("Admin"))
                         {
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle admin-link" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <a class="nav-link dropdown-toggle admin-link @(ViewContext.RouteData.Values["area"]?.ToString() == "Admin" ? "active" : "")"
+                                   href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     <i class="fas fa-users-cog"></i>Quản&nbsp;trị&nbsp;viên
                                 </a>
                                 <ul class="dropdown-menu admin-dropdown" aria-labelledby="adminDropdown">
@@ -118,7 +191,7 @@
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="@Url.Action("Dashboard", "Admin", new { area = "Admin" })">
-                                            <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                                            <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider" /></li>
@@ -128,12 +201,12 @@
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="@Url.Action("Students", "Admin", new { area = "Admin" })">
-                                            <i class="fas fa-user-graduate me-2"></i> Học viên
+                                            <i class="fas fa-user-graduate me-2"></i>Học viên
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="@Url.Action("Teachers", "Admin", new { area = "Admin" })">
-                                            <i class="fas fa-chalkboard-teacher me-2"></i> Giảng viên
+                                            <i class="fas fa-chalkboard-teacher me-2"></i>Giảng viên
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider" /></li>
@@ -143,12 +216,12 @@
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="@Url.Action("Courses", "Admin", new { area = "Admin" })">
-                                            <i class="fas fa-list me-2"></i> Tất cả khóa học
+                                            <i class="fas fa-list me-2"></i>Tất cả khóa học
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="@Url.Action("Categories", "Admin", new { area = "Admin" })">
-                                            <i class="fas fa-tags me-2"></i> Danh mục
+                                            <i class="fas fa-tags me-2"></i>Danh mục
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider" /></li>
@@ -158,17 +231,17 @@
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="@Url.Action("Payments", "Admin", new { area = "Admin" })">
-                                            <i class="fas fa-money-bill-wave me-2"></i> Thanh toán
+                                            <i class="fas fa-money-bill-wave me-2"></i>Thanh toán
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="@Url.Action("Statistics", "Admin", new { area = "Admin" })">
-                                            <i class="fas fa-chart-line me-2"></i> Thống kê
+                                            <i class="fas fa-chart-line me-2"></i>Thống kê
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="@Url.Action("Analytics", "Admin", new { area = "Admin" })">
-                                            <i class="fas fa-chart-pie me-2"></i> Phân tích
+                                            <i class="fas fa-chart-pie me-2"></i>Phân tích
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider" /></li>
@@ -178,17 +251,17 @@
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="@Url.Action("Settings", "Admin", new { area = "Admin" })">
-                                            <i class="fas fa-sliders-h me-2"></i> Cài đặt
+                                            <i class="fas fa-sliders-h me-2"></i>Cài đặt
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="@Url.Action("SystemHealth", "Admin", new { area = "Admin" })">
-                                            <i class="fas fa-heartbeat me-2"></i> Tình trạng hệ thống
+                                            <i class="fas fa-heartbeat me-2"></i>Tình trạng hệ thống
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="@Url.Action("Maintenance", "Admin", new { area = "Admin" })">
-                                            <i class="fas fa-tools me-2"></i> Bảo trì
+                                            <i class="fas fa-tools me-2"></i>Bảo trì
                                         </a>
                                     </li>
                                 </ul>
@@ -196,10 +269,10 @@
                         }
                     </ul>
 
-                    <!-- Modern Search Form -->
+                    <!-- Enhanced Search Form -->
                     <form class="d-flex me-3 search-form" method="get" action="@Url.Action("SearchByName", "Course")">
                         <div class="input-group">
-                            <input class="form-control" type="search" name="keyword"
+                            <input class="form-control" type="search" name="keyword" value="@ViewBag.SearchKeyword"
                                    placeholder="Tìm kiếm khóa học..." aria-label="Search" />
                             <button class="btn" type="submit">
                                 <i class="fas fa-search"></i>
@@ -207,17 +280,17 @@
                         </div>
                     </form>
 
-                    <!-- User Navigation -->
+                    <!-- Enhanced User Navigation -->
                     <ul class="navbar-nav">
                         @if (User.Identity.IsAuthenticated)
                         {
-                            <!-- Modern Notifications dropdown -->
+                            <!-- Enhanced Notifications dropdown -->
                             <li class="nav-item dropdown me-3">
                                 <a class="nav-link position-relative" href="#" id="notificationsDropdown"
                                    role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     <i class="fas fa-bell fa-lg"></i>
-                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                        3
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notification-count">
+                                        0
                                         <span class="visually-hidden">Thông báo chưa đọc</span>
                                     </span>
                                 </a>
@@ -226,47 +299,26 @@
                                     <div class="dropdown-header text-center py-3">
                                         <h6 class="mb-0"><i class="fas fa-bell me-2"></i>Thông báo</h6>
                                     </div>
-                                    <div class="notification-list">
-                                        <a href="#" class="dropdown-item notification-item unread">
-                                            <div class="notification-icon bg-info">
-                                                <i class="fas fa-book text-white"></i>
-                                            </div>
-                                            <div class="notification-content">
-                                                <div class="notification-text">Khóa học mới đã được thêm vào danh mục của bạn</div>
-                                                <div class="notification-time">5 phút trước</div>
-                                            </div>
-                                        </a>
-                                        <a href="#" class="dropdown-item notification-item unread">
-                                            <div class="notification-icon bg-success">
-                                                <i class="fas fa-certificate text-white"></i>
-                                            </div>
-                                            <div class="notification-content">
-                                                <div class="notification-text">Bạn đã hoàn thành khóa học Python cơ bản</div>
-                                                <div class="notification-time">30 phút trước</div>
-                                            </div>
-                                        </a>
-                                        <a href="#" class="dropdown-item notification-item">
-                                            <div class="notification-icon bg-warning">
-                                                <i class="fas fa-star text-white"></i>
-                                            </div>
-                                            <div class="notification-content">
-                                                <div class="notification-text">Giảng viên đã phản hồi bình luận của bạn</div>
-                                                <div class="notification-time">2 giờ trước</div>
-                                            </div>
-                                        </a>
+                                    <div class="notification-list" id="notification-list">
+                                        <div class="text-center p-3 text-muted">
+                                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                                            <p class="mb-0">Không có thông báo mới</p>
+                                        </div>
                                     </div>
                                     <div class="dropdown-footer text-center py-3">
-                                        <a href="#" class="text-decoration-none fw-medium">Xem tất cả thông báo</a>
+                                        <a href="#" class="text-decoration-none fw-medium" onclick="markAllAsRead()">
+                                            Đánh dấu tất cả đã đọc
+                                        </a>
                                     </div>
                                 </div>
                             </li>
 
-                            <!-- Modern User dropdown -->
+                            <!-- Enhanced User dropdown -->
                             <li class="nav-item dropdown">
                                 <a class="nav-link d-flex align-items-center" href="#" id="userDropdown"
                                    role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     <div class="user-avatar me-2">
-                                        <img src="https://ui-avatars.com/api/?name=@User.Identity.Name&background=667eea&color=fff&bold=true"
+                                        <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(User.Identity.Name ?? "User")&background=667eea&color=fff&bold=true&size=35"
                                              alt="@User.Identity.Name" />
                                     </div>
                                     <span class="d-none d-lg-inline fw-medium">@User.Identity.Name</span>
@@ -274,49 +326,67 @@
                                     {
                                         <span class="badge bg-danger ms-2 small">ADMIN</span>
                                     }
+                                    @if (User.IsInRole("Teacher"))
+                                    {
+                                        <span class="badge bg-success ms-2 small">TEACHER</span>
+                                    }
                                     <i class="fas fa-chevron-down ms-2 small"></i>
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <ul class="dropdown-menu dropdown-menu-end user-dropdown" aria-labelledby="userDropdown">
                                     @if (User.IsInRole("Admin"))
                                     {
                                         <li>
                                             <a class="dropdown-item admin-quick-access" href="@Url.Action("Dashboard", "Admin", new { area = "Admin" })">
-                                                <i class="fas fa-crown me-2 text-warning"></i> Bảng điều khiển Admin
+                                                <i class="fas fa-crown me-2 text-warning"></i>Bảng điều khiển Admin
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider" /></li>
+                                    }
+                                    @if (User.IsInRole("Teacher"))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item teacher-quick-access" asp-area="Teacher" asp-controller="Teacher" asp-action="Dashboard">
+                                                <i class="fas fa-chalkboard-teacher me-2 text-success"></i>Bảng điều khiển Giảng viên
                                             </a>
                                         </li>
                                         <li><hr class="dropdown-divider" /></li>
                                     }
                                     <li>
                                         <a class="dropdown-item" href="@Url.Action("MyCourses", "Course")">
-                                            <i class="fas fa-book me-2"></i> Khóa&nbsp;học&nbsp;của&nbsp;tôi
+                                            <i class="fas fa-book me-2"></i>Khóa&nbsp;học&nbsp;của&nbsp;tôi
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="@Url.Action("FavoriteCourses", "Course")">
-                                            <i class="fas fa-heart me-2"></i> Khóa&nbsp;học&nbsp;yêu&nbsp;thích
+                                            <i class="fas fa-heart me-2"></i>Khóa&nbsp;học&nbsp;yêu&nbsp;thích
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider" /></li>
                                     <li>
                                         <a class="dropdown-item" href="/User/EditProfile">
-                                            <i class="fas fa-user-edit me-2"></i> Hồ&nbsp;sơ&nbsp;cá&nbsp;nhân
+                                            <i class="fas fa-user-edit me-2"></i>Hồ&nbsp;sơ&nbsp;cá&nbsp;nhân
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="@Url.Action("Progress", "Course")">
-                                            <i class="fas fa-chart-line me-2"></i> Tiến&nbsp;độ&nbsp;học&nbsp;tập
+                                            <i class="fas fa-chart-line me-2"></i>Tiến&nbsp;độ&nbsp;học&nbsp;tập
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="@Url.Action("History", "Payment")">
-                                            <i class="fas fa-history me-2"></i> Lịch&nbsp;sử&nbsp;thanh&nbsp;toán
+                                            <i class="fas fa-history me-2"></i>Lịch&nbsp;sử&nbsp;thanh&nbsp;toán
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider" /></li>
                                     <li>
+                                        <a class="dropdown-item" href="#" onclick="showSettings()">
+                                            <i class="fas fa-cog me-2"></i>Cài&nbsp;đặt
+                                        </a>
+                                    </li>
+                                    <li>
                                         <form asp-area="Identity" asp-page="/Account/Logout" method="post">
-                                            <button type="submit" class="dropdown-item">
-                                                <i class="fas fa-sign-out-alt me-2"></i> Đăng&nbsp;xuất
+                                            <button type="submit" class="dropdown-item text-danger">
+                                                <i class="fas fa-sign-out-alt me-2"></i>Đăng&nbsp;xuất
                                             </button>
                                         </form>
                                     </li>
@@ -327,12 +397,12 @@
                         {
                             <li class="nav-item me-2">
                                 <a class="btn btn-outline-modern" href="/Identity/Account/Login">
-                                    <i class="fas fa-sign-in-alt me-2"></i> Đăng nhập
+                                    <i class="fas fa-sign-in-alt me-2"></i>Đăng nhập
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="btn btn-modern" href="/Identity/Account/Register">
-                                    <i class="fas fa-user-plus me-2"></i> Đăng ký
+                                    <i class="fas fa-user-plus me-2"></i>Đăng ký
                                 </a>
                             </li>
                         }
@@ -341,6 +411,7 @@
             </div>
         </nav>
 
+        <!-- Enhanced Progress Bar -->
         @if (User.Identity.IsAuthenticated)
         {
             <div class="progress-container">
@@ -352,31 +423,129 @@
         }
     </header>
 
+    <!-- Enhanced Course Selection Modal -->
+    @if (User.IsInRole("Teacher"))
+    {
+        <div class="modal fade" id="courseSelectionModal" tabindex="-1" aria-labelledby="courseSelectionModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-gradient-primary text-white">
+                        <h5 class="modal-title" id="courseSelectionModalLabel">
+                            <i class="fas fa-book-open me-2"></i>Chọn khóa học
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <input type="text" class="form-control" id="courseSearchInput" placeholder="Tìm kiếm khóa học...">
+                        </div>
+                        <div id="courseList" class="course-list">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Đang tải...</span>
+                                </div>
+                                <p class="mt-2 text-muted">Đang tải danh sách khóa học...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Đóng
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course Stats Modal -->
+        <div class="modal fade" id="courseStatsModal" tabindex="-1" aria-labelledby="courseStatsModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header bg-gradient-info text-white">
+                        <h5 class="modal-title" id="courseStatsModalLabel">
+                            <i class="fas fa-chart-line me-2"></i>Thống kê khóa học
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" id="courseStatsContent">
+                        <!-- Stats content will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
     <!-- Main Content -->
     <main class="animate-fade-in">
-        @if (TempData["SuccessMessage"] != null)
+        <!-- Enhanced Alert Messages -->
+        @if (TempData["SuccessMessage"] != null || TempData["Success"] != null)
         {
             <div class="container py-2">
                 <div class="alert alert-success alert-dismissible fade show animate-slide-up" role="alert">
                     <i class="fas fa-check-circle me-2"></i>
-                    <strong>Thành công!</strong> @TempData["SuccessMessage"]
+                    <strong>Thành công!</strong> @(TempData["SuccessMessage"] ?? TempData["Success"])
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             </div>
         }
 
-        @if (TempData["ErrorMessage"] != null)
+        @if (TempData["ErrorMessage"] != null || TempData["Error"] != null)
         {
             <div class="container py-2">
                 <div class="alert alert-danger alert-dismissible fade show animate-slide-up" role="alert">
                     <i class="fas fa-exclamation-circle me-2"></i>
-                    <strong>Lỗi!</strong> @TempData["ErrorMessage"]
+                    <strong>Lỗi!</strong> @(TempData["ErrorMessage"] ?? TempData["Error"])
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             </div>
         }
 
-        <!-- Check if this is the Home page -->
+        @if (TempData["WarningMessage"] != null || TempData["Warning"] != null)
+        {
+            <div class="container py-2">
+                <div class="alert alert-warning alert-dismissible fade show animate-slide-up" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Cảnh báo!</strong> @(TempData["WarningMessage"] ?? TempData["Warning"])
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        }
+
+        @if (TempData["InfoMessage"] != null || TempData["Info"] != null)
+        {
+            <div class="container py-2">
+                <div class="alert alert-info alert-dismissible fade show animate-slide-up" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Thông tin!</strong> @(TempData["InfoMessage"] ?? TempData["Info"])
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        }
+
+        <!-- Breadcrumb Navigation -->
+        @if (ViewBag.Breadcrumbs != null)
+        {
+            <div class="container pt-3">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        @foreach (var breadcrumb in ViewBag.Breadcrumbs as List<object>)
+                        {
+                            var item = breadcrumb as dynamic;
+                            if (item.IsActive)
+                            {
+                                <li class="breadcrumb-item active" aria-current="page">@item.Text</li>
+                            }
+                            else
+                            {
+                                <li class="breadcrumb-item"><a href="@item.Url">@item.Text</a></li>
+                            }
+                        }
+                    </ol>
+                </nav>
+            </div>
+        }
+
+        <!-- Content Area -->
         @if (ViewContext.RouteData.Values["controller"]?.ToString() == "Home" &&
         ViewContext.RouteData.Values["action"]?.ToString() == "Index")
         {
@@ -392,36 +561,90 @@
         }
     </main>
 
-    <!-- Modern Back to Top Button -->
-    <a href="#" class="back-to-top" id="scrollToTop">
+    <!-- Enhanced Back to Top Button -->
+    <a href="#" class="back-to-top" id="scrollToTop" title="Lên đầu trang">
         <i class="fas fa-arrow-up"></i>
     </a>
 
-    <!-- Modern Loading Spinner -->
-    <div id="loading-spinner" style="display: none;">
+    <!-- Enhanced Loading Spinner -->
+    <div id="loading-spinner" class="loading-overlay" style="display: none;">
         <div class="spinner-content">
             <div class="spinner-border text-primary mb-3" role="status">
-                <span class="visually-hidden">Loading...</span>
+                <span class="visually-hidden">Đang tải...</span>
             </div>
-            <h5 class="fw-medium">Đang tải...</h5>
+            <h5 class="fw-medium">Đang xử lý...</h5>
             <p class="text-muted mb-0">Vui lòng chờ trong giây lát</p>
         </div>
     </div>
 
-    <!-- Modern Toast Container -->
-    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
-        <div id="liveToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+    <!-- Enhanced Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055">
+        <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="toast-header">
-                <div class="rounded me-2" style="width: 20px; height: 20px; background: var(--primary-gradient);"></div>
+                <div class="rounded me-2 toast-icon" style="width: 20px; height: 20px;"></div>
                 <strong class="me-auto" id="toastTitle">OnlineLearning</strong>
                 <small id="toastTime">Bây giờ</small>
                 <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
             <div class="toast-body" id="toastMessage">
-                Thông báo sẽ hiển thị tại đây
+                <!-- Toast message will be displayed here -->
             </div>
         </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-5 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h5 class="mb-3">
+                        <i class="fas fa-graduation-cap me-2"></i>OnlineLearning
+                    </h5>
+                    <p class="text-muted">Nền tảng học trực tuyến hàng đầu Việt Nam, mang đến cho bạn những khóa học chất lượng cao.</p>
+                    <div class="social-links">
+                        <a href="#" class="text-light me-3"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-light me-3"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-light me-3"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#" class="text-light"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h6 class="mb-3">Khóa học</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="@Url.Action("Index", "Course")" class="text-muted text-decoration-none">Tất cả khóa học</a></li>
+                        <li><a href="@Url.Action("PopularCourses", "Course")" class="text-muted text-decoration-none">Khóa học phổ biến</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Miễn phí</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h6 class="mb-3">Hỗ trợ</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-muted text-decoration-none">Trung tâm trợ giúp</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Liên hệ</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Điều khoản sử dụng</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Chính sách bảo mật</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h6 class="mb-3">Liên hệ</h6>
+                    <ul class="list-unstyled text-muted">
+                        <li><i class="fas fa-envelope me-2"></i>support@onlinelearning.vn</li>
+                        <li><i class="fas fa-phone me-2"></i>+84 123 456 789</li>
+                        <li><i class="fas fa-map-marker-alt me-2"></i>Hà Nội, Việt Nam</li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted">&copy; 2025 OnlineLearning. Tất cả quyền được bảo lưu.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0 text-muted">Phiên bản 2.0.0</p>
+                </div>
+            </div>
+        </div>
+    </footer>
 
     <!-- JavaScript Dependencies -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -432,6 +655,486 @@
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Enhanced Layout JavaScript -->
+    <script>
+        // Global variables
+        let currentAction = '';
+        let teacherCourses = [];
+
+        // Initialize layout functionality
+        $(document).ready(function() {
+            initializeLayout();
+            loadNotifications();
+            updateProgress();
+
+        @if (User.IsInRole("Teacher"))
+        {
+            <text>loadTeacherCourses();</text>
+        }
+        });
+
+        // Initialize layout components
+        function initializeLayout() {
+            // Back to top button
+            $(window).scroll(function() {
+                if ($(this).scrollTop() > 100) {
+                    $('#scrollToTop').addClass('show');
+                } else {
+                    $('#scrollToTop').removeClass('show');
+                }
+            });
+
+            $('#scrollToTop').click(function(e) {
+                e.preventDefault();
+                $('html, body').animate({scrollTop: 0}, 500);
+            });
+
+            // Search functionality
+            $('#courseSearchInput').on('input', function() {
+                const searchTerm = $(this).val().toLowerCase();
+                filterCourses(searchTerm);
+            });
+
+            // Auto-hide alerts
+            $('.alert').each(function() {
+                const alert = $(this);
+                setTimeout(function() {
+                    alert.fadeOut('slow');
+                }, 5000);
+            });
+        }
+
+        // Teacher course management functions
+        @if (User.IsInRole("Teacher"))
+        {
+            <text>
+                function showCourseSelectionModal(action) {
+                    currentAction = action;
+                    const modal = new bootstrap.Modal(document.getElementById('courseSelectionModal'));
+
+                    // Update modal title based on action
+                    const modalTitle = document.getElementById('courseSelectionModalLabel');
+                    const iconClass = getActionIcon(action);
+                    const actionText = getActionText(action);
+
+                    modalTitle.innerHTML = `<i class="${iconClass} me-2"></i>${actionText}`;
+
+                    displayCourses();
+                    modal.show();
+                }
+
+                function loadTeacherCourses() {
+                    $.ajax({
+                        url: '/Teacher/Teacher/GetMyCourses',
+                        type: 'GET',
+                        success: function(data) {
+                            teacherCourses = data;
+                            updateCourseCount();
+                        },
+                        error: function() {
+                            console.error('Failed to load teacher courses');
+                        }
+                    });
+                }
+
+                function displayCourses() {
+                    const courseList = $('#courseList');
+                    courseList.empty();
+
+                    if (teacherCourses.length === 0) {
+                        courseList.html(`
+                            <div class="alert alert-info text-center">
+                                <i class="fas fa-info-circle fa-2x mb-2"></i>
+                                <h6>Chưa có khóa học</h6>
+                                <p class="mb-0">Bạn chưa tạo khóa học nào. <a href="/Teacher/Teacher/CreateCourse">Tạo khóa học đầu tiên</a></p>
+                            </div>
+                        `);
+                        return;
+                    }
+
+                    teacherCourses.forEach(course => {
+                        const courseCard = createCourseCard(course);
+                        courseList.append(courseCard);
+                    });
+                }
+
+                function createCourseCard(course) {
+                    const statusBadge = getStatusBadge(course.trangThai);
+                    const studentCount = course.studentCount || 0;
+
+                    return $(`
+                        <div class="course-card" data-course-name="${course.tenKhoaHoc.toLowerCase()}">
+                            <div class="card mb-3 course-selection-card" onclick="selectCourse(${course.courseID}, '${course.tenKhoaHoc}')">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h6 class="card-title mb-1">${course.tenKhoaHoc}</h6>
+                                            <p class="card-text text-muted small mb-2">${course.moTa || 'Không có mô tả'}</p>
+                                            <div class="d-flex gap-2 flex-wrap">
+                                                ${statusBadge}
+                                                <span class="badge bg-info">${studentCount} học viên</span>
+                                                <span class="badge bg-secondary">${formatDate(course.ngayTao)}</span>
+                                            </div>
+                                        </div>
+                                        <div class="text-end">
+                                            <i class="fas fa-chevron-right text-muted"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                }
+
+                function selectCourse(courseId, courseName) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('courseSelectionModal'));
+                    modal.hide();
+
+                    // Show loading
+                    showLoading(`Đang chuyển đến ${getActionText(currentAction).toLowerCase()}...`);
+
+                    // Navigate to appropriate action
+                    let url = '';
+                    switch(currentAction) {
+                        case 'lessons':
+                            url = `/Teacher/Teacher/CourseLessons/${courseId}`;
+                            break;
+                        case 'quiz':
+                            url = `/Teacher/Teacher/CourseQuizzes/${courseId}`;
+                            break;
+                        case 'assignment':
+                            url = `/Teacher/Teacher/CourseAssignments/${courseId}`;
+                            break;
+                        case 'students':
+                            url = `/Teacher/Teacher/CourseStudents/${courseId}`;
+                            break;
+                        case 'submissions':
+                            url = `/Teacher/Teacher/CourseSubmissions/${courseId}`;
+                            break;
+                        default:
+                            hideLoading();
+                            showToast('error', 'Hành động không hợp lệ');
+                            return;
+                    }
+
+                    // Navigate with slight delay for better UX
+                    setTimeout(() => {
+                        window.location.href = url;
+                    }, 500);
+                }
+
+                function showCourseStatsModal() {
+                    const modal = new bootstrap.Modal(document.getElementById('courseStatsModal'));
+                    loadCourseStats();
+                    modal.show();
+                }
+
+                function loadCourseStats() {
+                    const content = $('#courseStatsContent');
+                    content.html(`
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-2">Đang tải thống kê...</p>
+                        </div>
+                    `);
+
+                    $.ajax({
+                        url: '/Teacher/Teacher/GetAllCourseStats',
+                        type: 'GET',
+                        success: function(data) {
+                            displayCourseStats(data);
+                        },
+                        error: function() {
+                            content.html(`
+                                <div class="alert alert-danger">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    Không thể tải thống kê khóa học.
+                                </div>
+                            `);
+                        }
+                    });
+                }
+
+                function displayCourseStats(stats) {
+                    const content = $('#courseStatsContent');
+                    // Implementation for displaying course statistics
+                    content.html(`
+                        <div class="row">
+                            <div class="col-md-6">
+                                <canvas id="courseChart"></canvas>
+                            </div>
+                            <div class="col-md-6">
+                                <canvas id="studentChart"></canvas>
+                            </div>
+                        </div>
+                    `);
+                    // Add chart rendering logic here
+                }
+
+                function filterCourses(searchTerm) {
+                    $('.course-card').each(function() {
+                        const courseName = $(this).data('course-name');
+                        if (courseName.includes(searchTerm)) {
+                            $(this).show();
+                        } else {
+                            $(this).hide();
+                        }
+                    });
+                }
+
+                function updateCourseCount() {
+                    const activeCount = teacherCourses.filter(c => c.trangThai === 'Active').length;
+                    // Update UI elements that show course count
+                }
+            </text>
+        }
+
+        // Utility functions
+        function getActionIcon(action) {
+            const icons = {
+                'lessons': 'fas fa-play',
+                'quiz': 'fas fa-question-circle',
+                'assignment': 'fas fa-clipboard-list',
+                'students': 'fas fa-users',
+                'submissions': 'fas fa-file-upload'
+            };
+            return icons[action] || 'fas fa-book';
+        }
+
+        function getActionText(action) {
+            const texts = {
+                'lessons': 'Quản lý bài học',
+                'quiz': 'Quản lý bài kiểm tra',
+                'assignment': 'Quản lý bài tập',
+                'students': 'Học viên theo khóa học',
+                'submissions': 'Bài nộp học viên'
+            };
+            return texts[action] || 'Chọn khóa học';
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                'Active': '<span class="badge bg-success">Đang hoạt động</span>',
+                'Pending': '<span class="badge bg-warning">Chờ duyệt</span>',
+                'Closed': '<span class="badge bg-secondary">Đã đóng</span>',
+                'Draft': '<span class="badge bg-info">Nháp</span>'
+            };
+            return badges[status] || '<span class="badge bg-light">Không xác định</span>';
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('vi-VN');
+        }
+
+        // Loading and notification functions
+        function showLoading(message = 'Đang xử lý...') {
+            $('#loading-spinner').show();
+            $('#loading-spinner .fw-medium').text(message);
+        }
+
+        function hideLoading() {
+            $('#loading-spinner').hide();
+        }
+
+        function showToast(type, message, title = 'OnlineLearning') {
+            const toast = $('#liveToast');
+            const toastIcon = $('.toast-icon');
+
+            // Set icon and color based on type
+            const configs = {
+                'success': { icon: 'var(--success-gradient)', bg: 'bg-success' },
+                'error': { icon: 'var(--danger-gradient)', bg: 'bg-danger' },
+                'warning': { icon: 'var(--warning-gradient)', bg: 'bg-warning' },
+                'info': { icon: 'var(--info-gradient)', bg: 'bg-info' }
+            };
+
+            const config = configs[type] || configs['info'];
+            toastIcon.css('background', config.icon);
+
+            $('#toastTitle').text(title);
+            $('#toastMessage').text(message);
+            $('#toastTime').text('Bây giờ');
+
+            const bsToast = new bootstrap.Toast(toast[0]);
+            bsToast.show();
+        }
+
+        function loadNotifications() {
+            // Load notifications from server
+            $.ajax({
+                url: '/Api/Notifications/GetUnread',
+                type: 'GET',
+                success: function(data) {
+                    updateNotifications(data);
+                },
+                error: function() {
+                    console.log('Failed to load notifications');
+                }
+            });
+        }
+
+        function updateNotifications(notifications) {
+            const badge = $('#notification-count');
+            const list = $('#notification-list');
+
+            if (notifications.length === 0) {
+                badge.hide();
+                list.html(`
+                    <div class="text-center p-3 text-muted">
+                        <i class="fas fa-inbox fa-2x mb-2"></i>
+                        <p class="mb-0">Không có thông báo mới</p>
+                    </div>
+                `);
+                return;
+            }
+
+            badge.text(notifications.length).show();
+            list.empty();
+
+            notifications.forEach(notification => {
+                const item = createNotificationItem(notification);
+                list.append(item);
+            });
+        }
+
+        function createNotificationItem(notification) {
+            const timeAgo = getTimeAgo(notification.createdAt);
+            const iconClass = getNotificationIcon(notification.type);
+            const bgClass = getNotificationBg(notification.type);
+
+            return $(`
+                <a href="#" class="dropdown-item notification-item ${notification.isRead ? '' : 'unread'}"
+                   data-id="${notification.id}">
+                    <div class="notification-icon ${bgClass}">
+                        <i class="${iconClass} text-white"></i>
+                    </div>
+                    <div class="notification-content">
+                        <div class="notification-text">${notification.message}</div>
+                        <div class="notification-time">${timeAgo}</div>
+                    </div>
+                </a>
+            `);
+        }
+
+        function getNotificationIcon(type) {
+            const icons = {
+                'course': 'fas fa-book',
+                'assignment': 'fas fa-clipboard-list',
+                'quiz': 'fas fa-question-circle',
+                'payment': 'fas fa-credit-card',
+                'system': 'fas fa-cog'
+            };
+            return icons[type] || 'fas fa-bell';
+        }
+
+        function getNotificationBg(type) {
+            const backgrounds = {
+                'course': 'bg-info',
+                'assignment': 'bg-warning',
+                'quiz': 'bg-primary',
+                'payment': 'bg-success',
+                'system': 'bg-secondary'
+            };
+            return backgrounds[type] || 'bg-info';
+        }
+
+        function getTimeAgo(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffInSeconds = (now - date) / 1000;
+
+            if (diffInSeconds < 60) return 'Vừa xong';
+            if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} phút trước`;
+            if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} giờ trước`;
+            return `${Math.floor(diffInSeconds / 86400)} ngày trước`;
+        }
+
+        function markAllAsRead() {
+            $.ajax({
+                url: '/Api/Notifications/MarkAllAsRead',
+                type: 'POST',
+                success: function() {
+                    loadNotifications();
+                    showToast('success', 'Đã đánh dấu tất cả thông báo là đã đọc');
+                }
+            });
+        }
+
+        function updateProgress() {
+            // Update learning progress bar
+            const progressBar = $('.progress-bar');
+            if (progressBar.length) {
+                // Simulate progress update
+                setTimeout(() => {
+                    progressBar.css('width', '25%').attr('aria-valuenow', 25);
+                }, 1000);
+            }
+        }
+
+        function showSettings() {
+            // Implementation for settings modal
+            showToast('info', 'Tính năng cài đặt đang được phát triển');
+        }
+
+        // Form validation and submission helpers
+        function validateForm(formId) {
+            const form = $(`#${formId}`);
+            let isValid = true;
+
+            form.find('input[required], select[required], textarea[required]').each(function() {
+                if (!$(this).val()) {
+                    $(this).addClass('is-invalid');
+                    isValid = false;
+                } else {
+                    $(this).removeClass('is-invalid');
+                }
+            });
+
+            return isValid;
+        }
+
+        function submitFormWithLoading(formId, loadingMessage = 'Đang xử lý...') {
+            if (!validateForm(formId)) {
+                showToast('error', 'Vui lòng điền đầy đủ thông tin bắt buộc');
+                return false;
+            }
+
+            showLoading(loadingMessage);
+            return true;
+        }
+
+        // Keyboard shortcuts
+        $(document).keydown(function(e) {
+            // Ctrl/Cmd + K for search
+            if ((e.ctrlKey || e.metaKey) && e.keyCode === 75) {
+                e.preventDefault();
+                $('.search-form input').focus();
+            }
+
+            // Escape to close modals
+            if (e.keyCode === 27) {
+                $('.modal.show').modal('hide');
+            }
+        });
+
+        // AJAX error handling
+        $(document).ajaxError(function(event, xhr, settings, thrownError) {
+            hideLoading();
+
+            if (xhr.status === 401) {
+                showToast('error', 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+                setTimeout(() => {
+                    window.location.href = '/Identity/Account/Login';
+                }, 2000);
+            } else if (xhr.status === 403) {
+                showToast('error', 'Bạn không có quyền thực hiện hành động này.');
+            } else if (xhr.status >= 500) {
+                showToast('error', 'Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.');
+            }
+        });
+    </script>
 
     <!-- Render any additional scripts from the view -->
     @await RenderSectionAsync("Scripts", required: false)

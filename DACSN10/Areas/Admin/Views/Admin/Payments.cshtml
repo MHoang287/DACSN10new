@@ -547,6 +547,51 @@
             }, 30000);
         });
 
+        function showLoading() {
+            Swal.fire({
+                title: 'Đang xử lý...',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                allowEnterKey: false,
+                showConfirmButton: false,
+                willOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        }
+
+        function hideLoading() {
+            Swal.close();
+        }
+
+        function showSuccess(message) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Thành công!',
+                text: message,
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
+
+        function showError(message) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi!',
+                text: message,
+                confirmButtonText: 'OK'
+            });
+        }
+
+        function showWarning(message) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Cảnh báo!',
+                text: message,
+                confirmButtonText: 'OK'
+            });
+        }
+
         function updateSelectedCount() {
             const selectedCount = $('.payment-checkbox:checked').length;
             $('#selectedCount').text(selectedCount);
@@ -623,26 +668,61 @@
                 if (result.isConfirmed) {
                     showLoading();
 
-                    $.post('/Admin/ApprovePayment', {
-                        id: paymentId,
-                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
-                    })
-                    .done(function(response) {
-                        hideLoading();
-                        if (response.success) {
-                            showSuccess(response.message);
-                            setTimeout(() => location.reload(), 1500);
-                        } else {
-                            showError(response.message);
-                        }
-                    })
-                    .fail(function() {
-                        hideLoading();
-                        showError('Có lỗi xảy ra khi duyệt thanh toán!');
-                    });
+                    // Lấy token từ form hoặc tạo token mới
+                    var token = $('input[name="__RequestVerificationToken"]').val();
+                    if (!token) {
+                        // Nếu không tìm thấy token trong trang, tạo request để lấy token
+                        $.get('/Admin/Payments', function(data) {
+                            var tokenMatch = data.match(/name="__RequestVerificationToken"[^>]*value="([^"]*)"/)
+                            if (tokenMatch) {
+                                token = tokenMatch[1];
+                                performApproval(paymentId, token);
+                            } else {
+                                hideLoading();
+                                showError('Không thể lấy token bảo mật!');
+                            }
+                        });
+                        return;
+                    }
+
+                    performApproval(paymentId, token);
                 }
             });
         }
+
+        function performApproval(paymentId, token) {
+            $.ajax({
+                url: '/Admin/Admin/ApprovePayment',
+                type: 'POST',
+                data: {
+                    id: paymentId,
+                    __RequestVerificationToken: token
+                },
+                success: function(response) {
+                    hideLoading();
+                    if (response.success) {
+                        showSuccess(response.message);
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showError(response.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    hideLoading();
+                    console.error('Error details:', xhr.responseText);
+                    if (xhr.status === 404) {
+                        showError('Không tìm thấy API endpoint. Vui lòng kiểm tra route!');
+                    } else if (xhr.status === 400) {
+                        showError('Dữ liệu không hợp lệ!');
+                    } else if (xhr.status === 500) {
+                        showError('Lỗi server: ' + (xhr.responseJSON?.message || error));
+                    } else {
+                        showError('Có lỗi xảy ra khi duyệt thanh toán: ' + error);
+                    }
+                }
+            });
+        }
+
 
         function rejectPayment(paymentId) {
             Swal.fire({
