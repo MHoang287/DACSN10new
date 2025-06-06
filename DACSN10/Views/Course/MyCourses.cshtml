@@ -62,12 +62,6 @@
         </div>
     </div>
 
-    <!-- Progress Chart -->
-    <div class="chart-container" data-aos="fade-up">
-        <h5 class="mb-3">Biểu đồ tiến độ học tập</h5>
-        <canvas id="progressChart" height="100"></canvas>
-    </div>
-
     <!-- Overview Cards -->
     <div class="overview-cards" data-aos="fade-up">
         <div class="overview-card">
@@ -277,9 +271,6 @@
             // Calculate and update statistics
             updateStatistics();
 
-            // Initialize progress chart
-            initializeProgressChart();
-
             // Filter functionality
             $('#courseFilter .nav-link').on('click', function(e) {
                 e.preventDefault();
@@ -338,72 +329,6 @@
 
             // Re-trigger AOS for visible items
             AOS.refresh();
-        }
-
-        function initializeProgressChart() {
-            const ctx = document.getElementById('progressChart').getContext('2d');
-
-            // Get progress data from courses
-            const courseNames = [];
-            const progressData = [];
-
-        @if (Model != null && Model.Any())
-        {
-            <text>
-                @foreach (var item in Model.Take(10)) // Limit to 10 courses for chart readability
-                {
-                    <text>
-                            courseNames.push('@Html.Raw(item.Course.TenKhoaHoc.Replace("'", "\\'"))');
-                            progressData.push(@item.Progress);
-                    </text>
-                }
-            </text>
-        }
-
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: courseNames,
-                    datasets: [{
-                        label: 'Tiến độ (%)',
-                        data: progressData,
-                        backgroundColor: function(context) {
-                            const value = context.parsed.y;
-                            if (value >= 100) return '#10b981';
-                            if (value >= 50) return '#f59e0b';
-                            return '#3b82f6';
-                        },
-                        borderRadius: 8,
-                        borderSkipped: false,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100,
-                            ticks: {
-                                callback: function(value) {
-                                    return value + '%';
-                                }
-                            }
-                        },
-                        x: {
-                            ticks: {
-                                maxRotation: 45,
-                                minRotation: 45
-                            }
-                        }
-                    }
-                }
-            });
         }
 
         function loadAverageProgress() {

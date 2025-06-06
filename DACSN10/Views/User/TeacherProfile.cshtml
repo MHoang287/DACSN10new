@@ -317,6 +317,15 @@
     </style>
 }
 
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
 <!-- Profile Hero Section -->
 <section class="profile-hero">
     <div class="container-fluid px-4 px-md-5">
@@ -325,13 +334,11 @@
                 <div class="text-center text-lg-start" data-aos="fade-right">
                     <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(Model.Teacher.HoTen)&background=random&color=fff&bold=true&size=150"
                          alt="@Model.Teacher.HoTen" class="teacher-avatar-large">
-
                     <h1 class="teacher-name">@Model.Teacher.HoTen</h1>
                     <p class="teacher-title">
                         <i class="fas fa-chalkboard-teacher me-2"></i>
                         Giảng viên chuyên nghiệp
                     </p>
-
                     <div class="rating-display">
                         <div class="star-rating">
                             <i class="fas fa-star"></i>
@@ -348,11 +355,28 @@
                 <div class="text-center text-lg-end" data-aos="fade-left">
                     @if (User.Identity.IsAuthenticated)
                     {
-                        <button class="follow-btn-large @(Model.IsFollowed ? "following" : "")"
-                                onclick="toggleFollowTeacher('@Model.Teacher.Id', this)">
-                            <i class="fas @(Model.IsFollowed ? "fa-user-minus" : "fa-user-plus")"></i>
-                            @(Model.IsFollowed ? "Bỏ theo dõi" : "Theo dõi giảng viên")
-                        </button>
+                        if (Model.IsFollowed)
+                        {
+                            using (Html.BeginForm("UnfollowTeacher", "User", FormMethod.Post, new { @class = "d-inline" }))
+                            {
+                                @Html.AntiForgeryToken()
+                                @Html.Hidden("teacherId", Model.Teacher.Id)
+                                <button type="submit" class="follow-btn-large following">
+                                    <i class="fas fa-user-minus"></i> Bỏ theo dõi
+                                </button>
+                            }
+                        }
+                        else
+                        {
+                            using (Html.BeginForm("FollowTeacher", "User", FormMethod.Post, new { @class = "d-inline" }))
+                            {
+                                @Html.AntiForgeryToken()
+                                @Html.Hidden("teacherId", Model.Teacher.Id)
+                                <button type="submit" class="follow-btn-large">
+                                    <i class="fas fa-user-plus"></i> Theo dõi giảng viên
+                                </button>
+                            }
+                        }
                     }
                     else
                     {
@@ -436,11 +460,9 @@
 
                             <div class="course-content-featured">
                                 <h3 class="course-title-featured">@course.TenKhoaHoc</h3>
-
                                 <p class="course-description">
                                     @(string.IsNullOrEmpty(course.MoTa) ? "Khóa học chất lượng cao với nội dung được cập nhật liên tục." : course.MoTa.Length > 100 ? course.MoTa.Substring(0, 100) + "..." : course.MoTa)
                                 </p>
-
                                 <div class="course-stats-row">
                                     <div class="course-students-large">
                                         <i class="fas fa-users"></i>
@@ -457,14 +479,12 @@
                                         }
                                     </div>
                                 </div>
-
                                 <div class="d-flex gap-2">
                                     <a href="@Url.Action("Details", "Course", new { id = course.CourseID })"
                                        class="btn btn-primary flex-fill rounded-pill">
                                         <i class="fas fa-eye me-2"></i>
                                         Xem chi tiết
                                     </a>
-
                                     @if (User.Identity.IsAuthenticated)
                                     {
                                         <button class="btn btn-outline-danger rounded-pill"
@@ -474,7 +494,6 @@
                                         </button>
                                     }
                                 </div>
-
                                 <div class="mt-3">
                                     <small class="text-muted">
                                         <i class="fas fa-calendar me-1"></i>
@@ -508,7 +527,6 @@
             <i class="fas fa-trophy me-3"></i>
             Thành tích nổi bật
         </h2>
-
         <div class="row">
             <div class="col-lg-3 col-md-6 mb-4">
                 <div class="achievement-item" data-aos="zoom-in" data-aos-delay="100">
@@ -564,7 +582,6 @@
                     <p class="text-muted mb-4">
                         Gửi email để được tư vấn về khóa học và lộ trình học tập phù hợp
                     </p>
-
                     <div class="d-flex gap-3 justify-content-center">
                         <a href="mailto:@Model.Teacher.Email" class="btn btn-primary btn-lg rounded-pill">
                             <i class="fas fa-paper-plane me-2"></i>
@@ -591,59 +608,6 @@
             easing: 'ease-out-quart',
             once: true
         });
-
-        function toggleFollowTeacher(teacherId, button) {
-            const isFollowing = $(button).hasClass('following');
-            const action = isFollowing ? 'UnfollowTeacher' : 'FollowTeacher';
-
-            // Disable button during request
-            $(button).prop('disabled', true);
-
-            $.post('@Url.Action("' + action + '")', {
-                teacherId: teacherId,
-                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
-            })
-            .done(function(response) {
-                if (response.success) {
-                    // Toggle button state
-                    if (isFollowing) {
-                        $(button).removeClass('following')
-                                 .html('<i class="fas fa-user-plus"></i>Theo dõi giảng viên');
-                    } else {
-                        $(button).addClass('following')
-                                 .html('<i class="fas fa-user-minus"></i>Bỏ theo dõi');
-                    }
-
-                    // Show success message with animation
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Thành công!',
-                        text: response.message,
-                        showConfirmButton: false,
-                        timer: 2000,
-                        toast: true,
-                        position: 'top-end'
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Lỗi!',
-                        text: response.message
-                    });
-                }
-            })
-            .fail(function() {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Lỗi!',
-                    text: 'Có lỗi xảy ra, vui lòng thử lại!'
-                });
-            })
-            .always(function() {
-                // Re-enable button
-                $(button).prop('disabled', false);
-            });
-        }
 
         function toggleFavorite(courseId) {
         @if (User.Identity.IsAuthenticated)
@@ -684,7 +648,6 @@
         }
         }
 
-        // Smooth scroll for internal links
         $('a[href^="#"]').on('click', function(event) {
             var target = $(this.getAttribute('href'));
             if (target.length) {
@@ -695,7 +658,6 @@
             }
         });
 
-        // Configure toastr
         toastr.options = {
             "closeButton": true,
             "progressBar": true,
@@ -703,7 +665,6 @@
             "timeOut": 3000
         };
 
-        // Add parallax effect to hero section
         $(window).scroll(function() {
             const scrolled = $(this).scrollTop();
             const parallax = $('.profile-hero');
@@ -711,9 +672,4 @@
             parallax.css('transform', 'translate3d(0, ' + speed + 'px, 0)');
         });
     </script>
-
-    @if (User.Identity.IsAuthenticated)
-    {
-        @Html.AntiForgeryToken()
-    }
 }

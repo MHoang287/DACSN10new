@@ -166,19 +166,22 @@ namespace DACSN10.Controllers
         {
             if (string.IsNullOrWhiteSpace(teacherId))
             {
-                return Json(new { success = false, message = "ID giảng viên không hợp lệ." });
+                TempData["Error"] = "ID giảng viên không hợp lệ.";
+                return RedirectToAction("TeacherProfile", new { id = teacherId });
             }
 
             var currentUserId = GetCurrentUserId();
             if (string.IsNullOrEmpty(currentUserId))
             {
-                return Json(new { success = false, message = "Vui lòng đăng nhập để theo dõi giảng viên." });
+                TempData["Error"] = "Vui lòng đăng nhập để theo dõi giảng viên.";
+                return RedirectToAction("TeacherProfile", new { id = teacherId });
             }
 
             // Can't follow yourself
             if (currentUserId == teacherId)
             {
-                return Json(new { success = false, message = "Không thể theo dõi chính mình." });
+                TempData["Error"] = "Không thể theo dõi chính mình.";
+                return RedirectToAction("TeacherProfile", new { id = teacherId });
             }
 
             var teacher = await _context.Users
@@ -186,7 +189,8 @@ namespace DACSN10.Controllers
 
             if (teacher == null)
             {
-                return Json(new { success = false, message = "Không tìm thấy giảng viên." });
+                TempData["Error"] = "Không tìm thấy giảng viên.";
+                return RedirectToAction("TeacherProfile", new { id = teacherId });
             }
 
             var exists = await _context.Follows
@@ -194,7 +198,8 @@ namespace DACSN10.Controllers
 
             if (exists)
             {
-                return Json(new { success = false, message = "Bạn đã theo dõi giảng viên này." });
+                TempData["Error"] = "Bạn đã theo dõi giảng viên này.";
+                return RedirectToAction("TeacherProfile", new { id = teacherId });
             }
 
             try
@@ -206,11 +211,13 @@ namespace DACSN10.Controllers
                 });
 
                 await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "Đã theo dõi giảng viên!" });
+                TempData["Success"] = "Đã theo dõi giảng viên!";
+                return RedirectToAction("TeacherProfile", new { id = teacherId });
             }
             catch
             {
-                return Json(new { success = false, message = "Lỗi khi theo dõi giảng viên." });
+                TempData["Error"] = "Lỗi khi theo dõi giảng viên.";
+                return RedirectToAction("TeacherProfile", new { id = teacherId });
             }
         }
 
@@ -221,13 +228,15 @@ namespace DACSN10.Controllers
         {
             if (string.IsNullOrWhiteSpace(teacherId))
             {
-                return Json(new { success = false, message = "ID giảng viên không hợp lệ." });
+                TempData["Error"] = "ID giảng viên không hợp lệ.";
+                return RedirectToAction("TeacherProfile", new { id = teacherId });
             }
 
             var currentUserId = GetCurrentUserId();
             if (string.IsNullOrEmpty(currentUserId))
             {
-                return Json(new { success = false, message = "Vui lòng đăng nhập để bỏ theo dõi giảng viên." });
+                TempData["Error"] = "Vui lòng đăng nhập để bỏ theo dõi giảng viên.";
+                return RedirectToAction("TeacherProfile", new { id = teacherId });
             }
 
             var follow = await _context.Follows
@@ -235,18 +244,21 @@ namespace DACSN10.Controllers
 
             if (follow == null)
             {
-                return Json(new { success = false, message = "Bạn chưa theo dõi giảng viên này." });
+                TempData["Error"] = "Bạn chưa theo dõi giảng viên này.";
+                return RedirectToAction("TeacherProfile", new { id = teacherId });
             }
 
             try
             {
                 _context.Follows.Remove(follow);
                 await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "Đã bỏ theo dõi giảng viên!" });
+                TempData["Success"] = "Đã bỏ theo dõi giảng viên!";
+                return RedirectToAction("TeacherProfile", new { id = teacherId });
             }
             catch
             {
-                return Json(new { success = false, message = "Lỗi khi bỏ theo dõi giảng viên." });
+                TempData["Error"] = "Lỗi khi bỏ theo dõi giảng viên.";
+                return RedirectToAction("TeacherProfile", new { id = teacherId });
             }
         }
 
