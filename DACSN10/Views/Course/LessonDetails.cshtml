@@ -1,7 +1,11 @@
 ﻿@model DACSN10.Models.Lesson
 @{
     ViewData["Title"] = "Chi tiết bài học";
-    Layout = "~/Views/Shared/_Layout.cshtml"; // Layout cho student
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var allLessons = ViewBag.AllLessons as List<DACSN10.Models.Lesson>;
+    var currentIndex = (int)(ViewBag.CurrentLessonIndex ?? 0);
+    var prevLesson = (allLessons != null && currentIndex > 0) ? allLessons[currentIndex - 1] : null;
+    var nextLesson = (allLessons != null && currentIndex < (allLessons.Count - 1)) ? allLessons[currentIndex + 1] : null;
 }
 
 @section Styles {
@@ -166,6 +170,12 @@
             margin-bottom: 2rem;
         }
 
+        .lesson-navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+        }
+
         {
             padding: 1rem;
         }
@@ -178,27 +188,57 @@
             flex-direction: column;
         }
 
-        }
     </style>
 }
 
 <div class="lesson-detail-container">
-    <!-- Course Info -->
+
+    <!-- Thông tin khóa học -->
     <div class="course-info">
         <h6 class="mb-2">
             <i class="fas fa-book text-primary me-2"></i>
-            Khóa học: @ViewBag.Course.TenKhoaHoc
+            Khóa học: @Model.Course?.TenKhoaHoc
         </h6>
         <p class="text-muted mb-0">Đang học bài học trong khóa học này</p>
     </div>
 
-    <!-- Completion Status -->
+    <!-- Tiến độ bài học (có thể tuỳ chỉnh điều kiện hiển thị) -->
     <div class="completion-status">
         <i class="fas fa-check-circle me-2"></i>
         Bạn đã hoàn thành bài học này!
     </div>
 
-    <!-- Lesson Header -->
+    <!-- Navigation giữa các bài học -->
+    @if (allLessons != null && allLessons.Count > 1)
+    {
+        <div class="lesson-navigation">
+            @if (prevLesson != null)
+            {
+                <a href="@Url.Action("LessonDetails", "Course", new { id = prevLesson.LessonID })" class="btn-outline">
+                    <i class="fas fa-arrow-left"></i> Bài trước
+                </a>
+            }
+            else
+            {
+                <span></span>
+            }
+            <span>
+                Bài @(currentIndex + 1) / @allLessons.Count
+            </span>
+            @if (nextLesson != null)
+            {
+                <a href="@Url.Action("LessonDetails", "Course", new { id = nextLesson.LessonID })" class="btn-outline">
+                    Bài tiếp <i class="fas fa-arrow-right"></i>
+                </a>
+            }
+            else
+            {
+                <span></span>
+            }
+        </div>
+    }
+
+    <!-- Header bài học -->
     <div class="lesson-header">
         <h1 class="lesson-title">@Model.TenBaiHoc</h1>
         <div class="lesson-meta">
@@ -220,7 +260,7 @@
         </div>
     </div>
 
-    <!-- Video Section -->
+    <!-- Phần video -->
     @if (!string.IsNullOrEmpty(Model.VideoUrl))
     {
         <div class="video-section">
@@ -273,20 +313,20 @@
         </div>
     }
 
-    <!-- Content Section -->
+    <!-- Nội dung bài học -->
     <div class="content-section">
         <h3 class="section-title">
             <i class="fas fa-file-text"></i>
             Nội dung bài học
         </h3>
         <div class="content-text">
-            @Html.Raw(Model.NoiDung.Replace("\n", "<br>"))
+            @Html.Raw(Model.NoiDung?.Replace("\n", "<br>"))
         </div>
     </div>
 
     <!-- Action Buttons -->
     <div class="action-buttons">
-        <a href="@Url.Action("CourseDetails", "Course", new { id = ViewBag.Course.CourseID })" class="btn-outline">
+        <a href="@Url.Action("Details", "Course", new { id = Model.Course?.CourseID })" class="btn-outline">
             <i class="fas fa-arrow-left"></i>
             Quay lại khóa học
         </a>
@@ -297,7 +337,7 @@
                 Xem video gốc
             </a>
         }
-        <button onclick="markAsCompleted()" class="btn-primary">
+        <button onclick="markAsCompleted()" class="btn-primary" type="button">
             <i class="fas fa-check"></i>
             Đánh dấu hoàn thành
         </button>
@@ -309,13 +349,18 @@
         function markAsCompleted() {
             // AJAX call để đánh dấu bài học đã hoàn thành
             $.ajax({
-                url: '@Url.Action("MarkLessonCompleted", "Student")',
+                url: '@Url.Action("MarkLessonComplete", "Course")',
                 type: 'POST',
-                data: { lessonId: @Model.LessonID },
+                data: {
+                    lessonId: @Model.LessonID,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
                 success: function(result) {
                     if (result.success) {
-                        alert('Đã đánh dấu bài học hoàn thành!');
+                        alert(result.message || 'Đã đánh dấu bài học hoàn thành!');
                         location.reload();
+                    } else {
+                        alert(result.message || 'Có lỗi xảy ra. Vui lòng thử lại!');
                     }
                 },
                 error: function() {
@@ -331,4 +376,5 @@
             });
         });
     </script>
+    @Html.AntiForgeryToken()
 }

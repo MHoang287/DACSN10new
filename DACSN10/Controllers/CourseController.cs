@@ -732,8 +732,10 @@ namespace DACSN10.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
+            // Lấy đúng 1 bài học với LessonID
             var lesson = await _context.Lessons
-                .Include(l => l.Course).ThenInclude(c => c.User)
+                .Include(l => l.Course)
+                .ThenInclude(c => c.User)
                 .FirstOrDefaultAsync(l => l.LessonID == id);
 
             if (lesson == null)
@@ -742,7 +744,7 @@ namespace DACSN10.Controllers
                 return NotFound();
             }
 
-            // Check if user can access this lesson
+            // Kiểm tra quyền truy cập khóa học chứa bài học này
             var canAccess = await CanAccessCourseContent(userId, lesson.CourseID);
             if (!canAccess)
             {
@@ -750,29 +752,27 @@ namespace DACSN10.Controllers
                 return RedirectToAction("Details", new { id = lesson.CourseID });
             }
 
-            // Get user's enrollment to track progress
+            // Lấy Enrollment nếu muốn hiển thị tiến độ (nếu cần)
             var enrollment = await _context.Enrollments
                 .FirstOrDefaultAsync(e => e.UserID == userId && e.CourseID == lesson.CourseID && e.TrangThai == "Active");
-
             ViewBag.Enrollment = enrollment;
-            ViewBag.CanAccessContent = true;
 
-            // Get all lessons in the course for navigation
+            // Lấy danh sách tất cả bài học trong khóa học để chuyển bài (nếu muốn)
             var allLessons = await _context.Lessons
                 .Where(l => l.CourseID == lesson.CourseID)
                 .OrderBy(l => l.LessonID)
                 .ToListAsync();
-
             ViewBag.AllLessons = allLessons;
             ViewBag.CurrentLessonIndex = allLessons.FindIndex(l => l.LessonID == id);
 
+            // Truyền lesson đúng kiểu sang View
             return View(lesson);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize]
-        public async Task<IActionResult> MarkLessonComplete(int lessonId)
+        public async Task<IActionResult> MarkLessonCompleted(int lessonId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
@@ -799,13 +799,39 @@ namespace DACSN10.Controllers
 
             try
             {
-                // Calculate progress
+                // Check if lesson is already marked as completed
+                var existingProgress = await _context.UserLessonProgress
+                    .FirstOrDefaultAsync(p => p.UserID == userId && p.LessonID == lessonId);
+
+                if (existingProgress == null)
+                {
+                    // Add new progress record
+                    var progress = new UserLessonProgress
+                    {
+                        UserID = userId,
+                        LessonID = lessonId,
+                        IsCompleted = true,
+                        CompletedAt = DateTime.Now
+                    };
+                    _context.UserLessonProgress.Add(progress);
+                }
+                else if (!existingProgress.IsCompleted)
+                {
+                    // Update existing record
+                    existingProgress.IsCompleted = true;
+                    existingProgress.CompletedAt = DateTime.Now;
+                }
+
+                // Calculate overall course progress
                 var totalLessons = await _context.Lessons.CountAsync(l => l.CourseID == lesson.CourseID);
+                var completedLessonsCount = await _context.UserLessonProgress
+                    .CountAsync(p => p.UserID == userId &&
+                                   p.Lesson.CourseID == lesson.CourseID &&
+                                   p.IsCompleted);
+
                 if (totalLessons > 0)
                 {
-                    var progressIncrement = 100f / totalLessons;
-                    enrollment.Progress = Math.Min(100f, enrollment.Progress + progressIncrement);
-
+                    enrollment.Progress = (float)completedLessonsCount / totalLessons * 100;
                     await _context.SaveChangesAsync();
 
                     return Json(new
@@ -822,6 +848,63 @@ namespace DACSN10.Controllers
             {
                 return Json(new { success = false, message = "Lỗi khi cập nhật tiến độ: " + ex.Message });
             }
+        }
+
+        // Helper method to get completed lessons for a user in a course
+        private async Task<List<int>> GetCompletedLessons(string userId, int courseId)
+        {
+            return await _context.UserLessonProgress
+                .Where(p => p.UserID == userId &&
+                           p.Lesson.CourseID == courseId &&
+                           p.IsCompleted)
+                .Select(p => p.LessonID)
+                .ToListAsync();
+        }
+
+        // Method to handle "Học ngay" button click
+        [Authorize]
+        public async Task<IActionResult> StartLesson(int courseId)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                TempData["Error"] = "Vui lòng đăng nhập để học.";
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Check if user is enrolled in the course
+            var canAccess = await CanAccessCourseContent(userId, courseId);
+            if (!canAccess)
+            {
+                TempData["Error"] = "Bạn cần đăng ký khóa học để bắt đầu học.";
+                return RedirectToAction("Details", new { id = courseId });
+            }
+
+            // Get the first lesson or the next uncompleted lesson
+            var completedLessons = await GetCompletedLessons(userId, courseId);
+
+            var nextLesson = await _context.Lessons
+                .Where(l => l.CourseID == courseId && !completedLessons.Contains(l.LessonID))
+                .OrderBy(l => l.LessonID)
+                .FirstOrDefaultAsync();
+
+            // If all lessons are completed, go to the first lesson
+            if (nextLesson == null)
+            {
+                nextLesson = await _context.Lessons
+                    .Where(l => l.CourseID == courseId)
+                    .OrderBy(l => l.LessonID)
+                    .FirstOrDefaultAsync();
+            }
+
+            if (nextLesson == null)
+            {
+                TempData["Error"] = "Khóa học này chưa có bài học nào.";
+                return RedirectToAction("Details", new { id = courseId });
+            }
+
+            // Redirect to the lesson details page
+            return RedirectToAction("LessonDetails", new { id = nextLesson.LessonID });
         }
 
         #endregion

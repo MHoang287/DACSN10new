@@ -10,7 +10,7 @@ namespace DACSN10.Models
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }
-
+        public DbSet<UserLessonProgress> UserLessonProgress { get; set; }
         public DbSet<Course> Courses { get; set; }
         public DbSet<Lesson> Lessons { get; set; }
         public DbSet<Assignment> Assignments { get; set; }
@@ -29,6 +29,10 @@ namespace DACSN10.Models
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<UserLessonProgress>()
+                .HasIndex(p => new { p.UserID, p.LessonID })
+                .IsUnique(); // Đảm bảo mỗi user chỉ có 1 record cho mỗi lesson
 
             modelBuilder.Entity<Course>()
                 .HasOne(c => c.User)
