@@ -284,69 +284,12 @@
             margin-top: 0.25rem;
         }
 
-        .resource-section {
-            margin-top: 1.5rem;
-        }
-
-        .resource-item {
-            background: white;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 0.75rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            transition: all 0.3s ease;
-        }
-
-            .resource-item:hover {
-                border-color: #cbd5e1;
-            }
-
-        .resource-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f1f5f9;
-            color: #64748b;
-        }
-
-        .resource-details {
-            flex: 1;
-        }
-
-        .resource-name {
-            font-weight: 600;
-            color: #1e293b;
-            margin-bottom: 0.25rem;
-        }
-
-        .resource-size {
-            color: #64748b;
+        .validation-error {
+            color: #ef4444;
             font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: block;
         }
-
-        .remove-resource {
-            background: #fee2e2;
-            color: #dc2626;
-            border: none;
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-            .remove-resource:hover {
-                background: #fecaca;
-            }
     </style>
 }
 
@@ -364,8 +307,9 @@
 </div>
 
 <div class="create-lesson-container">
-    <form asp-action="CreateLesson" method="post" id="createLessonForm">
-        <input asp-for="CourseID" type="hidden" value="@course?.CourseID" />
+    <form asp-action="CreateLesson" asp-controller="Teacher" asp-area="Teacher" method="post" id="createLessonForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="CourseID" value="@course?.CourseID" />
 
         <!-- Basic Information -->
         <div class="form-card" data-aos="fade-up">
@@ -383,12 +327,12 @@
             </div>
 
             <div class="mb-4">
-                <label asp-for="TenBaiHoc" class="form-label">
+                <label for="TenBaiHoc" class="form-label">
                     Tên bài học <span class="required">*</span>
                 </label>
-                <input asp-for="TenBaiHoc" class="form-control"
+                <input type="text" name="TenBaiHoc" id="TenBaiHoc" class="form-control"
                        placeholder="VD: Giới thiệu về lập trình web"
-                       maxlength="200" />
+                       maxlength="200" required />
                 <div class="char-counter">
                     <span id="titleCharCount">0</span>/200
                 </div>
@@ -396,12 +340,12 @@
             </div>
 
             <div class="mb-4">
-                <label asp-for="NoiDung" class="form-label">
+                <label for="NoiDung" class="form-label">
                     Nội dung bài học <span class="required">*</span>
                 </label>
-                <textarea asp-for="NoiDung" class="form-control"
+                <textarea name="NoiDung" id="NoiDung" class="form-control"
                           placeholder="Mô tả chi tiết nội dung bài học, các khái niệm chính, mục tiêu học tập..."
-                          maxlength="2000"></textarea>
+                          maxlength="2000" required></textarea>
                 <div class="char-counter">
                     <span id="contentCharCount">0</span>/2000
                 </div>
@@ -417,12 +361,12 @@
                 </div>
 
                 <div class="col-md-6 mb-4">
-                    <label asp-for="ThoiLuong" class="form-label">
+                    <label for="ThoiLuong" class="form-label">
                         Thời lượng <span class="required">*</span>
                     </label>
                     <div class="duration-input-group">
-                        <input asp-for="ThoiLuong" type="number" class="form-control duration-input"
-                               placeholder="0" min="1" max="999" />
+                        <input type="number" name="ThoiLuong" id="ThoiLuong" class="form-control"
+                               placeholder="0" min="1" max="999" required />
                         <span>phút</span>
                     </div>
                     <span asp-validation-for="ThoiLuong" class="validation-error"></span>
@@ -434,11 +378,11 @@
         <div class="form-card" data-aos="fade-up" data-aos-delay="100">
             <h3 class="section-title">
                 <i class="fas fa-video"></i>
-                Video bài giảng
+                Video bài giảng (Tùy chọn)
             </h3>
 
             <div class="video-options">
-                <div class="option-card active" onclick="selectVideoOption('upload')">
+                <div class="option-card" id="uploadOption">
                     <div class="option-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
                         <i class="fas fa-cloud-upload-alt"></i>
                     </div>
@@ -446,7 +390,7 @@
                     <p class="text-muted mb-0">Upload từ máy tính</p>
                 </div>
 
-                <div class="option-card" onclick="selectVideoOption('youtube')">
+                <div class="option-card" id="youtubeOption">
                     <div class="option-icon" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">
                         <i class="fab fa-youtube"></i>
                     </div>
@@ -454,7 +398,7 @@
                     <p class="text-muted mb-0">Nhúng từ YouTube</p>
                 </div>
 
-                <div class="option-card" onclick="selectVideoOption('external')">
+                <div class="option-card" id="externalOption">
                     <div class="option-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
                         <i class="fas fa-link"></i>
                     </div>
@@ -463,8 +407,11 @@
                 </div>
             </div>
 
+            <!-- Hidden input for VideoUrl -->
+            <input type="hidden" name="VideoUrl" id="VideoUrl" value="" />
+
             <!-- Upload Section -->
-            <div class="mt-4" id="uploadSection">
+            <div class="mt-4" id="uploadSection" style="display: none;">
                 <div class="video-upload-section" id="dropZone">
                     <div class="upload-icon">
                         <i class="fas fa-cloud-upload-alt"></i>
@@ -477,20 +424,20 @@
 
             <!-- YouTube URL Section -->
             <div class="mt-4" id="youtubeSection" style="display: none;">
-                <label asp-for="VideoUrl" class="form-label">
+                <label for="VideoUrlYoutube" class="form-label">
                     YouTube URL
                 </label>
-                <input asp-for="VideoUrl" class="form-control"
+                <input type="text" id="VideoUrlYoutube" class="form-control"
                        placeholder="https://www.youtube.com/watch?v=..." />
                 <small class="text-muted">Nhập link video YouTube</small>
             </div>
 
             <!-- External URL Section -->
             <div class="mt-4" id="externalSection" style="display: none;">
-                <label asp-for="VideoUrl" class="form-label">
+                <label for="VideoUrlExternal" class="form-label">
                     Video URL
                 </label>
-                <input asp-for="VideoUrl" class="form-control"
+                <input type="text" id="VideoUrlExternal" class="form-control"
                        placeholder="https://example.com/video.mp4" />
                 <small class="text-muted">Nhập link trực tiếp đến file video</small>
             </div>
@@ -503,24 +450,6 @@
                         <i class="fas fa-play"></i>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Resources Section -->
-        <div class="form-card" data-aos="fade-up" data-aos-delay="200">
-            <h3 class="section-title">
-                <i class="fas fa-paperclip"></i>
-                Tài liệu đính kèm
-            </h3>
-
-            <p class="text-muted mb-3">Thêm tài liệu bổ sung cho bài học (PDF, Word, PowerPoint...)</p>
-
-            <button type="button" class="btn btn-outline-primary" onclick="addResource()">
-                <i class="fas fa-plus me-2"></i>Thêm tài liệu
-            </button>
-
-            <div class="resource-section" id="resourcesContainer">
-                <!-- Resources will be added here -->
             </div>
         </div>
 
@@ -539,11 +468,8 @@
 </div>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-
     <script>
-        let selectedVideoOption = 'upload';
-        let uploadedResources = [];
+        let selectedVideoOption = 'none';
 
         $(document).ready(function() {
             // Character counters
@@ -555,47 +481,66 @@
                 $('#contentCharCount').text($(this).val().length);
             });
 
-            // Drag and drop
-            const dropZone = document.getElementById('dropZone');
-            const fileInput = document.getElementById('videoFile');
-
-            dropZone.addEventListener('click', () => fileInput.click());
-
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropZone.classList.add('dragover');
+            // Option card click handlers
+            $('#uploadOption').click(function() {
+                selectVideoOption('upload');
             });
 
-            dropZone.addEventListener('dragleave', () => {
-                dropZone.classList.remove('dragover');
+            $('#youtubeOption').click(function() {
+                selectVideoOption('youtube');
             });
 
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('dragover');
+            $('#externalOption').click(function() {
+                selectVideoOption('external');
+            });
 
-                const files = e.dataTransfer.files;
-                if (files.length > 0 && files[0].type.startsWith('video/')) {
-                    handleVideoFile(files[0]);
-                } else {
-                    toastr.error('Vui lòng chọn file video');
+            // YouTube URL input handler
+            $('#VideoUrlYoutube').on('input', function() {
+                $('#VideoUrl').val($(this).val());
+                const url = $(this).val();
+                if (url && isValidYouTubeUrl(url)) {
+                    showYouTubePreview(url);
                 }
             });
 
-            fileInput.addEventListener('change', (e) => {
-                if (e.target.files.length > 0) {
-                    handleVideoFile(e.target.files[0]);
-                }
+            // External URL input handler
+            $('#VideoUrlExternal').on('input', function() {
+                $('#VideoUrl').val($(this).val());
             });
 
-            // YouTube URL validation
-            $('#VideoUrl').on('change', function() {
-                if (selectedVideoOption === 'youtube') {
-                    const url = $(this).val();
-                    if (url && isValidYouTubeUrl(url)) {
-                        showYouTubePreview(url);
-                    }
+            // Form validation
+            $('#createLessonForm').on('submit', function(e) {
+                const tenBaiHoc = $('#TenBaiHoc').val();
+                const noiDung = $('#NoiDung').val();
+                const thoiLuong = $('#ThoiLuong').val();
+
+                if (!tenBaiHoc || !tenBaiHoc.trim()) {
+                    e.preventDefault();
+                    alert('Vui lòng nhập tên bài học');
+                    $('#TenBaiHoc').focus();
+                    return false;
                 }
+
+                if (!noiDung || !noiDung.trim()) {
+                    e.preventDefault();
+                    alert('Vui lòng nhập nội dung bài học');
+                    $('#NoiDung').focus();
+                    return false;
+                }
+
+                if (!thoiLuong || parseInt(thoiLuong) <= 0) {
+                    e.preventDefault();
+                    alert('Vui lòng nhập thời lượng hợp lệ');
+                    $('#ThoiLuong').focus();
+                    return false;
+                }
+
+                // Set empty string if no video
+                if (!$('#VideoUrl').val()) {
+                    $('#VideoUrl').val('');
+                }
+
+                return true;
             });
         });
 
@@ -604,42 +549,38 @@
 
             // Update UI
             $('.option-card').removeClass('active');
-            event.currentTarget.classList.add('active');
 
-            // Show/hide sections
-            $('#uploadSection').toggle(option === 'upload');
-            $('#youtubeSection').toggle(option === 'youtube');
-            $('#externalSection').toggle(option === 'external');
-
-            // Clear video URL if switching options
-            if (option !== 'youtube' && option !== 'external') {
+            if (option === 'upload') {
+                $('#uploadOption').addClass('active');
+                $('#uploadSection').show();
+                $('#youtubeSection').hide();
+                $('#externalSection').hide();
+                // Note: For upload, we'd need server-side handling
                 $('#VideoUrl').val('');
+            } else if (option === 'youtube') {
+                $('#youtubeOption').addClass('active');
+                $('#uploadSection').hide();
+                $('#youtubeSection').show();
+                $('#externalSection').hide();
+                $('#VideoUrl').val($('#VideoUrlYoutube').val());
+            } else if (option === 'external') {
+                $('#externalOption').addClass('active');
+                $('#uploadSection').hide();
+                $('#youtubeSection').hide();
+                $('#externalSection').show();
+                $('#VideoUrl').val($('#VideoUrlExternal').val());
             }
         }
 
-        function handleVideoFile(file) {
-            const maxSize = 500 * 1024 * 1024; // 500MB
-
-            if (file.size > maxSize) {
-                toastr.error('File video không được vượt quá 500MB');
-                return;
-            }
-
-            // Show preview
-            const url = URL.createObjectURL(file);
-            showVideoPreview(url, file.name);
-
-            toastr.success('Video đã được tải lên');
+        function isValidYouTubeUrl(url) {
+            const regex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/;
+            return regex.test(url);
         }
 
-        function showVideoPreview(url, filename) {
-            $('#videoPreview').show();
-            $('#videoContainer').html(`
-                <video controls>
-                    <source src="${url}" type="video/mp4">
-                    Trình duyệt không hỗ trợ video.
-                </video>
-            `);
+        function extractYouTubeId(url) {
+            const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+            const match = url.match(regex);
+            return match ? match[1] : null;
         }
 
         function showYouTubePreview(url) {
@@ -655,139 +596,5 @@
                 `);
             }
         }
-
-        function isValidYouTubeUrl(url) {
-            const regex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/;
-            return regex.test(url);
-        }
-
-        function extractYouTubeId(url) {
-            const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-            const match = url.match(regex);
-            return match ? match[1] : null;
-        }
-
-        function addResource() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip';
-
-            input.onchange = (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const resourceId = Date.now();
-                    uploadedResources.push({
-                        id: resourceId,
-                        name: file.name,
-                        size: formatFileSize(file.size),
-                        file: file
-                    });
-
-                    displayResource(resourceId, file.name, file.size);
-                }
-            };
-
-            input.click();
-        }
-
-        function displayResource(id, name, size) {
-            const html = `
-                <div class="resource-item" data-resource-id="${id}">
-                    <div class="resource-icon">
-                        <i class="fas ${getFileIcon(name)}"></i>
-                    </div>
-                    <div class="resource-details">
-                        <div class="resource-name">${name}</div>
-                        <div class="resource-size">${formatFileSize(size)}</div>
-                    </div>
-                    <button type="button" class="remove-resource" onclick="removeResource(${id})">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            `;
-
-            $('#resourcesContainer').append(html);
-        }
-
-        function removeResource(id) {
-            uploadedResources = uploadedResources.filter(r => r.id !== id);
-            $(`.resource-item[data-resource-id="${id}"]`).fadeOut(300, function() {
-                $(this).remove();
-            });
-        }
-
-        function getFileIcon(filename) {
-            const ext = filename.split('.').pop().toLowerCase();
-            const icons = {
-                pdf: 'fa-file-pdf',
-                doc: 'fa-file-word',
-                docx: 'fa-file-word',
-                ppt: 'fa-file-powerpoint',
-                pptx: 'fa-file-powerpoint',
-                xls: 'fa-file-excel',
-                xlsx: 'fa-file-excel',
-                zip: 'fa-file-archive'
-            };
-            return icons[ext] || 'fa-file';
-        }
-
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-
-        // Form submission
-        $('#createLessonForm').on('submit', function(e) {
-            e.preventDefault();
-
-            // Validate
-            if (!$('#TenBaiHoc').val().trim()) {
-                toastr.error('Vui lòng nhập tên bài học');
-                $('#TenBaiHoc').focus();
-                return;
-            }
-
-            if (!$('#NoiDung').val().trim()) {
-                toastr.error('Vui lòng nhập nội dung bài học');
-                $('#NoiDung').focus();
-                return;
-            }
-
-            if (!$('#ThoiLuong').val() || $('#ThoiLuong').val() <= 0) {
-                toastr.error('Vui lòng nhập thời lượng hợp lệ');
-                $('#ThoiLuong').focus();
-                return;
-            }
-
-            // Confirm
-            Swal.fire({
-                title: 'Xác nhận tạo bài học',
-                text: 'Bạn có chắc chắn muốn tạo bài học này?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#10b981',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Tạo bài học',
-                cancelButtonText: 'Hủy'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Show loading
-                    Swal.fire({
-                        title: 'Đang tạo bài học...',
-                        text: 'Vui lòng đợi',
-                        allowOutsideClick: false,
-                        didOpen: () => {
-                            Swal.showLoading();
-                        }
-                    });
-
-                    // Submit form
-                    this.submit();
-                }
-            });
-        });
     </script>
 }

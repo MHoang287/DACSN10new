@@ -719,5 +719,111 @@ namespace DACSN10.Controllers
         }
 
         #endregion
+
+        #region Lesson Details
+
+        [Authorize]
+        public async Task<IActionResult> LessonDetails(int id)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                TempData["Error"] = "Vui lòng đăng nhập để xem bài học.";
+                return RedirectToAction("Login", "Account");
+            }
+
+            var lesson = await _context.Lessons
+                .Include(l => l.Course).ThenInclude(c => c.User)
+                .FirstOrDefaultAsync(l => l.LessonID == id);
+
+            if (lesson == null)
+            {
+                TempData["Error"] = "Không tìm thấy bài học.";
+                return NotFound();
+            }
+
+            // Check if user can access this lesson
+            var canAccess = await CanAccessCourseContent(userId, lesson.CourseID);
+            if (!canAccess)
+            {
+                TempData["Error"] = "Bạn cần đăng ký khóa học để xem bài học này.";
+                return RedirectToAction("Details", new { id = lesson.CourseID });
+            }
+
+            // Get user's enrollment to track progress
+            var enrollment = await _context.Enrollments
+                .FirstOrDefaultAsync(e => e.UserID == userId && e.CourseID == lesson.CourseID && e.TrangThai == "Active");
+
+            ViewBag.Enrollment = enrollment;
+            ViewBag.CanAccessContent = true;
+
+            // Get all lessons in the course for navigation
+            var allLessons = await _context.Lessons
+                .Where(l => l.CourseID == lesson.CourseID)
+                .OrderBy(l => l.LessonID)
+                .ToListAsync();
+
+            ViewBag.AllLessons = allLessons;
+            ViewBag.CurrentLessonIndex = allLessons.FindIndex(l => l.LessonID == id);
+
+            return View(lesson);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+        public async Task<IActionResult> MarkLessonComplete(int lessonId)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Json(new { success = false, message = "Vui lòng đăng nhập." });
+            }
+
+            var lesson = await _context.Lessons
+                .Include(l => l.Course)
+                .FirstOrDefaultAsync(l => l.LessonID == lessonId);
+
+            if (lesson == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy bài học." });
+            }
+
+            var enrollment = await _context.Enrollments
+                .FirstOrDefaultAsync(e => e.UserID == userId && e.CourseID == lesson.CourseID && e.TrangThai == "Active");
+
+            if (enrollment == null)
+            {
+                return Json(new { success = false, message = "Bạn chưa đăng ký khóa học này." });
+            }
+
+            try
+            {
+                // Calculate progress
+                var totalLessons = await _context.Lessons.CountAsync(l => l.CourseID == lesson.CourseID);
+                if (totalLessons > 0)
+                {
+                    var progressIncrement = 100f / totalLessons;
+                    enrollment.Progress = Math.Min(100f, enrollment.Progress + progressIncrement);
+
+                    await _context.SaveChangesAsync();
+
+                    return Json(new
+                    {
+                        success = true,
+                        message = "Đã đánh dấu hoàn thành bài học!",
+                        progress = enrollment.Progress
+                    });
+                }
+
+                return Json(new { success = false, message = "Không thể cập nhật tiến độ." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi khi cập nhật tiến độ: " + ex.Message });
+            }
+        }
+
+        #endregion
     }
 }

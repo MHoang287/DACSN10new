@@ -12,10 +12,12 @@ namespace DACSN10.Controllers
     public class TeacherController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly ILogger<TeacherController> _logger;
 
-        public TeacherController(AppDbContext context)
+        public TeacherController(AppDbContext context, ILogger<TeacherController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         #region Dashboard
@@ -282,41 +284,107 @@ namespace DACSN10.Controllers
             }
 
             ViewBag.Course = course;
-            return View(new Lesson { CourseID = courseId });
+            var lesson = new Lesson { CourseID = courseId };
+            return View(lesson);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateLesson(Lesson lesson)
         {
-            var teacherId = GetCurrentUserId();
-            var course = await _context.Courses
-                .FirstOrDefaultAsync(c => c.CourseID == lesson.CourseID && c.UserID == teacherId);
-
-            if (course == null)
+            try
             {
-                TempData["Error"] = "Không tìm thấy khóa học.";
+                var teacherId = GetCurrentUserId();
+
+                // Debug logging
+                _logger?.LogInformation($"CreateLesson called - CourseID: {lesson.CourseID}, TenBaiHoc: {lesson.TenBaiHoc}");
+
+                // Verify course exists and belongs to teacher
+                var course = await _context.Courses
+                    .FirstOrDefaultAsync(c => c.CourseID == lesson.CourseID && c.UserID == teacherId);
+
+                if (course == null)
+                {
+                    TempData["Error"] = "Không tìm thấy khóa học hoặc bạn không có quyền.";
+                    return RedirectToAction("MyCourses");
+                }
+
+                // Clear model state for navigation properties
+                var keysToRemove = ModelState.Keys.Where(k => k.StartsWith("Course.")).ToList();
+                foreach (var key in keysToRemove)
+                {
+                    ModelState.Remove(key);
+                }
+
+                // Basic validation
+                if (string.IsNullOrWhiteSpace(lesson.TenBaiHoc))
+                {
+                    ModelState.AddModelError("TenBaiHoc", "Tên bài học là bắt buộc.");
+                }
+
+                if (string.IsNullOrWhiteSpace(lesson.NoiDung))
+                {
+                    ModelState.AddModelError("NoiDung", "Nội dung bài học là bắt buộc.");
+                }
+
+                if (lesson.ThoiLuong <= 0)
+                {
+                    ModelState.AddModelError("ThoiLuong", "Thời lượng phải lớn hơn 0.");
+                }
+
+                if (!ModelState.IsValid)
+                {
+                    ViewBag.Course = course;
+                    return View(lesson);
+                }
+
+                // Ensure VideoUrl is not null
+                if (string.IsNullOrEmpty(lesson.VideoUrl))
+                {
+                    lesson.VideoUrl = string.Empty;
+                }
+
+                // Create the lesson
+                _context.Lessons.Add(lesson);
+                await _context.SaveChangesAsync();
+
+                TempData["Success"] = "Tạo bài học thành công!";
+                return RedirectToAction("CourseLessons", new { courseId = lesson.CourseID });
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error creating lesson");
+                TempData["Error"] = "Có lỗi xảy ra khi tạo bài học. Vui lòng thử lại.";
+
+                // Reload course for view
+                var teacherId = GetCurrentUserId();
+                var courseForError = await _context.Courses
+                    .FirstOrDefaultAsync(c => c.CourseID == lesson.CourseID && c.UserID == teacherId);
+
+                ViewBag.Course = courseForError;
+                return View(lesson);
+            }
+        }
+
+        // Thêm action này vào TeacherController.cs trong phần #region Lesson Management
+
+        public async Task<IActionResult> LessonDetails(int id)
+        {
+            var teacherId = GetCurrentUserId();
+            var lesson = await _context.Lessons
+                .Include(l => l.Course)
+                .FirstOrDefaultAsync(l => l.LessonID == id && l.Course.UserID == teacherId);
+
+            if (lesson == null)
+            {
+                TempData["Error"] = "Không tìm thấy bài học.";
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Lessons.Add(lesson);
-                    await _context.SaveChangesAsync();
-                    TempData["Success"] = "Thêm bài học thành công!";
-                    return RedirectToAction("CourseLessons", new { courseId = lesson.CourseID });
-                }
-                catch (Exception ex)
-                {
-                    TempData["Error"] = "Lỗi khi thêm bài học: " + ex.Message;
-                }
-            }
-
-            ViewBag.Course = course;
+            ViewBag.Course = lesson.Course;
             return View(lesson);
         }
+        
 
         public async Task<IActionResult> EditLesson(int id)
         {
@@ -339,38 +407,78 @@ namespace DACSN10.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditLesson(Lesson lesson)
         {
-            var teacherId = GetCurrentUserId();
-            var existingLesson = await _context.Lessons
-                .Include(l => l.Course)
-                .FirstOrDefaultAsync(l => l.LessonID == lesson.LessonID && l.Course.UserID == teacherId);
-
-            if (existingLesson == null)
+            try
             {
-                TempData["Error"] = "Không tìm thấy bài học.";
-                return NotFound();
-            }
+                var teacherId = GetCurrentUserId();
 
-            if (ModelState.IsValid)
+                // Lấy bài học hiện tại từ database
+                var existingLesson = await _context.Lessons
+                    .Include(l => l.Course)
+                    .FirstOrDefaultAsync(l => l.LessonID == lesson.LessonID && l.Course.UserID == teacherId);
+
+                if (existingLesson == null)
+                {
+                    TempData["Error"] = "Không tìm thấy bài học hoặc bạn không có quyền chỉnh sửa.";
+                    return NotFound();
+                }
+
+                // Xóa các ModelState errors cho navigation properties
+                var keysToRemove = ModelState.Keys.Where(k => k.StartsWith("Course.")).ToList();
+                foreach (var key in keysToRemove)
+                {
+                    ModelState.Remove(key);
+                }
+
+                // Validate dữ liệu
+                if (string.IsNullOrWhiteSpace(lesson.TenBaiHoc))
+                {
+                    ModelState.AddModelError("TenBaiHoc", "Tên bài học là bắt buộc.");
+                }
+
+                if (string.IsNullOrWhiteSpace(lesson.NoiDung))
+                {
+                    ModelState.AddModelError("NoiDung", "Nội dung bài học là bắt buộc.");
+                }
+
+                if (lesson.ThoiLuong <= 0)
+                {
+                    ModelState.AddModelError("ThoiLuong", "Thời lượng phải lớn hơn 0.");
+                }
+
+                if (!ModelState.IsValid)
+                {
+                    ViewBag.Course = existingLesson.Course;
+                    return View(lesson);
+                }
+
+                // Cập nhật thông tin bài học
+                existingLesson.TenBaiHoc = lesson.TenBaiHoc;
+                existingLesson.NoiDung = lesson.NoiDung;
+                existingLesson.ThoiLuong = lesson.ThoiLuong;
+                existingLesson.VideoUrl = lesson.VideoUrl ?? string.Empty;
+
+                // Lưu thay đổi
+                _context.Lessons.Update(existingLesson);
+                await _context.SaveChangesAsync();
+
+                _logger?.LogInformation($"Lesson {lesson.LessonID} updated successfully by teacher {teacherId}");
+
+                TempData["Success"] = "Cập nhật bài học thành công!";
+                return RedirectToAction("CourseLessons", new { courseId = existingLesson.CourseID });
+            }
+            catch (Exception ex)
             {
-                try
-                {
-                    existingLesson.TenBaiHoc = lesson.TenBaiHoc;
-                    existingLesson.NoiDung = lesson.NoiDung;
-                    existingLesson.ThoiLuong = lesson.ThoiLuong;
-                    existingLesson.VideoUrl = lesson.VideoUrl;
+                _logger?.LogError(ex, $"Error updating lesson {lesson.LessonID}");
+                TempData["Error"] = "Có lỗi xảy ra khi cập nhật bài học. Vui lòng thử lại.";
 
-                    await _context.SaveChangesAsync();
-                    TempData["Success"] = "Cập nhật bài học thành công!";
-                    return RedirectToAction("CourseLessons", new { courseId = existingLesson.CourseID });
-                }
-                catch (Exception ex)
-                {
-                    TempData["Error"] = "Lỗi khi cập nhật: " + ex.Message;
-                }
+                // Reload course data for view
+                var teacherId = GetCurrentUserId();
+                var courseForError = await _context.Courses
+                    .FirstOrDefaultAsync(c => c.CourseID == lesson.CourseID && c.UserID == teacherId);
+
+                ViewBag.Course = courseForError;
+                return View(lesson);
             }
-
-            ViewBag.Course = existingLesson.Course;
-            return View(lesson);
         }
 
         [HttpPost]

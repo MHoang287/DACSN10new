@@ -1,0 +1,334 @@
+﻿@model DACSN10.Models.Lesson
+@{
+    ViewData["Title"] = "Chi tiết bài học";
+    Layout = "~/Views/Shared/_Layout.cshtml"; // Layout cho student
+}
+
+@section Styles {
+    <style>
+        .lesson-detail-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .lesson-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+        }
+
+        .lesson-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .lesson-meta {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+        }
+
+        .video-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+            .video-container iframe,
+            .video-container video {
+                width: 100%;
+                height: 100%;
+                border: none;
+            }
+
+        .no-video {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #64748b;
+            font-size: 1.1rem;
+        }
+
+        .content-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+            .section-title i {
+                color: #667eea;
+            }
+
+        .content-text {
+            line-height: 1.8;
+            color: #475569;
+            font-size: 1.1rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+            .btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+                color: white;
+            }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #e2e8f0;
+            padding: 0.75rem 2rem;
+            border-radius: 10px;
+            color: #64748b;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+            .btn-outline:hover {
+                border-color: #667eea;
+                color: #667eea;
+                background: rgba(102, 126, 234, 0.05);
+            }
+
+        .course-info {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .completion-status {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        {
+            padding: 1rem;
+        }
+
+        .video-container {
+            height: 250px;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        }
+    </style>
+}
+
+<div class="lesson-detail-container">
+    <!-- Course Info -->
+    <div class="course-info">
+        <h6 class="mb-2">
+            <i class="fas fa-book text-primary me-2"></i>
+            Khóa học: @ViewBag.Course.TenKhoaHoc
+        </h6>
+        <p class="text-muted mb-0">Đang học bài học trong khóa học này</p>
+    </div>
+
+    <!-- Completion Status -->
+    <div class="completion-status">
+        <i class="fas fa-check-circle me-2"></i>
+        Bạn đã hoàn thành bài học này!
+    </div>
+
+    <!-- Lesson Header -->
+    <div class="lesson-header">
+        <h1 class="lesson-title">@Model.TenBaiHoc</h1>
+        <div class="lesson-meta">
+            <div class="meta-item">
+                <i class="fas fa-clock"></i>
+                <span>@Model.ThoiLuong phút</span>
+            </div>
+            <div class="meta-item">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Bài học #@Model.LessonID</span>
+            </div>
+            @if (!string.IsNullOrEmpty(Model.VideoUrl))
+            {
+                <div class="meta-item">
+                    <i class="fas fa-video"></i>
+                    <span>Có video</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Video Section -->
+    @if (!string.IsNullOrEmpty(Model.VideoUrl))
+    {
+        <div class="video-section">
+            <h3 class="section-title">
+                <i class="fas fa-play-circle"></i>
+                Video bài giảng
+            </h3>
+            <div class="video-container">
+                @if (Model.VideoUrl.Contains("youtube.com") || Model.VideoUrl.Contains("youtu.be"))
+                {
+                    string videoId = "";
+                    if (Model.VideoUrl.Contains("youtube.com/watch?v="))
+                    {
+                        videoId = Model.VideoUrl.Split("v=")[1].Split("&")[0];
+                    }
+                    else if (Model.VideoUrl.Contains("youtu.be/"))
+                    {
+                        videoId = Model.VideoUrl.Split("youtu.be/")[1].Split("?")[0];
+                    }
+
+                    <iframe src="https://www.youtube.com/embed/@videoId?autoplay=1"
+                            allowfullscreen
+                            allow="autoplay; encrypted-media"></iframe>
+                }
+                else
+                {
+                    <video controls autoplay>
+                        <source src="@Model.VideoUrl" type="video/mp4">
+                        Trình duyệt của bạn không hỗ trợ video.
+                    </video>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="video-section">
+            <h3 class="section-title">
+                <i class="fas fa-video-slash"></i>
+                Video bài giảng
+            </h3>
+            <div class="video-container">
+                <div class="no-video">
+                    <div class="text-center">
+                        <i class="fas fa-video-slash fa-3x mb-3"></i>
+                        <p>Bài học này chưa có video</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Content Section -->
+    <div class="content-section">
+        <h3 class="section-title">
+            <i class="fas fa-file-text"></i>
+            Nội dung bài học
+        </h3>
+        <div class="content-text">
+            @Html.Raw(Model.NoiDung.Replace("\n", "<br>"))
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <a href="@Url.Action("CourseDetails", "Course", new { id = ViewBag.Course.CourseID })" class="btn-outline">
+            <i class="fas fa-arrow-left"></i>
+            Quay lại khóa học
+        </a>
+        @if (!string.IsNullOrEmpty(Model.VideoUrl))
+        {
+            <a href="@Model.VideoUrl" target="_blank" class="btn-outline">
+                <i class="fas fa-external-link-alt"></i>
+                Xem video gốc
+            </a>
+        }
+        <button onclick="markAsCompleted()" class="btn-primary">
+            <i class="fas fa-check"></i>
+            Đánh dấu hoàn thành
+        </button>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function markAsCompleted() {
+            // AJAX call để đánh dấu bài học đã hoàn thành
+            $.ajax({
+                url: '@Url.Action("MarkLessonCompleted", "Student")',
+                type: 'POST',
+                data: { lessonId: @Model.LessonID },
+                success: function(result) {
+                    if (result.success) {
+                        alert('Đã đánh dấu bài học hoàn thành!');
+                        location.reload();
+                    }
+                },
+                error: function() {
+                    alert('Có lỗi xảy ra. Vui lòng thử lại!');
+                }
+            });
+        }
+
+        // Auto-mark as completed when video ends
+        $(document).ready(function() {
+            $('video').on('ended', function() {
+                markAsCompleted();
+            });
+        });
+    </script>
+}

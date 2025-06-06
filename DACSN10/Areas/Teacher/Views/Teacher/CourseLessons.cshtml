@@ -6,7 +6,315 @@
 }
 
 @section Styles {
-    <link href="~/css/teacher-courselessons.css" rel="stylesheet" />
+    <style>
+        .page-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .breadcrumb {
+            background: none;
+            padding: 0;
+            margin: 0.5rem 0 0 0;
+        }
+
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: ">";
+            color: #64748b;
+        }
+
+        .breadcrumb-item a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+
+        .course-info-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+        }
+
+        .course-title-large {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .course-meta {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card-small {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .stat-icon-small {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .stat-value-small {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            line-height: 1;
+        }
+
+        .stat-label-small {
+            color: #64748b;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        .lessons-container {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .lessons-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .lessons-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .add-lesson-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+            .add-lesson-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+                color: white;
+            }
+
+        .lesson-item {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 1rem;
+            align-items: start;
+            transition: all 0.3s ease;
+        }
+
+            .lesson-item:hover {
+                border-color: #cbd5e1;
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            }
+
+        .lesson-number {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .lesson-content {
+            min-width: 0;
+        }
+
+        .lesson-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .lesson-description {
+            color: #64748b;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .lesson-meta {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        .video-badge {
+            background: #dcfce7;
+            color: #166534;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .lesson-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-view {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+        }
+
+            .btn-view:hover {
+                background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(139, 92, 246, 0.3);
+                color: white;
+            }
+
+        .btn-edit {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+        }
+
+            .btn-edit:hover {
+                background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
+                color: white;
+            }
+
+        .btn-preview {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+            .btn-preview:hover {
+                background: linear-gradient(135deg, #059669 0%, #047857 100%);
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+                color: white;
+            }
+
+        .btn-delete {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+            .btn-delete:hover {
+                background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(239, 68, 68, 0.3);
+            }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #64748b;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            color: #1e293b;
+            margin-bottom: 1rem;
+        }
+
+        .lesson-item {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .lesson-actions {
+            gap: 0.25rem;
+        }
+
+        .action-btn {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.8rem;
+        }
+
+        }
+    </style>
 }
 
 <!-- Page Header -->
@@ -36,32 +344,40 @@
         <div class="stat-icon-small" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
             <i class="fas fa-book"></i>
         </div>
-        <div class="stat-value-small">@Model.Count()</div>
-        <div class="stat-label-small">Tổng bài học</div>
+        <div>
+            <div class="stat-value-small">@Model.Count()</div>
+            <div class="stat-label-small">Tổng bài học</div>
+        </div>
     </div>
 
     <div class="stat-card-small">
         <div class="stat-icon-small" style="background: linear-gradient(135deg, #10b981, #059669);">
             <i class="fas fa-clock"></i>
         </div>
-        <div class="stat-value-small">@Model.Sum(l => l.ThoiLuong)</div>
-        <div class="stat-label-small">Tổng thời lượng (phút)</div>
+        <div>
+            <div class="stat-value-small">@Model.Sum(l => l.ThoiLuong)</div>
+            <div class="stat-label-small">Tổng thời lượng (phút)</div>
+        </div>
     </div>
 
     <div class="stat-card-small">
         <div class="stat-icon-small" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
             <i class="fas fa-video"></i>
         </div>
-        <div class="stat-value-small">@Model.Count(l => !string.IsNullOrEmpty(l.VideoUrl))</div>
-        <div class="stat-label-small">Video bài giảng</div>
+        <div>
+            <div class="stat-value-small">@Model.Count(l => !string.IsNullOrEmpty(l.VideoUrl))</div>
+            <div class="stat-label-small">Video bài giảng</div>
+        </div>
     </div>
 
     <div class="stat-card-small">
         <div class="stat-icon-small" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
             <i class="fas fa-tasks"></i>
         </div>
-        <div class="stat-value-small">@(course?.Assignments?.Count ?? 0)</div>
-        <div class="stat-label-small">Bài tập</div>
+        <div>
+            <div class="stat-value-small">0</div>
+            <div class="stat-label-small">Bài tập</div>
+        </div>
     </div>
 </div>
 
@@ -87,7 +403,6 @@
             @foreach (var lesson in Model.OrderBy(l => l.LessonID))
             {
                 <div class="lesson-item" data-lesson-id="@lesson.LessonID">
-                    <i class="fas fa-grip-vertical drag-handle"></i>
                     <div class="lesson-number">@lessonNumber</div>
                     <div class="lesson-content">
                         <h4 class="lesson-title">@lesson.TenBaiHoc</h4>
@@ -106,24 +421,28 @@
                                 </div>
                             }
                         </div>
+                    </div>
 
-                        <div class="lesson-actions">
-                            <a href="@Url.Action("EditLesson", "Teacher", new { id = lesson.LessonID })" class="action-btn btn-edit">
-                                <i class="fas fa-edit"></i>
-                                Chỉnh sửa
+                    <div class="lesson-actions">
+                        <a href="@Url.Action("LessonDetails", "Teacher", new { id = lesson.LessonID })" class="action-btn btn-view">
+                            <i class="fas fa-eye"></i>
+                            Xem chi tiết
+                        </a>
+                        <a href="@Url.Action("EditLesson", "Teacher", new { id = lesson.LessonID })" class="action-btn btn-edit">
+                            <i class="fas fa-edit"></i>
+                            Chỉnh sửa
+                        </a>
+                        @if (!string.IsNullOrEmpty(lesson.VideoUrl))
+                        {
+                            <a href="@lesson.VideoUrl" target="_blank" class="action-btn btn-preview">
+                                <i class="fas fa-play"></i>
+                                Xem video
                             </a>
-                            @if (!string.IsNullOrEmpty(lesson.VideoUrl))
-                            {
-                                <a href="@lesson.VideoUrl" target="_blank" class="action-btn btn-preview">
-                                    <i class="fas fa-play"></i>
-                                    Xem video
-                                </a>
-                            }
-                            <button class="action-btn btn-delete" onclick="deleteLesson(@lesson.LessonID, '@lesson.TenBaiHoc')">
-                                <i class="fas fa-trash"></i>
-                                Xóa
-                            </button>
-                        </div>
+                        }
+                        <button class="action-btn btn-delete" onclick="deleteLesson(@lesson.LessonID, '@lesson.TenBaiHoc')">
+                            <i class="fas fa-trash"></i>
+                            Xóa
+                        </button>
                     </div>
                 </div>
                 lessonNumber++;
@@ -157,71 +476,78 @@
 </div>
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script>
-        // Initialize sortable
-        if (document.getElementById('lessonsList')) {
-            const sortable = Sortable.create(document.getElementById('lessonsList'), {
-                animation: 150,
-                handle: '.drag-handle',
-                ghostClass: 'sortable-ghost',
-                onEnd: function (evt) {
-                    toastr.info('Thứ tự bài học đã được cập nhật');
-                    // Update lesson numbers
-                    updateLessonNumbers();
-                }
-            });
-        }
-
-        function updateLessonNumbers() {
-            const lessons = document.querySelectorAll('.lesson-item');
-            lessons.forEach((lesson, index) => {
-                const numberElement = lesson.querySelector('.lesson-number');
-                if (numberElement) {
-                    numberElement.textContent = index + 1;
-                }
-            });
-        }
-
         function deleteLesson(lessonId, lessonName) {
-            Swal.fire({
-                title: 'Xác nhận xóa',
-                html: `Bạn có chắc chắn muốn xóa bài học "<strong>${lessonName}</strong>"?<br>
-                       <small class="text-danger">Hành động này không thể hoàn tác!</small>`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc2626',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: '<i class="fas fa-trash me-2"></i>Xóa bài học',
-                cancelButtonText: 'Hủy'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: '@Url.Action("DeleteLesson", "Teacher")',
-                        type: 'POST',
-                        data: {
-                            id: lessonId,
-                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
-                        },
-                        success: function(response) {
-                            if (response.success) {
-                                Swal.fire({
-                                    title: 'Đã xóa!',
-                                    text: response.message,
-                                    icon: 'success',
-                                    confirmButtonColor: '#10b981'
-                                }).then(() => {
-                                    location.reload();
-                                });
-                            } else {
-                                Swal.fire('Lỗi!', response.message, 'error');
-                            }
-                        },
-                        error: function() {
-                            Swal.fire('Lỗi!', 'Có lỗi xảy ra khi xóa bài học.', 'error');
-                        }
-                    });
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Xác nhận xóa',
+                    html: `Bạn có chắc chắn muốn xóa bài học "<strong>${lessonName}</strong>"?<br>
+                           <small class="text-danger">Hành động này không thể hoàn tác!</small>`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: '<i class="fas fa-trash me-2"></i>Xóa bài học',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        performDelete(lessonId);
+                    }
+                });
+            } else {
+                if (confirm(`Bạn có chắc chắn muốn xóa bài học "${lessonName}"?`)) {
+                    performDelete(lessonId);
                 }
+            }
+        }
+
+        function performDelete(lessonId) {
+            $.ajax({
+                url: '@Url.Action("DeleteLesson", "Teacher")',
+                type: 'POST',
+                data: {
+                    id: lessonId,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                title: 'Đã xóa!',
+                                text: response.message,
+                                icon: 'success',
+                                confirmButtonColor: '#10b981'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            alert(response.message);
+                            location.reload();
+                        }
+                    } else {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire('Lỗi!', response.message, 'error');
+                        } else {
+                            alert('Lỗi: ' + response.message);
+                        }
+                    }
+                },
+                error: function() {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire('Lỗi!', 'Có lỗi xảy ra khi xóa bài học.', 'error');
+                    } else {
+                        alert('Có lỗi xảy ra khi xóa bài học.');
+                    }
+                }
+            });
+        }
+
+        // Initialize AOS if available
+        if (typeof AOS !== 'undefined') {
+            AOS.init({
+                duration: 1000,
+                easing: 'ease-out-quart',
+                once: true
             });
         }
     </script>

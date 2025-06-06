@@ -69,34 +69,44 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <form asp-action="EditLesson" method="post" id="editLessonForm">
+                    @using (Html.BeginForm("EditLesson", "Teacher", FormMethod.Post, new { id = "editLessonForm", @class = "needs-validation", novalidate = "novalidate" }))
+                    {
                         @Html.AntiForgeryToken()
-                        <input type="hidden" asp-for="LessonID" />
-                        <input type="hidden" asp-for="CourseID" />
+                        @Html.HiddenFor(m => m.LessonID)
+                        @Html.HiddenFor(m => m.CourseID)
 
                         <div class="row">
                             <!-- Left Column -->
                             <div class="col-md-8">
                                 <!-- Lesson Name -->
                                 <div class="mb-4">
-                                    <label asp-for="TenBaiHoc" class="form-label fw-bold">
+                                    <label for="TenBaiHoc" class="form-label fw-bold">
                                         <i class="fas fa-heading text-primary"></i>
                                         Tên bài học <span class="text-danger">*</span>
                                     </label>
-                                    <input asp-for="TenBaiHoc" class="form-control form-control-lg"
-                                           placeholder="Nhập tên bài học..." />
-                                    <span asp-validation-for="TenBaiHoc" class="text-danger"></span>
+                                    @Html.TextBoxFor(m => m.TenBaiHoc, new
+                                        {
+                                            @class = "form-control form-control-lg",
+                                            placeholder = "Nhập tên bài học...",
+                                            required = "required"
+                                        })
+                                    @Html.ValidationMessageFor(m => m.TenBaiHoc, "", new { @class = "text-danger" })
                                 </div>
 
                                 <!-- Lesson Content -->
                                 <div class="mb-4">
-                                    <label asp-for="NoiDung" class="form-label fw-bold">
+                                    <label for="NoiDung" class="form-label fw-bold">
                                         <i class="fas fa-align-left text-primary"></i>
                                         Nội dung bài học <span class="text-danger">*</span>
                                     </label>
-                                    <textarea asp-for="NoiDung" class="form-control" rows="8"
-                                              placeholder="Mô tả chi tiết nội dung bài học..."></textarea>
-                                    <span asp-validation-for="NoiDung" class="text-danger"></span>
+                                    @Html.TextAreaFor(m => m.NoiDung, new
+                                        {
+                                            @class = "form-control",
+                                            rows = "8",
+                                            placeholder = "Mô tả chi tiết nội dung bài học...",
+                                            required = "required"
+                                        })
+                                    @Html.ValidationMessageFor(m => m.NoiDung, "", new { @class = "text-danger" })
                                     <div class="form-text">
                                         <i class="fas fa-info-circle"></i>
                                         Hỗ trợ Markdown để định dạng nội dung
@@ -105,7 +115,7 @@
 
                                 <!-- Video URL -->
                                 <div class="mb-4">
-                                    <label asp-for="VideoUrl" class="form-label fw-bold">
+                                    <label for="VideoUrl" class="form-label fw-bold">
                                         <i class="fas fa-video text-primary"></i>
                                         Đường dẫn video
                                     </label>
@@ -113,10 +123,13 @@
                                         <span class="input-group-text">
                                             <i class="fab fa-youtube text-danger"></i>
                                         </span>
-                                        <input asp-for="VideoUrl" class="form-control"
-                                               placeholder="https://www.youtube.com/watch?v=..." />
+                                        @Html.TextBoxFor(m => m.VideoUrl, new
+                                            {
+                                                @class = "form-control",
+                                                placeholder = "https://www.youtube.com/watch?v=..."
+                                            })
                                     </div>
-                                    <span asp-validation-for="VideoUrl" class="text-danger"></span>
+                                    @Html.ValidationMessageFor(m => m.VideoUrl, "", new { @class = "text-danger" })
                                     <div class="form-text">
                                         <i class="fas fa-lightbulb"></i>
                                         Hỗ trợ YouTube, Vimeo, hoặc link video trực tiếp
@@ -128,16 +141,23 @@
                             <div class="col-md-4">
                                 <!-- Duration -->
                                 <div class="mb-4">
-                                    <label asp-for="ThoiLuong" class="form-label fw-bold">
+                                    <label for="ThoiLuong" class="form-label fw-bold">
                                         <i class="fas fa-clock text-primary"></i>
                                         Thời lượng (phút) <span class="text-danger">*</span>
                                     </label>
                                     <div class="input-group">
-                                        <input asp-for="ThoiLuong" class="form-control" type="number"
-                                               min="1" max="999" placeholder="60" />
+                                        @Html.TextBoxFor(m => m.ThoiLuong, new
+                                            {
+                                                @class = "form-control",
+                                                type = "number",
+                                                min = "1",
+                                                max = "999",
+                                                placeholder = "60",
+                                                required = "required"
+                                            })
                                         <span class="input-group-text">phút</span>
                                     </div>
-                                    <span asp-validation-for="ThoiLuong" class="text-danger"></span>
+                                    @Html.ValidationMessageFor(m => m.ThoiLuong, "", new { @class = "text-danger" })
                                 </div>
 
                                 <!-- Preview Card -->
@@ -154,12 +174,12 @@
                                                 <i class="fas fa-play-circle text-primary fs-1"></i>
                                             </div>
                                             <h6 class="lesson-title text-center" id="previewTitle">
-                                                @Model.TenBaiHoc
+                                                @(Model.TenBaiHoc ?? "Tên bài học")
                                             </h6>
                                             <div class="lesson-meta text-center text-muted">
                                                 <small>
                                                     <i class="fas fa-clock"></i>
-                                                    <span id="previewDuration">@Model.ThoiLuong</span> phút
+                                                    <span id="previewDuration">@(Model.ThoiLuong)</span> phút
                                                 </small>
                                             </div>
                                         </div>
@@ -180,117 +200,140 @@
                                 </div>
                             </div>
                         </div>
-                    </form>
+                    }
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-@section Scripts {
-    <script>
-        $(document).ready(function() {
-            // Real-time preview update
-            $('#TenBaiHoc').on('input', function() {
-                const title = $(this).val() || 'Tên bài học';
-                $('#previewTitle').text(title);
-            });
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 
-            $('#ThoiLuong').on('input', function() {
-                const duration = $(this).val() || '0';
-                $('#previewDuration').text(duration);
-            });
+<script>
+    $(document).ready(function() {
+        // Initialize AOS
+        AOS.init();
 
-            // Form validation
-            $('#editLessonForm').on('submit', function(e) {
-                const title = $('#TenBaiHoc').val().trim();
-                const content = $('#NoiDung').val().trim();
-                const duration = $('#ThoiLuong').val();
+        // Real-time preview update
+        $('#TenBaiHoc').on('input', function() {
+            const title = $(this).val() || 'Tên bài học';
+            $('#previewTitle').text(title);
+        });
 
-                if (!title) {
-                    e.preventDefault();
-                    toastr.error('Vui lòng nhập tên bài học!');
-                    $('#TenBaiHoc').focus();
-                    return false;
-                }
+        $('#ThoiLuong').on('input', function() {
+            const duration = $(this).val() || '0';
+            $('#previewDuration').text(duration);
+        });
 
-                if (!content) {
-                    e.preventDefault();
-                    toastr.error('Vui lòng nhập nội dung bài học!');
-                    $('#NoiDung').focus();
-                    return false;
-                }
+        // Form validation
+        $('#editLessonForm').on('submit', function(e) {
+            const title = $('#TenBaiHoc').val().trim();
+            const content = $('#NoiDung').val().trim();
+            const duration = $('#ThoiLuong').val();
 
-                if (!duration || duration <= 0) {
-                    e.preventDefault();
-                    toastr.error('Vui lòng nhập thời lượng hợp lệ!');
-                    $('#ThoiLuong').focus();
-                    return false;
-                }
-
-                // Show loading
-                const submitBtn = $(this).find('button[type="submit"]');
-                submitBtn.prop('disabled', true);
-                submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Đang lưu...');
-            });
-
-            // Video URL validation
-            $('#VideoUrl').on('blur', function() {
-                const url = $(this).val();
-                if (url && !isValidVideoUrl(url)) {
-                    toastr.warning('Đường dẫn video có thể không hợp lệ');
-                }
-            });
-
-            function isValidVideoUrl(url) {
-                const videoRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be|vimeo\.com|.*\.(mp4|webm|ogg)).*$/i;
-                return videoRegex.test(url);
+            if (!title) {
+                e.preventDefault();
+                toastr.error('Vui lòng nhập tên bài học!');
+                $('#TenBaiHoc').focus();
+                return false;
             }
 
-            // Initialize AOS animations
-            AOS.refresh();
+            if (!content) {
+                e.preventDefault();
+                toastr.error('Vui lòng nhập nội dung bài học!');
+                $('#NoiDung').focus();
+                return false;
+            }
+
+            if (!duration || duration <= 0) {
+                e.preventDefault();
+                toastr.error('Vui lòng nhập thời lượng hợp lệ!');
+                $('#ThoiLuong').focus();
+                return false;
+            }
+
+            // Show loading
+            const submitBtn = $(this).find('button[type="submit"]');
+            submitBtn.prop('disabled', true);
+            submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Đang lưu...');
         });
-    </script>
-}
 
-@section Styles {
-    <style>
-        .lesson-preview {
-            padding: 1rem;
-            text-align: center;
+        // Video URL validation
+        $('#VideoUrl').on('blur', function() {
+            const url = $(this).val();
+            if (url && !isValidVideoUrl(url)) {
+                toastr.warning('Đường dẫn video có thể không hợp lệ');
+            }
+        });
+
+        function isValidVideoUrl(url) {
+            const videoRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be|vimeo\.com|.*\.(mp4|webm|ogg)).*$/i;
+            return videoRegex.test(url);
         }
 
-        .lesson-icon i {
-            transition: all 0.3s ease;
-        }
+        // Display success/error messages
+    @if (TempData["Success"] != null)
+    {
+        <text>toastr.success('@TempData["Success"]');</text>
+    }
 
-        .lesson-preview:hover .lesson-icon i {
-            transform: scale(1.1);
-            color: var(--bs-primary) !important;
-        }
+    @if (TempData["Error"] != null)
+    {
+        <text>toastr.error('@TempData["Error"]');</text>
+    }
+    });
+</script>
 
-        .course-icon {
-            flex-shrink: 0;
-        }
+<style>
+    .lesson-preview {
+        padding: 1rem;
+        text-align: center;
+    }
 
-        .page-title {
-            font-size: 1.8rem;
-            font-weight: 600;
-            margin: 0;
-        }
+    .lesson-icon i {
+        transition: all 0.3s ease;
+    }
 
-        .form-label.fw-bold {
-            color: #2c3e50;
-        }
+    .lesson-preview:hover .lesson-icon i {
+        transform: scale(1.1);
+        color: var(--bs-primary) !important;
+    }
 
-        .card {
-            border: none;
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-        }
+    .course-icon {
+        flex-shrink: 0;
+    }
 
-        .form-control:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+    .page-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .form-label.fw-bold {
+        color: #2c3e50;
+    }
+
+    .card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .form-control:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+    }
+
+    .btn-primary {
+        background-color: #3b82f6;
+        border-color: #3b82f6;
+    }
+
+        .btn-primary:hover {
+            background-color: #2563eb;
+            border-color: #2563eb;
         }
-    </style>
-}
+</style>    
