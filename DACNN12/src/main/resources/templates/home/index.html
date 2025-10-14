@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>DACNN12 - Nền tảng học trực tuyến</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<header class="site-header">
+    <h1>DACNN12</h1>
+    <p>Nền tảng học trực tuyến chuyển đổi từ ASP.NET MVC sang Spring Boot</p>
+</header>
+<section class="statistics">
+    <div class="stat">
+        <span>Tổng học viên</span>
+        <strong th:text="${statistics.totalStudents}"></strong>
+    </div>
+    <div class="stat">
+        <span>Tổng khóa học</span>
+        <strong th:text="${statistics.totalCourses}"></strong>
+    </div>
+    <div class="stat">
+        <span>Tổng bài học</span>
+        <strong th:text="${statistics.totalLessons}"></strong>
+    </div>
+    <div class="stat">
+        <span>Giảng viên</span>
+        <strong th:text="${statistics.totalTeachers}"></strong>
+    </div>
+    <div class="stat">
+        <span>Khóa học đang mở</span>
+        <strong th:text="${statistics.publishedCourses}"></strong>
+    </div>
+    <div class="stat">
+        <span>Khóa học mới tháng này</span>
+        <strong th:text="${statistics.newCoursesThisMonth}"></strong>
+    </div>
+</section>
+<section class="courses">
+    <h2>Khóa học nổi bật</h2>
+    <div class="course-grid">
+        <article class="course-card" th:each="course : ${featuredCourses}">
+            <h3 th:text="${course.tenKhoaHoc}"></h3>
+            <p th:text="${course.moTa}"></p>
+            <a th:href="@{'/courses/' + ${course.courseId}}">Xem chi tiết</a>
+        </article>
+    </div>
+</section>
+<section class="courses">
+    <h2>Khóa học mới nhất</h2>
+    <div class="course-grid">
+        <article class="course-card" th:each="course : ${newCourses}">
+            <h3 th:text="${course.tenKhoaHoc}"></h3>
+            <p th:text="${course.moTa}"></p>
+            <a th:href="@{'/courses/' + ${course.courseId}}">Xem chi tiết</a>
+        </article>
+    </div>
+</section>
+<footer class="site-footer">
+    <p>© 2024 DACNN12. Được chuyển đổi từ dự án ASP.NET Core MVC.</p>
+</footer>
+</body>
+</html>

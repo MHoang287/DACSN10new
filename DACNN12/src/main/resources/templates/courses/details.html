@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${course.tenKhoaHoc}">Chi tiết khóa học</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<header class="site-header">
+    <h1 th:text="${course.tenKhoaHoc}"></h1>
+    <p th:text="${course.moTa}"></p>
+</header>
+<section class="course-meta">
+    <p><strong>Giảng viên:</strong> <span th:text="${course.user != null ? course.user.hoTen : 'Đang cập nhật'}"></span></p>
+    <p><strong>Giá:</strong> <span th:text="${#numbers.formatDecimal(course.gia, 0, 'COMMA', 0, 'POINT')}"></span> VND</p>
+    <p><strong>Ngày tạo:</strong> <span th:text="${#temporals.format(course.ngayTao, 'dd/MM/yyyy')}"></span></p>
+</section>
+<section class="course-categories" th:if="${#lists.isNotEmpty(categories)}">
+    <h2>Danh mục</h2>
+    <ul>
+        <li th:each="item : ${categories}" th:text="${item.category.name}"></li>
+    </ul>
+</section>
+<section class="course-lessons" th:if="${#lists.isNotEmpty(lessons)}">
+    <h2>Nội dung khóa học</h2>
+    <ol>
+        <li th:each="lesson : ${lessons}" th:text="${lesson.title}"></li>
+    </ol>
+</section>
+<section class="course-assignments" th:if="${#lists.isNotEmpty(assignments)}">
+    <h2>Bài tập</h2>
+    <ul>
+        <li th:each="assignment : ${assignments}">
+            <strong th:text="${assignment.title}"></strong>
+            <span th:text="${#temporals.format(assignment.deadline, 'dd/MM/yyyy HH:mm')}"></span>
+        </li>
+    </ul>
+</section>
+<section class="course-quizzes" th:if="${#lists.isNotEmpty(quizzes)}">
+    <h2>Bài kiểm tra</h2>
+    <ul>
+        <li th:each="quiz : ${quizzes}">
+            <strong th:text="${quiz.title}"></strong>
+            <span th:text="${#lists.size(quiz.questions)} + ' câu hỏi'"></span>
+        </li>
+    </ul>
+</section>
+<footer class="site-footer">
+    <a class="button" href="/courses">Quay lại danh sách khóa học</a>
+</footer>
+</body>
+</html>

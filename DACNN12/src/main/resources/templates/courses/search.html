@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Kết quả tìm kiếm</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<header class="site-header">
+    <h1>Kết quả tìm kiếm</h1>
+    <p th:if="${searchType == 'name'}">Từ khóa: <strong th:text="${keyword}"></strong></p>
+    <p th:if="${searchType == 'topic'}">Chủ đề: <strong th:text="${keyword}"></strong></p>
+    <p th:if="${searchType == 'category'}">Danh mục ID: <strong th:text="${categoryId}"></strong></p>
+</header>
+<section class="course-grid">
+    <article class="course-card" th:each="course : ${courses}">
+        <h2 th:text="${course.tenKhoaHoc}"></h2>
+        <p th:text="${course.moTa}"></p>
+        <a class="button" th:href="@{'/courses/' + ${course.courseId}}">Xem chi tiết</a>
+    </article>
+    <p th:if="${courses.empty}">Không tìm thấy khóa học phù hợp.</p>
+</section>
+<div class="pagination" th:if="${courses.totalPages} > 1">
+    <a th:if="${!courses.first}" th:href="@{|?page=${courses.number - 1}&size=${courses.size}|}">« Trước</a>
+    <span>Trang <span th:text="${courses.number + 1}"></span>/<span th:text="${courses.totalPages}"></span></span>
+    <a th:if="${!courses.last}" th:href="@{|?page=${courses.number + 1}&size=${courses.size}|}">Sau »</a>
+</div>
+<footer class="site-footer">
+    <p>© 2024 DACNN12</p>
+</footer>
+</body>
+</html>
