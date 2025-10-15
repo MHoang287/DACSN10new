@@ -361,3 +361,22 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Java/Maven
+*.class
+*.jar
+*.war
+*.ear
+target/
+.mvn/
+mvnw
+mvnw.cmd
+.idea/
+*.iml
+*.iws
+*.ipr
+.settings/
+.classpath
+.project
+.factorypath
+.vscode/
