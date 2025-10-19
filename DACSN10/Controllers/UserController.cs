@@ -1,11 +1,10 @@
+using DACSN10.Areas.Teacher.Service;
+using DACSN10.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using DACSN10.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Collections.Generic;
 using System.Security.Claims;
-using System.Threading.Tasks;
+using System.Text;
 
 namespace DACSN10.Controllers
 {
@@ -17,6 +16,54 @@ namespace DACSN10.Controllers
         public UserController(AppDbContext context)
         {
             _context = context;
+        }
+
+        [HttpGet("/watch/{key}")]
+        public async Task<IActionResult> Watch(
+    [FromRoute] string key,
+    [FromQuery] long streamId,
+    [FromQuery] string? meta,
+    CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+                return BadRequest("Missing stream key.");
+
+            var session = new StreamSession
+            {
+                StreamKey = key.Trim(),
+                Title = "Live"
+            };
+
+            if (!string.IsNullOrWhiteSpace(meta))
+            {
+                try
+                {
+                    var json = Encoding.UTF8.GetString(Convert.FromBase64String(meta));
+                    var obj = System.Text.Json.JsonDocument.Parse(json).RootElement;
+                    if (obj.TryGetProperty("title", out var t)) session.Title = t.GetString() ?? session.Title;
+                    if (obj.TryGetProperty("desc", out var d)) session.Description = d.GetString();
+                }
+                catch { /* ignore malformed meta */ }
+            }
+
+            session.StreamId = streamId;
+
+
+            ViewBag.StreamKey = session.StreamKey;
+            ViewBag.StreamId = session.StreamId;
+            ViewBag.Domain = LiveConfig.Origin;
+            ViewBag.ApiBase = LiveConfig.ApiBase;
+            ViewBag.WsEndpoint = LiveConfig.WsEndpoint;
+            ViewBag.WsCommentTopic = session.WsTopicComments;
+            ViewBag.WsSendComment = session.WsSendComment;
+            ViewBag.WsStatusTopic = session.WsStatusTopic; 
+            ViewBag.HlsUrl = session.HlsUrl;
+            ViewBag.CurrentUserId = GetCurrentUserId();
+            ViewBag.Name = User.Identity?.Name ?? "Guest";
+
+            ViewData["Title"] = $"{session.Title} - Livestream";
+
+            return View("~/Views/Shared/StreamWatcher.cshtml", session);
         }
 
         #region Profile Management

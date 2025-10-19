@@ -80,6 +80,7 @@ namespace DACSN10.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CourseID"));
 
                     b.Property<decimal>("Gia")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("MoTa")
@@ -257,6 +258,7 @@ namespace DACSN10.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("SoTien")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("Status")

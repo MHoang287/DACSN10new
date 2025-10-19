@@ -1,10 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace DACSN10.Models
 {
     public class Payment
     {
         public int PaymentID { get; set; }
+        [Precision(18, 2)]
         public decimal SoTien { get; set; }
         public DateTime NgayThanhToan { get; set; }
         public string PhuongThucThanhToan { get; set; }

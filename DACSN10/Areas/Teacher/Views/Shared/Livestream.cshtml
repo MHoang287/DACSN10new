@@ -1,0 +1,292 @@
+﻿@using DACSN10.Areas.Teacher.Service
+@{
+    Layout = "_TeacherLayout"; 
+    ViewData["Title"] = "OBS Livestream Control";
+}
+
+<div class="container py-4" id="liveApp">
+
+    <!-- Create -->
+    <div class="card shadow-sm mb-4" id="cardCreate">
+        <div class="card-body">
+            <h5 class="card-title mb-3"><i class="bi bi-broadcast-pin me-2"></i>Tạo luồng mới</h5>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Tiêu đề</label>
+                    <input id="liveTitle" class="form-control" placeholder="Ví dụ: Lập trình Java #01">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Mô tả</label>
+                    <input id="liveDesc" class="form-control" placeholder="Giới thiệu & cấu trúc dự án">
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center mt-3">
+                <button id="btnCreateStream" class="btn btn-primary px-4">
+                    <span class="me-2 d-none" id="spinCreate"><span class="spinner-border spinner-border-sm"></span></span>
+                    Tạo luồng
+                </button>
+                <div class="ms-3 text-muted small">Sau khi tạo, cấu hình OBS rồi Start Streaming.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- OBS settings / Status -->
+    <div class="card shadow-sm mb-4 d-none" id="cardObs">
+        <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between">
+                <h5 class="card-title mb-0"><i class="bi bi-gear-wide-connected me-2"></i>OBS & Trạng thái</h5>
+                <span id="liveStatusBadge" class="badge bg-secondary">Chưa tạo</span>
+            </div>
+            <hr>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">OBS Server (RTMP)</label>
+                    <div class="input-group">
+                        <input id="obsServer" class="form-control" readonly>
+                        <button class="btn btn-outline-secondary" id="copyObsServer" type="button" title="Copy">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                    <div class="form-text">OBS → <strong>Settings → Stream → Server</strong></div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Stream Key</label>
+                    <div class="input-group">
+                        <input id="obsKey" class="form-control" readonly>
+                        <button class="btn btn-outline-secondary" id="copyObsKey" type="button" title="Copy">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                    <div class="form-text">OBS → <strong>Settings → Stream → Stream Key</strong></div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">HLS URL</label>
+                    <div class="input-group">
+                        <input id="liveHls" class="form-control" readonly>
+                        <button class="btn btn-outline-secondary" id="copyHls" type="button" title="Copy">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Link xem</label>
+                    <div class="input-group">
+                        <input id="watchLinkText" class="form-control" readonly>
+                        <a id="watchLinkBtn" class="btn btn-outline-primary" target="_blank" rel="noopener">Mở</a>
+                        <button class="btn btn-outline-secondary" id="copyWatch" type="button" title="Copy">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-3">
+                <button id="btnRefresh" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-clockwise"></i> Kiểm tra trạng thái
+                </button>
+                <button id="btnStopStream" class="btn btn-outline-danger">
+                    <i class="bi bi-stop-circle"></i> Đóng luồng
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.js"></script>
+    <script>
+        window.LiveConfig = {
+          RTMP_SERVER: "@LiveConfig.RtmpServer",
+          API_BASE:    "@LiveConfig.ApiBase",
+          API_CREATE:  "@LiveConfig.ApiCreate",
+          HLS_FORMAT:  "@LiveConfig.HlsFormat"
+        };
+
+        (function () {
+          const CFG = window.LiveConfig || {};
+          const $ = (id) => document.getElementById(id);
+
+          let created = null;
+          let pollTimer = null;
+
+          function setBadge(state) {
+            const badge = $("liveStatusBadge");
+            if (!badge) return;
+            const M = {
+              idle:    ["bg-secondary","Chưa tạo"],
+              created: ["bg-warning","Đợi OBS…"],
+              live:    ["bg-success","Đang phát"],
+              error:   ["bg-danger","Lỗi"]
+            };
+            const [klass, text] = (M[state] || M.idle);
+            badge.className = "badge " + klass;
+            badge.textContent = text;
+          }
+
+          function setUiState(state) {
+            $("cardCreate").classList.toggle("d-none", state !== "idle");
+            $("cardObs").classList.toggle("d-none", state === "idle");
+            setBadge(state === "idle" ? "idle" : (state === "live" ? "live" : "created"));
+
+            $("btnCreateStream").disabled = state !== "idle";
+            $("btnRefresh").disabled = state === "idle";
+            $("btnStopStream").disabled = state === "idle";
+
+            if (state === "idle") stopPolling();
+          }
+
+          function copy(txt) {
+            navigator.clipboard.writeText(txt)
+              .then(() => toastr.success("Đã copy"))
+              .catch(() => toastr.error("Copy lỗi"));
+          }
+
+          function startPolling(key) {
+            stopPolling();
+            pollTimer = setInterval(() => checkStatus(key, false), 3000);
+          }
+          function stopPolling() {
+            if (pollTimer) clearInterval(pollTimer);
+            pollTimer = null;
+          }
+
+          async function checkStatus(key, toast = true) {
+            const url = `${CFG.API_BASE.replace(/\/+$/,'')}/rtmp/status/${encodeURIComponent(key)}`;
+            const ctl = new AbortController();
+            const t = setTimeout(() => ctl.abort("timeout"), 4500);
+            try {
+              const res = await fetch(url, { signal: ctl.signal, cache: "no-store" });
+              clearTimeout(t);
+              if (!res.ok) {
+                if (toast) toastr.warning(`Kiểm tra thất bại (${res.status})`);
+                setBadge("created");
+                return;
+              }
+              const st = await res.json();
+              setBadge(st.active ? "live" : "created");
+            } catch (e) {
+              clearTimeout(t);
+              setBadge("error");
+              if (toast) toastr.error("Không kiểm tra được trạng thái.");
+              console.warn("[status] fail", e);
+            }
+          }
+
+          function makeHlsUrl(key, serverHlsPath) {
+            if (serverHlsPath) return CFG.API_BASE.replace(/\/api\/?$/,"") + serverHlsPath;
+            const tmpl = CFG.HLS_FORMAT || "/live/{key}/index.m3u8";
+            const path = tmpl.includes("{key}") ? tmpl.replace("{key}", key) : tmpl.replace("{0}", key);
+            return CFG.API_BASE.replace(/\/api\/?$/,"") + path;
+          }
+
+                          function fillOutputs(obj, extras = {}) {
+          const key = obj.key;
+          const id  = obj.id;
+          let hls = obj.hlsUrl;
+          if (!hls || typeof hls !== 'string' || !hls.trim()) {
+            hls = makeHlsUrl(key, null);
+          } else if (!/^https?:\/\//i.test(hls)) {
+            hls = CFG.API_BASE.replace(/\/api\/?$/, "") + "/" + hls.replace(/^\/+/, "");
+          }
+
+          const metaObj = { title: extras.title || "", desc: extras.description || "" };
+          const metaStr = btoa(unescape(encodeURIComponent(JSON.stringify(metaObj))));
+
+          const params = new URLSearchParams();
+          if (id) params.set("streamId", id);
+          if (metaObj.title || metaObj.desc) params.set("meta", metaStr);
+
+          const watch = `${location.origin}/watch/${encodeURIComponent(key)}?${params}`;
+          $("watchLinkText").value = watch;
+          $("watchLinkBtn").href   = watch;
+          $("obsServer").value = CFG.RTMP_SERVER || "";
+          $("obsKey").value    = key || "";
+          $("liveHls").value   = hls;
+        }
+
+
+        async function createStream() {
+          const btn  = $("btnCreateStream");
+          const spin = $("spinCreate");
+          try {
+            spin?.classList.remove("d-none");
+            btn.disabled = true;
+
+            const payload = {
+              title: ($("liveTitle")?.value || "Untitled").trim(),
+              description: ($("liveDesc")?.value || "").trim()
+            };
+
+            const url = `${(CFG.API_CREATE || (CFG.API_BASE.replace(/\/+$/,'') + "/streams"))}`;
+            const res = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            });
+            if (!res.ok) throw new Error(await res.text());
+
+            created = await res.json();
+            if (!created?.key) throw new Error("Không nhận được key.");
+
+            fillOutputs(created, payload);
+            setUiState("created");
+            startPolling(created.key);
+            toastr.success("Tạo luồng thành công. Mở OBS và Start Streaming.");
+          } catch (e) {
+            console.error(e);
+            toastr.error("Không tạo được luồng.");
+            setUiState("idle");
+          } finally {
+            spin?.classList.add("d-none");
+            btn.disabled = false;
+          }
+        }
+
+
+          function stopStream() {
+            // Todo: gọi DELETE /api/streams/{key}
+            created = null;
+            setUiState("idle");
+            toastr.info("Đã đóng luồng. Dừng phát trong OBS nếu đang bật.");
+          }
+
+          // ========== INIT ==========
+          function init() {
+            const btnCreate = $("btnCreateStream");
+            if (btnCreate && !btnCreate.getAttribute("type")) btnCreate.setAttribute("type","button");
+            const btnStop = $("btnStopStream");
+            if (btnStop && !btnStop.getAttribute("type")) btnStop.setAttribute("type","button");
+            const btnRefresh = $("btnRefresh");
+            if (btnRefresh && !btnRefresh.getAttribute("type")) btnRefresh.setAttribute("type","button");
+
+            $("obsServer").value = CFG.RTMP_SERVER || "";
+            setUiState("idle");
+
+            // Bindings
+            btnCreate?.addEventListener("click", (e) => { e.preventDefault(); createStream(); });
+            btnStop?.addEventListener("click", (e) => { e.preventDefault(); stopStream(); });
+            btnRefresh?.addEventListener("click", (e) => {
+              e.preventDefault();
+              if (!created?.key) return toastr.warning("Chưa có stream để kiểm tra.");
+              checkStatus(created.key, true);
+            });
+
+            $("copyObsServer")?.addEventListener("click", () => copy($("obsServer").value));
+            $("copyObsKey")?.addEventListener("click", () => copy($("obsKey").value));
+            $("copyHls")?.addEventListener("click", () => copy($("liveHls").value));
+            $("copyWatch")?.addEventListener("click", () => copy($("watchLinkText").value));
+          }
+
+          if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", init, { once: true });
+          } else {
+            init();
+          }
+        })();
+    </script>
+}

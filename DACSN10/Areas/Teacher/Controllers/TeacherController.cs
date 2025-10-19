@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using DACSN10.Areas.Teacher.Service;
 using DACSN10.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace DACSN10.Controllers
 {
@@ -20,6 +21,12 @@ namespace DACSN10.Controllers
             _logger = logger;
         }
 
+        public IActionResult Live()
+        {
+            // Tuỳ bạn bind từ DB hay form; đây là ví dụ trống để View tạo mới
+            var vm = new StreamSession();
+            return View("Livestream", vm);
+        }
         #region Dashboard
 
         public async Task<IActionResult> Dashboard()
@@ -384,7 +391,7 @@ namespace DACSN10.Controllers
             ViewBag.Course = lesson.Course;
             return View(lesson);
         }
-        
+
 
         public async Task<IActionResult> EditLesson(int id)
         {

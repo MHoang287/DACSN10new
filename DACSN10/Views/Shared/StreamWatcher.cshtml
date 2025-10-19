@@ -1,0 +1,597 @@
+﻿@{
+    ViewData["Title"] = "Xem livestream";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    // Server set:
+    // ViewBag.StreamKey, ViewBag.Domain (https://livestream.nd24.id.vn)
+    // Optional: ViewBag.StreamId (long), ViewBag.WsEndpoint (https://.../ws), ViewBag.ApiBase (https://.../api), ViewBag.HlsUrl
+    // Chat:
+    // ViewBag.CurrentUserId = GetCurrentUserId();
+    // ViewBag.Name = User.Identity?.Name ?? "Guest";
+}
+<style>
+    :root {
+        --brand: #0d6efd;
+        --bg: #ffffff;
+        --border: #e2e8f0;
+        --muted: #6b7280;
+        --me: #DCF8C6;
+        --other: #f1f1f1;
+    }
+
+    body {
+        background: var(--bg);
+    }
+
+    .live-wrap {
+        position: relative;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #000;
+    }
+
+    .live-badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        z-index: 3;
+    }
+
+    .badge.pill {
+        border-radius: 999px;
+        padding: .4rem .75rem;
+    }
+
+    .ended-overlay, .paused-overlay, .play-overlay {
+        position: absolute;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255,255,255,0.75);
+        text-align: center;
+        z-index: 4;
+        backdrop-filter: blur(4px);
+    }
+
+        .ended-overlay .card, .paused-overlay .card, .play-overlay .card {
+            background: rgba(255,255,255,.9);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+    .skeleton {
+        animation: pulse 1.5s infinite ease-in-out;
+        background: linear-gradient(90deg,#f3f3f3 25%,#e7e7e7 37%,#f3f3f3 63%);
+        background-size: 400% 100%;
+    }
+    @@keyframes pulse {
+        0%
+
+    {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+
+    }
+
+    /* === Chat === */
+    .chat-card {
+        height: 560px;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+    }
+
+    .chat-header {
+        border-bottom: 1px solid var(--border);
+        background: #fff;
+        padding: .75rem 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 600;
+    }
+
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: .75rem;
+        background: #fafafa;
+        display: flex;
+        flex-direction: column;
+        gap: .5rem;
+    }
+
+    .msg {
+        display: flex;
+        flex-direction: column;
+        max-width: 80%;
+    }
+
+        .msg.right {
+            align-self: flex-end;
+            align-items: flex-end;
+        }
+
+        .msg.left {
+            align-self: flex-start;
+            align-items: flex-start;
+        }
+
+    .msg-group {
+        display: flex;
+        align-items: flex-end;
+        gap: .5rem;
+    }
+
+    .avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #e5e7eb;
+        color: #111;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        font-size: .75rem;
+    }
+
+    .bubble {
+        border-radius: 16px;
+        padding: .5rem .75rem;
+        box-shadow: 0 1px 2px rgba(0,0,0,.08);
+        line-height: 1.35;
+    }
+
+        .bubble.me {
+            background: var(--me);
+            border: 1px solid #c5e6b1;
+        }
+
+        .bubble.other {
+            background: var(--other);
+            border: 1px solid #e2e2e2;
+        }
+
+    .meta {
+        font-size: .75rem;
+        color: var(--muted);
+        margin-top: .25rem;
+    }
+
+    .chat-footer {
+        border-top: 1px solid var(--border);
+        background: #fff;
+        padding: .75rem;
+    }
+
+    .chat-input-wrap {
+        display: flex;
+        gap: .5rem;
+    }
+
+        .chat-input-wrap input {
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+    .btn-primary {
+        background: var(--brand);
+        border-color: var(--brand);
+    }
+</style>
+
+<div class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div class="page-title">
+            <span class="online-dot"></span>
+
+            <h3 class="mb-1">@(Model?.Title ?? "Livestream")</h3>
+
+            @if (!string.IsNullOrWhiteSpace(Model?.Description))
+            {
+                <div class="text-muted small">@Model!.Description</div>
+            }
+
+            <div class="mt-2">
+                <span id="liveStateBadge" class="badge pill text-bg-secondary">Đang khởi tạo…</span>
+                <span id="viewerBadge" class="badge pill text-bg-secondary ms-2 d-none">
+                    <i class="bi bi-people-fill me-1" style="font-size:.8rem;"></i>
+                    <span id="viewerCount">0</span> đang xem
+                </span>
+                <span id="latencyInfo" class="ms-2 small subtle d-none">• latency: <span id="latVal">—</span></span>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="row g-4">
+        <!-- Video -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body p-2">
+                    <div class="live-wrap">
+                        <video id="player" controls autoplay muted playsinline preload="auto" style="width:100%;aspect-ratio:16/9;border-radius:12px;"></video>
+
+                        <div class="live-badge">
+                            <span id="floatingBadge" class="badge pill text-bg-secondary">
+                                <i class="bi bi-circle-fill me-1" style="font-size:.6rem;"></i> Đang tải…
+                            </span>
+                        </div>
+
+                        <div id="pausedOverlay" class="paused-overlay">
+                            <div class="card p-4">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-pause-circle display-6 me-3"></i>
+                                    <div class="text-start">
+                                        <h5 class="mb-1">Buổi livestream đang tạm dừng</h5>
+                                        <div class="text-white-50">Vui lòng chờ giáo viên tiếp tục.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="endedOverlay" class="ended-overlay">
+                            <div class="card p-4">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-emoji-smile-upside-down display-6 me-3"></i>
+                                    <div class="text-start">
+                                        <h5 class="mb-1">Buổi livestream đã kết thúc</h5>
+                                        <div class="text-white-50">Bạn có thể xem lại khi video được lưu (nếu có), hoặc quay lại trang chủ.</div>
+                                        <div class="mt-3"><a href="/" class="btn btn-outline-light btn-sm"><i class="bi bi-arrow-left"></i> Về trang chủ</a></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="playOverlay" class="play-overlay">
+                            <div class="card p-4 text-center">
+                                <div class="mb-3"><i class="bi bi-play-circle display-6"></i></div>
+                                <div class="mb-3">Nhấn Play để bắt đầu phát</div>
+                                <button id="btnPlay" class="btn btn-primary btn-sm"><i class="bi bi-play-fill"></i> Play</button>
+                            </div>
+                        </div>
+
+                        <div id="videoSkeleton" class="position-absolute top-0 start-0 w-100 h-100 skeleton" style="display:none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat -->
+        <div class="col-lg-4">
+            <div class="card chat-card">
+                <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-chat-dots"></i>
+                        <strong>Chat</strong>
+                    </div>
+                    <div class="small subtle" id="chatStatus">Đang mở</div>
+                </div>
+
+                <div id="chatMessages" class="card-body chat-messages">
+                    <!-- messages -->
+                </div>
+
+                <div class="card-footer bg-transparent">
+                    <form id="chatForm" class="chat-input-wrap" autocomplete="off">
+                        <div class="chat-input">
+                            <input id="chatInput"
+                                   class="form-control"
+                                   placeholder="Nhập tin nhắn…"
+                                   maxlength="500"
+                                   autocomplete="off"
+                                   autocapitalize="off"
+                                   autocorrect="off"
+                                   spellcheck="false"
+                                   enterkeyhint="send" />
+                        </div>
+                        <button id="btnSend" type="submit" class="btn btn-primary">
+                            <i class="bi bi-send"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.14/dist/hls.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script>
+        (() => {
+          // ===== Inputs =====
+          const streamKey = '@(ViewBag.StreamKey ?? "")';
+          let domainRaw = ('@(ViewBag.Domain ?? "")').replace(/\/+$/, '');
+          const domain = /^https?:\/\//.test(domainRaw) ? domainRaw : window.location.origin;
+
+          let   streamId  = Number('@(ViewBag.StreamId ?? "0")') || 0;
+          const apiBase   = '@(ViewBag.ApiBase ?? "")' || `${domain}/api`;
+          const wsEndpointCfg = '@(ViewBag.WsEndpoint ?? "")';
+          const hlsFromServer = '@(ViewBag.HlsUrl ?? "")'.trim();
+
+          const currentUserId   = Number('@(ViewBag.CurrentUserId ?? "0")') || 0;
+          const currentUserName = '@(ViewBag.Name ?? "Guest")';
+
+          const hlsSrc     = (hlsFromServer && hlsFromServer.length) ? hlsFromServer : `${domain}/live/${encodeURIComponent(streamKey)}/index.m3u8`;
+          const wsEndpoint = wsEndpointCfg || `${domain}/ws`;
+
+          // ===== DOM =====
+          const video = document.getElementById('player');
+          const floatingBadge = document.getElementById('floatingBadge');
+          const liveStateBadge= document.getElementById('liveStateBadge');
+          const endedOverlay  = document.getElementById('endedOverlay');
+          const pausedOverlay = document.getElementById('pausedOverlay');
+          const playOverlay   = document.getElementById('playOverlay');
+          const playBtn       = document.getElementById('btnPlay');
+          const skeleton      = document.getElementById('videoSkeleton');
+          const latencyInfo   = document.getElementById('latencyInfo'); const latVal = document.getElementById('latVal');
+
+          const chatBox   = document.getElementById('chatMessages');
+          const chatInput = document.getElementById('chatInput');
+          const chatForm  = document.getElementById('chatForm');
+          const chatStatus= document.getElementById('chatStatus');
+          const btnSend   = document.getElementById('btnSend');
+
+          const viewerBadge  = document.getElementById('viewerBadge');
+          const viewerCountEl= document.getElementById('viewerCount');
+
+          // ===== Helpers =====
+          const normId = v => (v === null || v === undefined) ? '' : String(v);
+          function isMineMsg(c) {
+            if (c && c.clientId && pendingByClientId.has(c.clientId)) return true;
+            return normId(c?.userId) === normId(currentUserId);
+          }
+          function setBadges(state){
+            const map={loading:['text-bg-secondary','Đang tải…'],live:['text-bg-danger','LIVE'],ended:['text-bg-dark','Đã kết thúc'],offline:['text-bg-warning','Chưa phát'],paused:['text-bg-info','Tạm dừng'],error:['text-bg-danger','Lỗi kết nối']};
+            const [klass,text]=map[state]||map.loading;
+            floatingBadge.className=`badge pill ${klass}`;
+            floatingBadge.innerHTML=`<i class="bi bi-circle-fill me-1" style="font-size:.6rem;"></i>${text}`;
+            liveStateBadge.className=`badge pill ${klass}`;
+            liveStateBadge.textContent=(text==='LIVE')?'Đang phát':text;
+          }
+          const show=(el,on)=>{ if(el) el.style.display=on?'flex':'none'; }
+          const showSkeleton=(on)=>{ if(skeleton) skeleton.style.display=on?'block':'none'; }
+          function setLatency(seconds){ if(seconds==null){ latencyInfo.classList.add('d-none'); return; } latVal.textContent=`${seconds.toFixed(1)}s`; latencyInfo.classList.remove('d-none'); }
+          function disableChatInput(d){ chatInput.disabled=d; btnSend.disabled=d; chatStatus.textContent=d?'Đã đóng':'Đang mở'; }
+          function updateViewerCount(n){ if(!viewerBadge||!viewerCountEl) return; viewerCountEl.textContent=String(n); viewerBadge.classList.toggle('d-none', !(n>=0)); }
+
+          // ===== Video events =====
+          video.addEventListener('error', () => { setBadges('error'); });
+          video.addEventListener('loadeddata', () => showSkeleton(false));
+          video.addEventListener('canplay',     () => showSkeleton(false));
+          video.addEventListener('playing',     () => { setBadges('live'); showSkeleton(false); });
+
+          // ===== HLS =====
+          let hls = null, reconnectAttempts = 0; const MAX_RECONNECT = 6;
+          function attachHls() {
+            try {
+              if (Hls.isSupported()) {
+                if (hls) { try{hls.destroy();}catch{} hls=null; }
+                hls = new Hls({ lowLatencyMode:true, liveDurationInfinity:true, manifestLoadingMaxRetry:3, fragLoadingMaxRetry:3, enableWorker:true });
+                hls.on(Hls.Events.MANIFEST_PARSED, () => tryAutoPlay());
+                hls.on(Hls.Events.LEVEL_LOADED, (_, data) => {
+                  setBadges('live');
+                  const lat = hls.latency ?? (data?.details?.targetduration ? data.details.targetduration*3 : null);
+                  setLatency(lat);
+                });
+                hls.on(Hls.Events.ERROR, (_, data) => {
+                  if (!data?.fatal) return;
+                  if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                    try { hls.startLoad(); } catch { scheduleReconnect(); }
+                  } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                    try { hls.recoverMediaError(); } catch { scheduleReconnect(); }
+                  } else {
+                    try{hls.destroy();}catch{}; hls=null; scheduleReconnect();
+                  }
+                });
+                showSkeleton(true);
+                hls.loadSource(hlsSrc);
+                hls.attachMedia(video);
+                reconnectAttempts = 0;
+              } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = hlsSrc;
+                video.addEventListener('loadedmetadata', tryAutoPlay, { once:true });
+              } else {
+                setBadges('error'); alert('Trình duyệt không hỗ trợ HLS.');
+              }
+            } catch { scheduleReconnect(); }
+          }
+          function scheduleReconnect(){
+            if (reconnectAttempts>=MAX_RECONNECT){ setBadges('error'); return; }
+            reconnectAttempts++;
+            const delayMs = Math.min(1000*reconnectAttempts, 5000);
+            setTimeout(()=>{ try{hls?.destroy();}catch{} hls=null; attachHls(); }, delayMs);
+          }
+          async function tryAutoPlay(){
+            try{ video.muted=true; await video.play(); show(playOverlay,false); }
+            catch{ show(playOverlay,true); }
+          }
+          playBtn?.addEventListener('click', tryAutoPlay);
+
+          // ===== REST comments =====
+          const PAGE_LIMIT=50; let oldestId=null, loadingMore=false, canLoadMore=true;
+          function commentsListUrl(){ const url=new URL(`${apiBase}/streams/${streamId}/comments`); url.searchParams.set('limit',PAGE_LIMIT); if(oldestId) url.searchParams.set('beforeId',oldestId); return url.toString(); }
+          async function loadInitialComments(){
+            if(!streamId) return; loadingMore=true;
+            try{
+              const res=await fetch(commentsListUrl(),{credentials:'omit'}); if(!res.ok) throw 0;
+              const list=await res.json();
+              list.slice().reverse().forEach(c=>appendCommentDto(c, isMineMsg(c)));
+              if(list.length>0) oldestId=list[list.length-1].id;
+              if(list.length<PAGE_LIMIT) canLoadMore=false;
+              chatBox.scrollTop=chatBox.scrollHeight;
+            }catch{}
+            loadingMore=false;
+          }
+          async function loadMoreOnScrollTop(){
+            if(!canLoadMore||loadingMore) return;
+            if(chatBox.scrollTop<=0){
+              loadingMore=true; const prev=chatBox.scrollHeight;
+              try{
+                const res=await fetch(commentsListUrl(),{cache:'no-store'}); if(!res.ok) throw 0;
+                const list=await res.json(); if(list.length===0){ canLoadMore=false; loadingMore=false; return; }
+                list.slice().reverse().forEach(c=>appendCommentDto(c, isMineMsg(c), true)); oldestId=list[list.length-1].id;
+                chatBox.scrollTop=chatBox.scrollHeight - prev;
+              }catch{}
+              loadingMore=false;
+            }
+          }
+          async function postCommentREST(payload){
+            try{
+              const res=await fetch(`${apiBase}/streams/${streamId}/comments`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+              return res.ok;
+            }catch{ return false; }
+          }
+
+          // ===== Render comment =====
+          const seenIds = new Set(); const wsSeenKeys = new Map(); const WS_KEY_TTL_MS = 10_000;
+          const wsKey = c => `${c.userId||0}|${(c.content||'').trim()}|${Math.floor((c.createdAt?Date.parse(c.createdAt):Date.now())/1000)}`;
+          setInterval(()=>{ const now=Date.now(); for(const[k,t] of wsSeenKeys.entries()){ if(now-t>WS_KEY_TTL_MS) wsSeenKeys.delete(k); }}, 5000);
+          function initials(name){ if(!name) return '?'; const parts=name.trim().split(' ').filter(Boolean); const a=(parts[0]||'')[0]||''; const b=(parts.slice(-1)[0]||'')[0]||''; return (a+b).toUpperCase(); }
+          function appendCommentDto(c, mine=false, prepend=false) {
+            const wrap = document.createElement('div');
+            wrap.className = `msg ${mine?'right':'left'}`;
+            const row = document.createElement('div'); row.className='msg-group';
+            if (!mine) { const av=document.createElement('div'); av.className='avatar'; av.textContent=initials(c.displayName || (c.userId ? 'User '+c.userId : 'Guest')); row.appendChild(av); }
+            const bubble=document.createElement('div'); bubble.className=`bubble ${mine?'me':'other'}`; bubble.textContent=c.content||''; row.appendChild(bubble);
+            wrap.appendChild(row);
+            const meta=document.createElement('div'); meta.className='meta'; const t=c.createdAt?new Date(c.createdAt):new Date(); const name=c.displayName||(c.userId?('User#'+c.userId):'Guest'); meta.textContent=`${name} • ${t.toLocaleTimeString()}`; wrap.appendChild(meta);
+            if (prepend && chatBox.firstChild) chatBox.insertBefore(wrap, chatBox.firstChild); else chatBox.appendChild(wrap);
+            if (!prepend) chatBox.scrollTop=chatBox.scrollHeight;
+            return wrap;
+          }
+          function updateRenderedComment(el,c){
+            const mine=isMineMsg(c);
+            const bubble = el.querySelector('.bubble'); if (bubble){ bubble.textContent=c.content||''; bubble.className=`bubble ${mine?'me':'other'}`; }
+            const meta = el.querySelector('.meta'); if (meta){ const t=c.createdAt?new Date(c.createdAt):new Date(); const name=c.displayName||(c.userId?('User#'+c.userId):'Guest'); meta.textContent=`${name} • ${t.toLocaleTimeString()}`; }
+            el.classList.remove('left','right'); el.classList.add(mine?'right':'left');
+          }
+
+          // ===== WS (SockJS + STOMP) + Presence =====
+          let stomp=null, wsConnected=false, subscribed=false, subStatus=null, subComments=null;
+          const pendingByClientId = new Map(); // clientId -> {el, ts, content}
+          let pingTimer=null;
+
+          function startPresencePing(){
+            stopPresencePing();
+            pingTimer = setInterval(()=>{ try{ stomp && stomp.send(`/app/streams/${streamKey}/ping`, {}, '{}'); }catch{} }, 25000);
+          }
+          function stopPresencePing(){ if(pingTimer) clearInterval(pingTimer); pingTimer=null; }
+
+          function wsConnect(){
+            const sock = new SockJS(wsEndpoint);
+            stomp = Stomp.over(sock);
+            stomp.debug = null; // tắt log nếu ồn
+            stomp.connect({}, async () => {
+              wsConnected = true;
+              try{ subStatus?.unsubscribe(); }catch{}; try{ subComments?.unsubscribe(); }catch{};
+              subStatus=subComments=null; subscribed=false;
+              if(!streamId) await ensureStreamId();
+              subscribeTopics();
+              startPresencePing();
+            }, () => { wsConnected=false; subscribed=false; stopPresencePing(); });
+          }
+
+          function subscribeTopics(){
+            if(subscribed || !stomp || !streamId) return;
+            subscribed = true;
+
+            // Trạng thái
+            subStatus = stomp.subscribe(`/topic/streams/${streamKey}/status`, (msg)=>{
+              try{
+                const s=JSON.parse(msg.body);
+                if(s.status==='PAUSED'){ setBadges('paused'); show(pausedOverlay,true); disableChatInput(true); }
+                else if(s.status==='ACTIVE'){ setBadges('live'); show(pausedOverlay,false); disableChatInput(false); }
+                else if(s.status==='ENDED'){ setBadges('ended'); show(endedOverlay,true); disableChatInput(true); }
+              }catch{}
+            });
+
+            // Bình luận
+            subComments = stomp.subscribe(`/topic/streams/${streamId}/comments`, (msg)=>{
+              try{
+                const c = JSON.parse(msg.body);
+                if (c.id) { if (seenIds.has(c.id)) return; seenIds.add(c.id); }
+                else { const k=wsKey(c); if (wsSeenKeys.has(k)) return; wsSeenKeys.set(k, Date.now()); }
+                if (c.clientId && pendingByClientId.has(c.clientId)) {
+                  const { el } = pendingByClientId.get(c.clientId);
+                  updateRenderedComment(el, c);
+                  pendingByClientId.delete(c.clientId);
+                  return;
+                }
+                appendCommentDto(c, isMineMsg(c));
+              }catch{}
+            });
+
+            // Presence (viewer count)
+            stomp.subscribe(`/topic/streams/${streamKey}/presence`, (msg) => {
+              try { const p=JSON.parse(msg.body); updateViewerCount(p.viewerCount ?? 0); } catch {}
+            });
+
+            // JOIN ngay khi sub xong
+            try { stomp.send(`/app/streams/${streamKey}/watch`, {}, '{}'); } catch {}
+          }
+
+          // Rời trang: gửi leave (best-effort)
+          window.addEventListener('beforeunload', () => { try { stomp && stomp.send(`/app/streams/${streamKey}/leave`, {}, '{}'); } catch {} });
+
+          // ===== Submit =====
+          chatForm.addEventListener('submit', async e=>{
+            e.preventDefault();
+            const val=chatInput.value.trim(); if(!val) return;
+            if(!streamId) return;
+            const clientId=`${Date.now().toString(36)}${Math.random().toString(36).slice(2,8)}`;
+            const payload={ userId:currentUserId, displayName:currentUserName, content:val, clientId };
+            let sent=false;
+            if (wsConnected && stomp) { try{ stomp.send(`/app/streams/${streamId}/comment`, {}, JSON.stringify(payload)); sent=true; }catch{} }
+            if (!sent) { await postCommentREST(payload); }
+            const el=appendCommentDto(payload, true);
+            pendingByClientId.set(clientId,{ el, ts:Date.now(), content:val });
+            chatForm.reset(); chatInput.value=''; chatInput.focus();
+          });
+
+          chatBox.addEventListener('scroll', loadMoreOnScrollTop);
+
+          // ===== StreamId =====
+          async function ensureStreamId(){
+            if(streamId) return;
+            try{
+              const res=await fetch(`${apiBase}/streams/${encodeURIComponent(streamKey)}`, { cache:'no-store' });
+              if(!res.ok) throw 0;
+              const s=await res.json(); streamId=Number(s.id)||0;
+            }catch{}
+          }
+
+          // ===== Init =====
+          (async ()=>{
+            setBadges('loading'); showSkeleton(true); show(endedOverlay,false); show(pausedOverlay,false); disableChatInput(false);
+
+            // HLS
+            attachHls();
+
+            // WS + Presence
+            wsConnect();
+
+            // Initial comments
+            await ensureStreamId();
+            if(streamId){
+              if(wsConnected) subscribeTopics();
+              await loadInitialComments();
+            } else {
+              disableChatInput(true);
+            }
+
+            try{
+              const res=await fetch(`${apiBase}/streams/${encodeURIComponent(streamKey)}/viewers`, { cache:'no-store' });
+              if(res.ok){ const j=await res.json(); if (j && typeof j.viewerCount==='number') updateViewerCount(j.viewerCount); }
+            }catch{}
+          })();
+        })();
+    </script>
+}

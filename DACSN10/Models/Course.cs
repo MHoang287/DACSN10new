@@ -1,4 +1,6 @@
-﻿namespace DACSN10.Models
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace DACSN10.Models
 {
     public class Course
     {
@@ -6,6 +8,7 @@
 
         public string TenKhoaHoc { get; set; }
         public string MoTa { get; set; }
+        [Precision(18, 2)]
         public decimal Gia { get; set; }
         public string TrangThai { get; set; } // "Active", "Inactive", "Archived"
         public DateTime NgayTao { get; set; }

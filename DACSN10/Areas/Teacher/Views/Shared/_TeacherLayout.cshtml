@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
@@ -21,13 +22,13 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
     <!-- FullCalendar -->
-    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet" />
 
     <!-- Custom CSS -->
     <link href="~/css/teacher-site.css" rel="stylesheet" />
-
     @RenderSection("Styles", required: false)
 </head>
+
 <body>
     <!-- Sidebar -->
     <aside class="teacher-sidebar" id="teacherSidebar">
@@ -99,6 +100,16 @@
 
             <div class="nav-section">
                 <div class="nav-section-title">Khác</div>
+
+                <!-- Nút Phát trực tiếp -->
+                <div class="nav-item">
+                    <!-- Go Live Modal -->
+                    <a href="@Url.Action("Live", "Teacher", new { area = "Teacher" })" class="nav-link">
+                        <i class="bi bi-broadcast-pin"></i>
+                        <span>Phát trực tiếp</span>
+                    </a>
+                </div>
+
                 <div class="nav-item">
                     <a href="@Url.Action("Index", "Home")" class="nav-link">
                         <i class="fas fa-home"></i>
@@ -150,14 +161,10 @@
 
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="fas fa-user me-2"></i> Thông tin cá nhân
-                            </a>
+                            <a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Thông tin cá nhân</a>
                         </li>
                         <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="fas fa-cog me-2"></i> Cài đặt
-                            </a>
+                            <a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i> Cài đặt</a>
                         </li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
@@ -188,58 +195,38 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
 
     <script>
-        // Initialize AOS
-        AOS.init({
-            duration: 800,
-            easing: 'ease-in-out',
-            once: true
-        });
+        // AOS & tooltips
+        AOS.init({ duration: 800, easing: 'ease-in-out', once: true });
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
 
-        // Initialize tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-
-        // Toggle sidebar
         function toggleSidebar() {
-            const sidebar = document.getElementById('teacherSidebar');
-            const header = document.getElementById('teacherHeader');
-            const main = document.getElementById('teacherMain');
-
-            sidebar.classList.toggle('collapsed');
-            header.classList.toggle('sidebar-collapsed');
-            main.classList.toggle('sidebar-collapsed');
-
-            // Save state
-            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+          const sidebar = document.getElementById('teacherSidebar');
+          const header  = document.getElementById('teacherHeader');
+          const main    = document.getElementById('teacherMain');
+          sidebar.classList.toggle('collapsed');
+          header.classList.toggle('sidebar-collapsed');
+          main.classList.toggle('sidebar-collapsed');
+          localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
         }
-
-        // Restore sidebar state
         window.addEventListener('load', function() {
-            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-            if (isCollapsed) {
-                document.getElementById('teacherSidebar').classList.add('collapsed');
-                document.getElementById('teacherHeader').classList.add('sidebar-collapsed');
-                document.getElementById('teacherMain').classList.add('sidebar-collapsed');
-            }
+          const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+          if (isCollapsed) {
+            document.getElementById('teacherSidebar').classList.add('collapsed');
+            document.getElementById('teacherHeader').classList.add('sidebar-collapsed');
+            document.getElementById('teacherMain').classList.add('sidebar-collapsed');
+          }
         });
 
-        // Toastr configuration
         toastr.options = {
-            "closeButton": true,
-            "progressBar": true,
-            "positionClass": "toast-top-right",
-            "showDuration": "300",
-            "hideDuration": "1000",
-            "timeOut": "5000",
-            "extendedTimeOut": "1000"
+          closeButton: true, progressBar: true, positionClass: "toast-top-right",
+          showDuration: "300", hideDuration: "1000", timeOut: "5000", extendedTimeOut: "1000"
         };
 
-        // Show toast messages from TempData
+        // Show toast from TempData
         @if (TempData["Success"] != null)
         {
             <text>toastr.success('@Html.Raw(TempData["Success"])');</text>
@@ -257,7 +244,6 @@
             <text>toastr.info('@Html.Raw(TempData["Info"])');</text>
         }
     </script>
-
     @RenderSection("Scripts", required: false)
 </body>
 </html>
