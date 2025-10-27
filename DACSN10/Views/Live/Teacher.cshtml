@@ -1,0 +1,98 @@
+﻿@{
+    ViewBag.Title = "Teacher Livestream";
+    var apiBase = (string)ViewBag.ApiBase;
+    var roomId = (Guid)ViewBag.RoomId;
+    var participantId = (Guid)ViewBag.ParticipantId;
+    var teacherPid = (Guid)ViewBag.TeacherParticipantId;
+    var displayName = (string)ViewBag.DisplayName; // Họ tên từ Identity.User.HoTen
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/live.css" asp-append-version="true" />
+}
+
+<h2 class="mb-2">Teacher Livestream</h2>
+
+<div class="room-meta">
+    <span class="badge" title="Room Id">🏷️ @roomId</span>
+    <span class="badge" title="Participant Id">🧑‍🏫 @participantId</span>
+</div>
+
+<!-- Cấu hình cho JS -->
+<div id="live-config"
+     data-api-base="@apiBase"
+     data-room-id="@roomId"
+     data-my-id="@participantId"
+     data-teacher-id="@teacherPid"
+     data-display-name="@displayName"></div>
+
+<div class="live-container">
+    <div class="live-grid">
+        <!-- Video + Toolbar -->
+        <div class="live-card">
+            <div class="live-card-header">
+                <div class="live-card-title">Luồng phát của bạn</div>
+                <div class="live-meta">
+                    <span>Trạng thái: <span class="kbd" id="live-status">READY</span></span>
+                </div>
+            </div>
+            <div class="live-card-body">
+                <div class="live-video-wrap">
+                    <video id="localVideo" class="live-video" autoplay playsinline muted></video>
+                </div>
+
+                <div class="live-toolbar">
+                    <button id="btnUseCamera" class="pill-btn" type="button">📷 Dùng camera</button>
+                    <button id="btnShareScreen" class="pill-btn primary" type="button">🖥️ Chia sẻ màn hình</button>
+                    <button id="btnUseOBS" class="pill-btn" type="button">🎥 Dùng OBS Virtual Camera</button>
+
+                    <!-- Nút copy link học viên -->
+                    <button id="btnCopyStudentLink" class="pill-btn copy-link" type="button" title="Sao chép link dành cho học viên" style="margin-left:auto;">
+                        🔗 Copy link học viên
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat -->
+        @await Html.PartialAsync("_ChatBox")
+    </div>
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("_StompScripts")
+
+    <script>
+        (function () {
+            const btn = document.getElementById('btnCopyStudentLink');
+            if (!btn) return;
+
+            // Lấy roomId từ Razor và hiển thị tên hiện tại để gợi ý
+            const roomId = '@roomId';
+            const defaultDisplayName = encodeURIComponent('@displayName');
+
+            btn.addEventListener('click', async () => {
+                // Tạo link Student. Tùy hệ thống, bạn thay userId=0 bằng id thực (nếu cần).
+                const link = `${location.origin}/Live/Student?roomId=${roomId}&userId=0`;
+
+                try {
+                    await navigator.clipboard.writeText(link);
+                    const old = btn.textContent;
+                    btn.textContent = '✅ Đã copy';
+                    setTimeout(() => btn.textContent = '🔗 Copy link học viên', 1600);
+                } catch (e) {
+                    // Fallback nếu Clipboard API bị chặn
+                    const ta = document.createElement('textarea');
+                    ta.value = link;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    try { document.execCommand('copy'); } catch {}
+                    document.body.removeChild(ta);
+                    alert('Đã copy link:\n' + link);
+                }
+            });
+        })();
+    </script>
+
+    <script src="~/js/live-teacher.js" asp-append-version="true"></script>
+}

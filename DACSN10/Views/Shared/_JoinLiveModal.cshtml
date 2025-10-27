@@ -1,0 +1,68 @@
+﻿<div class="modal fade" id="joinLiveModal" tabindex="-1" aria-labelledby="joinLiveModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="joinLiveModalLabel">
+                    <i class="fas fa-video me-2 text-primary"></i>Vào livestream
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+
+            <div class="modal-body">
+                <ul class="nav nav-tabs" id="joinTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="tabByCode-tab" data-bs-toggle="tab" data-bs-target="#tabByCode" type="button" role="tab" aria-controls="tabByCode" aria-selected="true">
+                            Nhập mã/Link mời
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tabActive-tab" data-bs-toggle="tab" data-bs-target="#tabActive" type="button" role="tab" aria-controls="tabActive" aria-selected="false">
+                            Đang phát
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content pt-3">
+                    <div class="tab-pane fade show active" id="tabByCode" role="tabpanel" aria-labelledby="tabByCode-tab">
+                        <div class="mb-3">
+                            <label for="joinRoomId" class="form-label">Mã phòng hoặc link mời</label>
+                            <input id="joinRoomId" type="text" class="form-control"
+                                   placeholder="Dán link như https://.../Live/Student?roomId=... hoặc nhập mã phòng (GUID)" />
+                            <div class="form-text">Bạn có thể dán trực tiếp link mời, hệ thống sẽ tự nhận mã phòng.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="joinDisplayName" class="form-label">Tên hiển thị</label>
+                            <input id="joinDisplayName" type="text" class="form-control" placeholder="Tên của bạn" />
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="tabActive" role="tabpanel" aria-labelledby="tabActive-tab">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <input id="activeRoomsSearch" type="text" class="form-control" placeholder="Tìm theo tên phòng/giảng viên..." />
+                            <button id="activeRoomsRefresh" class="btn btn-outline-secondary" type="button" title="Tải lại">
+                                <i class="fas fa-rotate"></i>
+                            </button>
+                        </div>
+
+                        <div id="activeRoomsLoading" class="text-center py-4" style="display:none;">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-2 text-muted mb-0">Đang tải phòng đang phát...</p>
+                        </div>
+
+                        <div id="activeRoomsEmpty" class="text-center py-4" style="display:none;">
+                            <i class="fas fa-broadcast-tower fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">Chưa có phòng đang phát</p>
+                        </div>
+
+                        <div id="activeRoomsList" class="list-group list-group-flush"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary" id="btnJoinLive">Vào xem</button>
+            </div>
+        </div>
+    </div>
+</div>

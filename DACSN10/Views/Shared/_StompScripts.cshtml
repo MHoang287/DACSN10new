@@ -1,0 +1,21 @@
+﻿@* Nạp SockJS + STOMP qua CDN, escape @ => %40 để tránh Razor parse *@
+
+<!-- SockJS -->
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script>
+  if (typeof SockJS === "undefined") {
+    document.write('<script src="https://unpkg.com/sockjs-client@1/dist/sockjs.min.js"><\/script>');
+  }
+</script>
+
+<!-- StompJS (UMD). Lưu ý: encode cả 2 dấu  -> %40 -->
+<script src="https://cdn.jsdelivr.net/npm/%40stomp/stompjs%407.0.0/umd/stomp.umd.min.js"></script>
+<script>
+  if (typeof StompJs === "undefined") {
+    document.write('<script src="https://unpkg.com/%40stomp/stompjs%407.0.0/bundles/stomp.umd.min.js"><\/script>');
+  }
+</script>
+
+<script>
+  console.log("SockJS loaded?", typeof SockJS, "StompJs loaded?", typeof StompJs);
+</script>

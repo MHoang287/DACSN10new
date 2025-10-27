@@ -1,0 +1,56 @@
+﻿@{
+    ViewBag.Title = "Student Viewer";
+    var apiBase = (string)ViewBag.ApiBase;
+    var roomId = (Guid)ViewBag.RoomId;
+    var participantId = (Guid)ViewBag.ParticipantId;
+    var teacherPid = (Guid?)ViewBag.TeacherParticipantId;
+    var displayName = (string)ViewBag.DisplayName; // Họ tên từ Identity.User.HoTen
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/live.css" asp-append-version="true" />
+}
+<h2 class="mb-2">Student Viewer</h2>
+
+<div class="room-meta">
+    <span class="badge" title="Room Id">🏷️ @roomId</span>
+    <span class="badge" title="Your Id">🧑 @participantId</span>
+    @if (teacherPid.HasValue)
+    {
+        <span class="badge" title="Teacher Pid">🧑‍🏫 @teacherPid</span>
+    }
+</div>
+
+<!-- Cấu hình cho JS -->
+<div id="live-config"
+     data-api-base="@apiBase"
+     data-room-id="@roomId"
+     data-my-id="@participantId"
+     data-teacher-id="@teacherPid"
+     data-display-name="@displayName"></div>
+
+<div class="live-container">
+    <div class="live-grid">
+        <!-- Video -->
+        <div class="live-card">
+            <div class="live-card-header">
+                <div class="live-card-title">Luồng của giảng viên</div>
+                <div class="live-meta">
+                    <span>Trạng thái: <span class="kbd" id="student-live-status">READY</span></span>
+                </div>
+            </div>
+            <div class="live-card-body">
+                <div class="live-video-wrap">
+                    <video id="remoteVideo" class="live-video" autoplay playsinline controls></video>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat -->
+        @await Html.PartialAsync("_ChatBox")
+    </div>
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("_StompScripts")
+    <script src="~/js/live-student.js" asp-append-version="true"></script>
+}

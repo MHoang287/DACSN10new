@@ -1,0 +1,16 @@
+﻿<div class="live-card chat-wrap">
+    <div class="chat-header">
+        <div class="chat-title">Trò chuyện trực tiếp</div>
+        <div class="chat-presence">
+            <span class="badge" title="Người đang xem">👥 <span id="viewer-count">--</span></span>
+        </div>
+    </div>
+
+    <div id="chat-messages"></div>
+
+    <div class="chat-input-row">
+        <!-- Giữ nguyên id để JS hiện tại hoạt động; chuyển sang textarea cho gõ nhiều dòng -->
+        <textarea id="chat-input" rows="2" placeholder="Nhập tin nhắn (Enter để gửi, Shift+Enter xuống dòng)..."></textarea>
+        <button id="chat-send" type="button">Gửi</button>
+    </div>
+</div>

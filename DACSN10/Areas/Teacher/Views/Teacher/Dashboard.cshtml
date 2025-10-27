@@ -2,6 +2,10 @@
 @{
     ViewData["Title"] = "Dashboard";
     Layout = "~/Areas/Teacher/Views/Shared/_TeacherLayout.cshtml";
+
+    // Dùng Name hoặc họ tên, có thể thay bằng User.HoTen nếu bạn đã pass qua ViewBag
+    var displayName = User.Identity?.Name ?? "Teacher";
+    var appUserIdClaim = User.FindFirst("AppUserId")?.Value ?? "";
 }
 
 @section Styles {
@@ -18,39 +22,28 @@
 <div class="row g-4 mb-4">
     <div class="col-xl-3 col-md-6" data-aos="fade-up" data-aos-delay="100">
         <div class="stat-card primary">
-            <div class="stat-icon">
-                <i class="fas fa-book-open"></i>
-            </div>
+            <div class="stat-icon"><i class="fas fa-book-open"></i></div>
             <div class="stat-value counter" data-target="@ViewBag.TotalCourses">0</div>
             <div class="stat-label">Tổng khóa học</div>
         </div>
     </div>
-
     <div class="col-xl-3 col-md-6" data-aos="fade-up" data-aos-delay="200">
         <div class="stat-card success">
-            <div class="stat-icon">
-                <i class="fas fa-check-circle"></i>
-            </div>
+            <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
             <div class="stat-value counter" data-target="@ViewBag.ActiveCourses">0</div>
             <div class="stat-label">Khóa học đang hoạt động</div>
         </div>
     </div>
-
     <div class="col-xl-3 col-md-6" data-aos="fade-up" data-aos-delay="300">
         <div class="stat-card warning">
-            <div class="stat-icon">
-                <i class="fas fa-users"></i>
-            </div>
+            <div class="stat-icon"><i class="fas fa-users"></i></div>
             <div class="stat-value counter" data-target="@ViewBag.TotalStudents">0</div>
             <div class="stat-label">Tổng học viên</div>
         </div>
     </div>
-
     <div class="col-xl-3 col-md-6" data-aos="fade-up" data-aos-delay="400">
         <div class="stat-card info">
-            <div class="stat-icon">
-                <i class="fas fa-dollar-sign"></i>
-            </div>
+            <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
             <div class="stat-value">@ViewBag.TotalRevenue.ToString("N0")₫</div>
             <div class="stat-label">Tổng doanh thu</div>
         </div>
@@ -90,6 +83,23 @@
         <h5>Báo cáo</h5>
         <p class="text-muted mb-0">Xuất báo cáo hoạt động</p>
     </a>
+
+    <!-- NEW: Livestream Quick Actions -->
+    <a href="#" class="action-card" onclick="startLivestreamFromLayout(); return false;">
+        <div class="action-icon" style="background: linear-gradient(135deg, #ef4444, #b91c1c);">
+            <i class="fas fa-circle-play"></i>
+        </div>
+        <h5>Bắt đầu Livestream</h5>
+        <p class="text-muted mb-0">Tạo/đi vào phòng phát trực tiếp</p>
+    </a>
+
+    <a href="#" class="action-card" onclick="openStudentViewerFromLayout(); return false;">
+        <div class="action-icon" style="background: linear-gradient(135deg, #06b6d4, #0e7490);">
+            <i class="fas fa-eye"></i>
+        </div>
+        <h5>Xem như học viên</h5>
+        <p class="text-muted mb-0">Mở trang xem livestream</p>
+    </a>
 </div>
 
 <div class="row mt-4">
@@ -120,9 +130,7 @@
                                     @enrollment.EnrollDate.ToString("dd/MM/yyyy HH:mm")
                                 </div>
                             </div>
-                            <div>
-                                <span class="badge bg-success">Active</span>
-                            </div>
+                            <div><span class="badge bg-success">Active</span></div>
                         </div>
                     }
                 </div>
@@ -151,22 +159,14 @@
         // Counter animation
         document.addEventListener('DOMContentLoaded', function() {
             const counters = document.querySelectorAll('.counter');
-
             counters.forEach(counter => {
                 const target = +counter.getAttribute('data-target');
                 const increment = target / 100;
-
                 function updateCounter() {
                     const current = +counter.innerText;
-
-                    if (current < target) {
-                        counter.innerText = Math.ceil(current + increment);
-                        setTimeout(updateCounter, 20);
-                    } else {
-                        counter.innerText = target;
-                    }
+                    if (current < target) { counter.innerText = Math.ceil(current + increment); setTimeout(updateCounter, 20); }
+                    else { counter.innerText = target; }
                 }
-
                 updateCounter();
             });
 
@@ -191,18 +191,60 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                padding: 15,
-                                font: {
-                                    size: 12
-                                }
-                            }
-                        }
+                        legend: { position: 'bottom', labels: { padding: 15, font: { size: 12 } } }
                     }
                 }
             });
         });
+
+        // Fallback: nếu _Layout không load các hàm livestream vì khác layout area
+        (function(){
+            if (typeof window.startLivestreamFromLayout === 'function' &&
+                typeof window.openStudentViewerFromLayout === 'function') return;
+
+            const DISPLAY_NAME = '@displayName'.replace(/'/g, "\\'");
+            const CLAIM_APP_USER_ID = '@appUserIdClaim';
+            const LIVE_API_BASE = '/spring';
+            const parseNumeric = v => Number.isFinite(Number(v)) ? Number(v) : NaN;
+
+            async function createOrGetRoom(teacherId) {
+                const resp = await fetch(`${LIVE_API_BASE}/api/rooms`, {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ teacherId })
+                });
+                if (!resp.ok) throw new Error('Không tạo được phòng: ' + resp.status);
+                return await resp.json();
+            }
+
+            window.startLivestreamFromLayout = async function(){
+                try {
+                    let teacherId = parseNumeric(CLAIM_APP_USER_ID);
+                    if (!Number.isFinite(teacherId)) {
+                        const input = prompt('Nhập TeacherId (số) để tạo/đi vào phòng live:','');
+                        teacherId = parseNumeric(input);
+                        if (!Number.isFinite(teacherId)) return;
+                    }
+                    await createOrGetRoom(teacherId);
+                    const uidNum = parseNumeric(CLAIM_APP_USER_ID);
+                    const uid = Number.isFinite(uidNum) ? uidNum : 0;
+                    location.href = `/Live/Teacher?teacherId=${teacherId}&userId=${uid}&displayName=${encodeURIComponent(DISPLAY_NAME)}`;
+                } catch(e) { alert(e.message || e); }
+            };
+
+            window.openStudentViewerFromLayout = async function(){
+                try {
+                    let teacherId = parseNumeric(CLAIM_APP_USER_ID);
+                    if (!Number.isFinite(teacherId)) {
+                        const input = prompt('Nhập TeacherId (số) để mở trang xem live:','');
+                        teacherId = parseNumeric(input);
+                        if (!Number.isFinite(teacherId)) return;
+                    }
+                    const room = await createOrGetRoom(teacherId);
+                    const uidNum = parseNumeric(CLAIM_APP_USER_ID);
+                    const uid = Number.isFinite(uidNum) ? uidNum : 0;
+                    location.href = `/Live/Student?roomId=${room.roomId}&userId=${uid}&displayName=${encodeURIComponent('Student')}`;
+                } catch(e) { alert(e.message || e); }
+            };
+        })();
     </script>
 }
