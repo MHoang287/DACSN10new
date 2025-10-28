@@ -10,6 +10,60 @@
     const DISPLAY_NAME = cfgEl.dataset.displayName || 'Student';
     const WS_ENDPOINT = API_BASE + '/ws';
 
+    // ===== Presence + viewerCount =====
+    const HEARTBEAT_MS = 15000;
+    const VIEWERS_POLL_MS = 10000;
+    let __hbTimer = null;
+    let __viewerTimer = null;
+
+    async function sendStudentHeartbeat(live) {
+        if (!ROOM_ID || !MY_ID) return;
+        const url = `${API_BASE}/api/rooms/${ROOM_ID}/student/heartbeat?participantId=${encodeURIComponent(MY_ID)}&live=${live ? 'true' : 'false'}`;
+        try {
+            await fetch(url, { method: 'POST', keepalive: !live });
+        } catch { /* silent */ }
+    }
+    function startHeartbeat() {
+        clearInterval(__hbTimer);
+        sendStudentHeartbeat(true);
+        __hbTimer = setInterval(() => sendStudentHeartbeat(true), HEARTBEAT_MS);
+    }
+    function stopHeartbeat() {
+        clearInterval(__hbTimer); __hbTimer = null;
+        try {
+            const url = `${API_BASE}/api/rooms/${ROOM_ID}/student/heartbeat?participantId=${encodeURIComponent(MY_ID)}&live=false`;
+            if (navigator.sendBeacon) navigator.sendBeacon(url);
+            else fetch(url, { method: 'POST', keepalive: true }).catch(() => { });
+        } catch { }
+    }
+
+    async function fetchViewerCount() {
+        if (!ROOM_ID) return;
+        const url = `${API_BASE}/api/rooms/${ROOM_ID}/viewer-count`;
+        try {
+            const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            if (!resp.ok) throw new Error(`viewer-count ${resp.status}`);
+            const data = await resp.json();
+            const n = Number(data?.viewerCount ?? 0);
+            const el = document.getElementById('viewer-count');
+            if (el) el.textContent = isFinite(n) ? String(n) : '0';
+        } catch (e) {
+            // Optionally show "--" on failure
+            const el = document.getElementById('viewer-count');
+            if (el) el.textContent = '--';
+        }
+    }
+    function startViewerPolling() {
+        clearInterval(__viewerTimer);
+        fetchViewerCount();
+        __viewerTimer = setInterval(fetchViewerCount, VIEWERS_POLL_MS);
+    }
+    function stopViewerPolling() {
+        clearInterval(__viewerTimer);
+        __viewerTimer = null;
+    }
+
+    // ===== WebRTC playback =====
     const defaultIce = [{ urls: 'stun:stun.l.google.com:19302' }];
     const extraIce = Array.isArray(window.LIVE_TURN) ? window.LIVE_TURN : [];
     const rtcConfig = { iceServers: [...defaultIce, ...extraIce] };
@@ -18,16 +72,26 @@
     const remoteVideo = document.getElementById('remoteVideo');
     const pendingIce = [];
 
+    function setStatus(txt) {
+        const el = document.getElementById('student-live-status');
+        if (el) el.textContent = txt;
+    }
     function logState() {
         console.log(`[Student] connection=${pc.connectionState} ice=${pc.iceConnectionState} signaling=${pc.signalingState}`);
+        if (pc.connectionState === 'connected') setStatus('LIVE');
+        else if (pc.connectionState === 'connecting') setStatus('CONNECTING');
+        else if (pc.connectionState === 'failed') setStatus('FAILED');
+        else if (pc.connectionState === 'disconnected') setStatus('DISCONNECTED');
+        else if (pc.connectionState === 'closed') setStatus('CLOSED');
     }
 
     pc.ontrack = (ev) => {
         if (!remoteVideo.srcObject) {
-            remoteVideo.srcObject = ev.streams[0] || new MediaStream([ev.track]);
+            remoteVideo.srcObject = ev.streams?.[0] || new MediaStream([ev.track]);
         }
         const p = remoteVideo.play();
         if (p?.catch) p.catch(err => console.warn('auto-play blocked', err));
+        setStatus('LIVE');
     };
 
     let stompClient = null;
@@ -60,7 +124,8 @@
             await pc.setLocalDescription(offer);
             console.log('[Student] sends OFFER (no to) for room', ROOM_ID);
             sendSignal({ type: 'OFFER', roomId: ROOM_ID, from: MY_ID, sdp: JSON.stringify(pc.localDescription) });
-        } catch (e) { console.error('[Student] startOffer error', e); }
+            setStatus('CONNECTING');
+        } catch (e) { console.error('[Student] startOffer error', e); setStatus('ERROR'); }
     }
 
     async function handleSignal(msg) {
@@ -137,6 +202,17 @@
         stompClient.onWebSocketClose = () => console.warn('[Student] WS closed, will auto-reconnect');
         stompClient.activate();
     }
+
+    // Boot
+    document.addEventListener('DOMContentLoaded', () => {
+        startHeartbeat();
+        startViewerPolling();
+        setStatus('READY');
+    });
+    window.addEventListener('beforeunload', () => {
+        stopViewerPolling();
+        stopHeartbeat();
+    });
 
     connectWsAndOffer();
 })();

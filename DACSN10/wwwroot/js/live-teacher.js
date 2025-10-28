@@ -6,9 +6,64 @@
     const API_BASE = (cfgEl.dataset.apiBase || '').replace(/\/$/, '');
     const ROOM_ID = cfgEl.dataset.roomId;
     const MY_ID = cfgEl.dataset.myId;
+    const TEACHER_PID = cfgEl.dataset.teacherId || MY_ID; // ưu tiên teacherParticipantId nếu có
     const DISPLAY_NAME = cfgEl.dataset.displayName || 'Teacher';
     const WS_ENDPOINT = API_BASE + '/ws';
 
+    // ===== Presence (Teacher heartbeat) + viewerCount =====
+    const HEARTBEAT_MS = 15000;
+    const VIEWERS_POLL_MS = 10000;
+    let __hbTimer = null;
+    let __viewerTimer = null;
+
+    async function sendHeartbeat(live) {
+        if (!ROOM_ID) return;
+        const url = `${API_BASE}/api/rooms/${ROOM_ID}/teacher/heartbeat?live=${live ? 'true' : 'false'}${TEACHER_PID ? `&participantId=${encodeURIComponent(TEACHER_PID)}` : ''}`;
+        try { await fetch(url, { method: 'POST', keepalive: !live }); } catch { }
+    }
+    function startHeartbeat() {
+        clearInterval(__hbTimer);
+        sendHeartbeat(true);
+        __hbTimer = setInterval(() => sendHeartbeat(true), HEARTBEAT_MS);
+    }
+    function stopHeartbeat() {
+        clearInterval(__hbTimer); __hbTimer = null;
+        try {
+            const url = `${API_BASE}/api/rooms/${ROOM_ID}/teacher/heartbeat?live=false${TEACHER_PID ? `&participantId=${encodeURIComponent(TEACHER_PID)}` : ''}`;
+            if (navigator.sendBeacon) navigator.sendBeacon(url);
+            else fetch(url, { method: 'POST', keepalive: true }).catch(() => { });
+        } catch { }
+    }
+
+    async function fetchViewerCount() {
+        if (!ROOM_ID) return;
+        const url = `${API_BASE}/api/rooms/${ROOM_ID}/viewer-count`;
+        try {
+            const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            if (!resp.ok) throw new Error(`viewer-count ${resp.status}`);
+            const data = await resp.json();
+            const n = Number(data?.viewerCount ?? 0);
+            const el = document.getElementById('viewer-count');
+            if (el) el.textContent = isFinite(n) ? String(n) : '0';
+        } catch {
+            const el = document.getElementById('viewer-count');
+            if (el) el.textContent = '--';
+        }
+    }
+    function startViewerPolling() {
+        clearInterval(__viewerTimer);
+        fetchViewerCount();
+        __viewerTimer = setInterval(fetchViewerCount, VIEWERS_POLL_MS);
+    }
+    function stopViewerPolling() { clearInterval(__viewerTimer); __viewerTimer = null; }
+
+    // Status UI
+    function setStatus(txt) {
+        const el = document.getElementById('live-status');
+        if (el) el.textContent = txt;
+    }
+
+    // ===== WebRTC (Teacher publishes) =====
     const defaultIce = [{ urls: 'stun:stun.l.google.com:19302' }];
     const extraIce = Array.isArray(window.LIVE_TURN) ? window.LIVE_TURN : [];
     const rtcConfig = { iceServers: [...defaultIce, ...extraIce] };
@@ -42,6 +97,8 @@
         if (sendVideoTrack) previewStream.addTrack(sendVideoTrack);
         if (sendAudioTrack) previewStream.addTrack(sendAudioTrack);
         setPreviewElement();
+        // update status based on having tracks
+        if (sendVideoTrack || sendAudioTrack) setStatus('LIVE'); else setStatus('READY');
     }
     async function applyTracksToAllPeers() {
         for (const [sid, pc] of pcs) {
@@ -86,7 +143,6 @@
                 try { micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false }); } catch { }
             }
 
-            // Mix audio nếu có cả 2 nguồn
             const mic = micStream?.getAudioTracks()[0] || null;
             if (mic && systemAudio) {
                 try {
@@ -209,6 +265,17 @@
         stompClient.onStompError = (f) => console.error('STOMP error', f);
         stompClient.activate();
     }
+
+    // Boot
+    document.addEventListener('DOMContentLoaded', () => {
+        startHeartbeat();
+        startViewerPolling();
+        setStatus('READY');
+    });
+    window.addEventListener('beforeunload', () => {
+        stopViewerPolling();
+        stopHeartbeat();
+    });
 
     (async function start() {
         await initCameraDefault();
