@@ -40,6 +40,7 @@
             </div>
             <div class="live-card-body">
                 <div class="live-video-wrap">
+                    <!-- Không muted, có controls để người dùng bấm nếu autoplay bị chặn -->
                     <video id="remoteVideo" class="live-video" autoplay playsinline controls></video>
                 </div>
             </div>
@@ -52,5 +53,31 @@
 
 @section Scripts {
     @await Html.PartialAsync("_StompScripts")
+
+    <!-- ICE: Xirsys Static Credentials (ưu tiên TURN qua TLS 443) -->
+    <script>
+        window.LIVE_TURN = [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:ss-turn1.xirsys.com' },
+            {
+                username: 'WZjM1BJjBkkr83i7m5Sco72U3SDf7IEMYha5NOkOwwfuiVqDhR2G5Hs4tHrP5zKAAAAAAGkDwIhYb2Fud3M=',
+                credential: '18f71050-b5c9-11f0-9926-0242ac140004',
+                urls: [
+                    'turns:ss-turn1.xirsys.com:443?transport=tcp',
+                    'turns:ss-turn1.xirsys.com:5349?transport=tcp',
+                    'turn:ss-turn1.xirsys.com:3478?transport=tcp',
+                    'turn:ss-turn1.xirsys.com:80?transport=tcp',
+                    'turn:ss-turn1.xirsys.com:3478?transport=udp',
+                    'turn:ss-turn1.xirsys.com:80?transport=udp'
+                ]
+            }
+        ];
+        (function () {
+            const params = new URLSearchParams(location.search);
+            window.FORCE_TURN = params.get('forceTurn') === '1';
+            console.log('[LIVE] FORCE_TURN(page):', window.FORCE_TURN);
+        })();
+    </script>
+
     <script src="~/js/live-student.js" asp-append-version="true"></script>
 }

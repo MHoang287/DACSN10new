@@ -322,3 +322,50 @@
     font-weight: 600;
     font-size: .85rem;
 }
+
+/* Nút "Bật âm" nổi trên video */
+.unmute-btn {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid #dfe3ff;
+    background: #fff;
+    color: var(--text);
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    font-weight: 600;
+}
+
+    .unmute-btn:hover {
+        background: #f7f8ff;
+    }
+
+/* Overlay nút autoplay/unmute */
+.autoplay-btn,
+.unmute-btn {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid #dfe3ff;
+    background: #fff;
+    color: var(--text);
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.autoplay-btn {
+    left: 12px;
+}
+
+.unmute-btn {
+    left: 140px;
+}
+
+    .autoplay-btn:hover, .unmute-btn:hover {
+        background: #f7f8ff;
+    }

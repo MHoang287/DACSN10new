@@ -36,7 +36,6 @@ builder.Services.AddHttpClient("LiveApi", (sp, client) =>
     var config = sp.GetRequiredService<IConfiguration>();
     var baseUrl = (config["LiveStreamApi:BaseUrl"] ?? "").TrimEnd('/');
 
-    // Fallback nội bộ nếu chưa cấu hình
     if (string.IsNullOrWhiteSpace(baseUrl))
         baseUrl = "http://localhost:8080";
 
@@ -44,7 +43,7 @@ builder.Services.AddHttpClient("LiveApi", (sp, client) =>
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 
-// YARP reverse proxy: định nghĩa route/cluster bằng code và loại prefix "/spring"
+// YARP reverse proxy: /spring/** -> http://localhost:8080/**
 var routes = new[]
 {
     new RouteConfig
@@ -58,7 +57,6 @@ var routes = new[]
         }
     }
 };
-
 var clusters = new[]
 {
     new ClusterConfig
@@ -70,9 +68,7 @@ var clusters = new[]
         }
     }
 };
-
-builder.Services.AddReverseProxy()
-    .LoadFromMemory(routes, clusters);
+builder.Services.AddReverseProxy().LoadFromMemory(routes, clusters);
 
 // CORS cho dev
 builder.Services.AddCors(options =>
@@ -95,25 +91,21 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services
     .AddIdentity<User, IdentityRole>(options =>
     {
-        // Cho phép confirm email nếu bạn muốn; giữ nguyên cấu hình hiện có
         options.SignIn.RequireConfirmedAccount = true;
-
         options.Password.RequiredLength = 8;
         options.Password.RequireDigit = true;
         options.Password.RequireUppercase = true;
         options.Password.RequireLowercase = true;
         options.Password.RequireNonAlphanumeric = false;
-
         options.Lockout.MaxFailedAccessAttempts = 5;
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
-
         options.User.RequireUniqueEmail = true;
     })
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders()
     .AddDefaultUI();
 
-// Cookie paths (giúp redirect chính xác khi AccessDenied/Login)
+// Cookie
 builder.Services.ConfigureApplicationCookie(opt =>
 {
     opt.LoginPath = "/Identity/Account/Login";
@@ -123,7 +115,7 @@ builder.Services.ConfigureApplicationCookie(opt =>
     opt.Cookie.SameSite = SameSiteMode.Lax;
 });
 
-// External auth
+// External auth (giữ nguyên cấu hình hiện tại)
 builder.Services.AddAuthentication()
     .AddGoogle(options =>
     {
@@ -148,8 +140,6 @@ builder.Services.AddAuthentication()
     });
 
 // Authorization
-// LƯU Ý: Chuyển policy sang kiểm tra ROLE thay vì chỉ Claim "LoaiNguoiDung"
-// vẫn giữ fallback theo claim để tương thích dữ liệu cũ.
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy =>
@@ -179,10 +169,14 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 
-app.UseForwardedHeaders(new ForwardedHeadersOptions
+// TÔN TRỌNG HEADER TỪ NGROK/PROXY để ViewBag.ApiBase sinh đúng https://<ngrok>/spring
+var fwd = new ForwardedHeadersOptions
 {
-    ForwardedHeaders = ForwardedHeaders.XForwardedProto
-});
+    ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost | ForwardedHeaders.XForwardedFor
+};
+fwd.KnownNetworks.Clear();
+fwd.KnownProxies.Clear();
+app.UseForwardedHeaders(fwd);
 
 // Pipeline
 if (app.Environment.IsDevelopment())
@@ -208,10 +202,10 @@ app.UseAuthorization();
 // Bật WebSockets trước proxy để hỗ trợ WS/SockJS
 app.UseWebSockets();
 
-// Map reverse proxy (/spring/** -> http://localhost:8080/**, đã bỏ prefix "/spring")
+// Map reverse proxy (/spring/** -> http://localhost:8080/**)
 app.MapReverseProxy();
 
-// Seed data (roles + tài khoản admin/teacher mẫu để test policy)
+// Seed data (giữ nguyên)
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -221,7 +215,6 @@ using (var scope = app.Services.CreateScope())
         var userManager = services.GetRequiredService<UserManager<User>>();
         var logger = services.GetRequiredService<ILogger<Program>>();
 
-        // Tạo roles nếu chưa có
         foreach (var roleName in new[] { RoleNames.Admin, RoleNames.Teacher, RoleNames.User })
         {
             if (!await roleManager.RoleExistsAsync(roleName))
@@ -232,7 +225,6 @@ using (var scope = app.Services.CreateScope())
             }
         }
 
-        // Admin mẫu
         var adminEmail = "admin@example.com";
         var adminUser = await userManager.FindByEmailAsync(adminEmail);
         if (adminUser == null)
@@ -252,7 +244,6 @@ using (var scope = app.Services.CreateScope())
             if (result.Succeeded)
             {
                 await userManager.AddToRoleAsync(adminUser, RoleNames.Admin);
-                // giữ claim tương thích nếu code cũ còn dùng
                 await userManager.AddClaimAsync(adminUser, new Claim("LoaiNguoiDung", RoleNames.Admin));
             }
             else
@@ -262,7 +253,6 @@ using (var scope = app.Services.CreateScope())
         }
         else
         {
-            // đảm bảo role/claim tồn tại
             if (!await userManager.IsInRoleAsync(adminUser, RoleNames.Admin))
                 await userManager.AddToRoleAsync(adminUser, RoleNames.Admin);
             var claims = await userManager.GetClaimsAsync(adminUser);
@@ -270,7 +260,6 @@ using (var scope = app.Services.CreateScope())
                 await userManager.AddClaimAsync(adminUser, new Claim("LoaiNguoiDung", RoleNames.Admin));
         }
 
-        // Teacher mẫu
         var teacherEmail = "teacher@example.com";
         var teacherUser = await userManager.FindByEmailAsync(teacherEmail);
         if (teacherUser == null)
