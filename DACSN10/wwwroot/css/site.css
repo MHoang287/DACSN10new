@@ -993,11 +993,11 @@ body {
     color: #991b1b;
 }
 
-/* Back to Top Button */
+/* Nút Back to Top - đặt ngang hàng với nút Hỏi AI */
 .back-to-top {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
+    position: fixed !important;
+    bottom: 20px !important; /* cùng hàng với chatbot */
+    right: 95px !important; /* dịch sang trái khoảng 70px */
     width: 50px;
     height: 50px;
     background: var(--primary-gradient);
@@ -1011,12 +1011,13 @@ body {
     transition: var(--transition);
     opacity: 0;
     visibility: hidden;
-    z-index: 1000;
+    z-index: 9980 !important;
 }
 
     .back-to-top.show {
         opacity: 1;
         visibility: visible;
+        bottom: 20px !important; /* giữ nguyên để không nhảy */
     }
 
     .back-to-top:hover {

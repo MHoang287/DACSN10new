@@ -1,0 +1,97 @@
+﻿<div id="chatbot-widget" style="
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 320px;
+    max-height: 420px;
+    background: #ffffff;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    z-index: 9999;
+    overflow: hidden;
+">
+    <!-- Header -->
+    <div style="background:#4f46e5;color:#fff;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+            <div style="font-size:14px;font-weight:600;">Hỗ trợ tự động</div>
+            <div style="font-size:11px;opacity:0.8;">AI Chatbox (beta)</div>
+        </div>
+        <button id="chatbot-close-btn"
+                style="background:transparent;border:none;color:#fff;font-size:16px;cursor:pointer;line-height:1;">
+            ✕
+        </button>
+    </div>
+
+    <!-- Messages -->
+    <div id="chatbot-messages"
+         style="flex:1;overflow-y:auto;padding:10px;font-size:13px;line-height:1.4;background:#f9fafb;">
+        <div style="margin-bottom:8px;">
+            <div style="background:#fff;border:1px solid #ddd;border-radius:8px;padding:8px 10px;max-width:85%;">
+                Xin chào 👋<br />
+                Mình là trợ lý ảo. Bạn có thể hỏi về:
+                <ul style="padding-left:16px;margin:4px 0;">
+                    <li>Quên mật khẩu / xác nhận email</li>
+                    <li>Thanh toán MoMo</li>
+                    <li>Cách xem livestream</li>
+                    <li>Tiến độ học</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick questions -->
+    <div style="border-top:1px solid #eee;padding:8px;background:#fff;">
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <button class="chatbot-quick-btn"
+                    data-question="em quên mật khẩu đăng nhập thì làm sao?"
+                    style="flex:1 1 auto;background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:6px 8px;font-size:11px;cursor:pointer;">
+                Quên mật khẩu
+            </button>
+            <button class="chatbot-quick-btn"
+                    data-question="em thanh toán momo xong mà chưa mở khóa học?"
+                    style="flex:1 1 auto;background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:6px 8px;font-size:11px;cursor:pointer;">
+                Thanh toán MoMo
+            </button>
+            <button class="chatbot-quick-btn"
+                    data-question="em ở mạng khác có xem livestream được không?"
+                    style="flex:1 1 auto;background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:6px 8px;font-size:11px;cursor:pointer;">
+                Livestream bị quay vòng
+            </button>
+        </div>
+    </div>
+
+    <!-- Input -->
+    <div style="border-top:1px solid #eee;padding:8px;background:#fff;display:flex;gap:6px;">
+        <input id="chatbot-input"
+               placeholder="Nhập câu hỏi của bạn..."
+               style="flex:1;border:1px solid #ccc;border-radius:8px;padding:8px 10px;font-size:13px;" />
+        <button id="chatbot-send-btn"
+                style="background:#4f46e5;border:none;color:#fff;border-radius:8px;padding:8px 12px;font-size:13px;cursor:pointer;">
+            Gửi
+        </button>
+    </div>
+</div>
+
+<!-- Nút mở lại khi đóng -->
+<button id="chatbot-open-btn" style="
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    background:#4f46e5;
+    color:#fff;
+    border:none;
+    border-radius:999px;
+    padding:12px 16px;
+    font-size:14px;
+    font-weight:600;
+    box-shadow:0 12px 24px rgba(0,0,0,0.25);
+    cursor:pointer;
+    z-index:9998;
+    display:none;
+">
+    Hỏi AI 💬
+</button>
