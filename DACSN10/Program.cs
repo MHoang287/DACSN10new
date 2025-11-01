@@ -27,6 +27,9 @@ builder.Host.UseSerilog((context, services, configuration) =>
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
+// Đăng ký IEmailService -> EmailService (sửa lỗi DI)
+builder.Services.AddScoped<IEmailService, EmailService>();
+
 // ---------- HttpClientFactory ----------
 builder.Services.AddHttpClient();
 builder.Services.AddHttpClient("LiveApi", (sp, client) =>

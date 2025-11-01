@@ -292,19 +292,31 @@ namespace DACSN10.Controllers
         /// Check if user can access course content (enrolled or has successful payment)
         /// </summary>
         [Authorize]
-        public async Task<bool> CanAccessCourseContent(string userId, int courseId)
+        private async Task<bool> CanAccessCourseContent(string userId, int courseId)
         {
-            // Check if user is enrolled
-            var isEnrolled = await _context.Enrollments
+            // Lấy thông tin khóa học
+            var course = await _context.Courses
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.CourseID == courseId && c.TrangThai == "Active");
+
+            if (course == null) return false;
+
+            // Khóa học miễn phí: mở quyền truy cập
+            if (course.Gia <= 0) return true;
+
+            // Cần đăng nhập cho khóa có phí
+            if (string.IsNullOrEmpty(userId)) return false;
+
+            // Đã đăng ký
+            var enrolled = await _context.Enrollments
                 .AnyAsync(e => e.UserID == userId && e.CourseID == courseId && e.TrangThai == "Active");
+            if (enrolled) return true;
 
-            if (isEnrolled) return true;
-
-            // Check if user has successful payment (for courses that require admin approval)
-            var hasSuccessfulPayment = await _context.Payments
+            // Đã thanh toán thành công
+            var paymentOk = await _context.Payments
                 .AnyAsync(p => p.UserID == userId && p.CourseID == courseId && p.Status == PaymentStatus.Success);
 
-            return hasSuccessfulPayment;
+            return paymentOk;
         }
 
         #endregion

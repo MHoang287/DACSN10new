@@ -237,7 +237,8 @@
                                             }
                                         </div>
                                     </div>
-                                    @if (isEnrolled || hasPaid)
+                                    @* Cho phép truy cập nếu đã đăng ký, đã thanh toán, HOẶC khóa học miễn phí *@
+                                    @if (isEnrolled || hasPaid || Model.Gia == 0)
                                     {
                                         <a href="@Url.Action("LessonDetails", "Course", new { id = lesson.value.LessonID })" class="lesson-action available">
                                             <i class="fas fa-play me-1"></i>Học ngay
