@@ -1,17 +1,321 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+@model IEnumerable<DACSN10.Models.Quiz>
+
 @{
+    ViewData["Title"] = "Danh sách bài kiểm tra";
+    var course = ViewBag.Course as DACSN10.Models.Course;
+    var userResults = ViewBag.UserResults as List<dynamic>;
 }
-<div class="container mt-5">
-    <h2 class="mb-4">Danh sách bài kiểm tra</h2>
-    <ul class="list-group">
-        @for (int i = 1; i <= 5; i++)
+
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a asp-controller="Course" asp-action="Index">
+                            <i class="fas fa-home"></i> Trang chủ
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a asp-controller="Course" asp-action="Details" asp-route-id="@course?.CourseID">
+                            @course?.TenKhoaHoc
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        <i class="fas fa-clipboard-list"></i> Bài kiểm tra
+                    </li>
+                </ol>
+            </nav>
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h2 class="mb-2">
+                        <i class="fas fa-clipboard-list text-primary"></i>
+                        Danh sách bài kiểm tra
+                    </h2>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-book"></i> @course?.TenKhoaHoc
+                    </p>
+                </div>
+                <a asp-controller="Course" asp-action="Details" asp-route-id="@course?.CourseID" 
+                   class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Quay lại khóa học
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <!-- Quiz Cards -->
+        <div class="row g-4 mb-4">
+            @foreach (var quiz in Model)
+            {
+                var userResult = userResults?.FirstOrDefault(r => r.QuizID == quiz.QuizID);
+                var hasCompleted = userResult != null;
+
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm hover-lift @(hasCompleted ? "border-success border-2" : "")">
+                        @if (hasCompleted)
+                        {
+                            <div class="position-absolute top-0 end-0 m-3">
+                                <span class="badge bg-success rounded-pill px-3 py-2">
+                                    <i class="fas fa-check-circle"></i> Đã hoàn thành
+                                </span>
+                            </div>
+                        }
+                        
+                        <div class="card-body d-flex flex-column">
+                            <!-- Quiz Title -->
+                            <div class="mb-3">
+                                <h5 class="card-title text-primary mb-2">
+                                    <i class="fas fa-file-alt"></i>
+                                    @quiz.Title
+                                </h5>
+                            </div>
+
+                            <!-- Quiz Info -->
+                            <div class="quiz-info mb-3 flex-grow-1">
+                                <div class="d-flex align-items-center mb-2 text-muted">
+                                    <i class="fas fa-question-circle text-primary me-2"></i>
+                                    <span>Số câu hỏi: <strong class="text-dark">@(quiz.Questions?.Count ?? 0)</strong></span>
+                                </div>
+                                <div class="d-flex align-items-center mb-2 text-muted">
+                                    <i class="far fa-clock text-info me-2"></i>
+                                    <span>Thời gian: 
+                                        @if (quiz.DurationMinutes > 0)
+                                        {
+                                            <strong class="text-dark">@quiz.DurationMinutes phút</strong>
+                                        }
+                                        else
+                                        {
+                                            <strong class="text-dark">Không giới hạn</strong>
+                                        }
+                                    </span>
+                                </div>
+                            </div>
+
+                            @if (hasCompleted)
+                            {
+                                <!-- Result Summary -->
+                                <div class="result-summary p-3 bg-light rounded mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="text-muted">
+                                            <i class="fas fa-star text-warning"></i> Điểm số:
+                                        </span>
+                                        <span class="fs-5 fw-bold @(userResult.Score >= 80 ? "text-success" : userResult.Score >= 50 ? "text-warning" : "text-danger")">
+                                            @userResult.Score.ToString("F1")/100
+                                        </span>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar @(userResult.Score >= 80 ? "bg-success" : userResult.Score >= 50 ? "bg-warning" : "bg-danger")" 
+                                             role="progressbar" 
+                                             style="width: @userResult.Score%" 
+                                             aria-valuenow="@userResult.Score" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                    <div class="text-muted small mt-2">
+                                        <i class="far fa-calendar-alt"></i>
+                                        @Convert.ToDateTime(userResult.TakenAt).ToString("dd/MM/yyyy HH:mm")
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Action Button -->
+                        <div class="card-footer bg-transparent border-0 pt-0 pb-3 px-3">
+                            @if (hasCompleted)
+                            {
+                                <a asp-controller="Exam" asp-action="Details" asp-route-id="@quiz.QuizID" 
+                                   class="btn btn-outline-success w-100">
+                                    <i class="fas fa-eye"></i> Xem kết quả
+                                </a>
+                            }
+                            else
+                            {
+                                <a asp-controller="Exam" asp-action="Details" asp-route-id="@quiz.QuizID" 
+                                   class="btn btn-primary w-100">
+                                    <i class="fas fa-play-circle"></i> Làm bài kiểm tra
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Summary Statistics -->
+        @if (userResults != null && userResults.Any())
         {
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                Bài kiểm tra @i
-                <a href="/Exam/Details/@i" class="btn btn-sm btn-outline-primary">Làm bài</a>
-            </li>
+            var completedCount = userResults.Count;
+            var totalCount = Model.Count();
+            var averageScore = userResults.Average(r => (double)r.Score);
+            var completionRate = (completedCount * 100.0 / totalCount);
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-bar"></i> Thống kê của bạn
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center g-3">
+                                <div class="col-md-3 col-6">
+                                    <div class="stat-card p-3 rounded bg-light">
+                                        <div class="stat-icon mb-2">
+                                            <i class="fas fa-tasks fa-2x text-primary"></i>
+                                        </div>
+                                        <h3 class="stat-value text-primary mb-1">@completedCount/@totalCount</h3>
+                                        <p class="stat-label text-muted mb-0">Bài đã hoàn thành</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="stat-card p-3 rounded bg-light">
+                                        <div class="stat-icon mb-2">
+                                            <i class="fas fa-percentage fa-2x text-success"></i>
+                                        </div>
+                                        <h3 class="stat-value text-success mb-1">@averageScore.ToString("F1")</h3>
+                                        <p class="stat-label text-muted mb-0">Điểm trung bình</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="stat-card p-3 rounded bg-light">
+                                        <div class="stat-icon mb-2">
+                                            <i class="fas fa-chart-pie fa-2x text-info"></i>
+                                        </div>
+                                        <h3 class="stat-value text-info mb-1">@completionRate.ToString("F0")%</h3>
+                                        <p class="stat-label text-muted mb-0">Tỷ lệ hoàn thành</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="stat-card p-3 rounded bg-light">
+                                        <div class="stat-icon mb-2">
+                                            <i class="fas fa-medal fa-2x text-warning"></i>
+                                        </div>
+                                        <h3 class="stat-value text-warning mb-1">
+                                            @if (averageScore >= 90)
+                                            {
+                                                <text>A+</text>
+                                            }
+                                            else if (averageScore >= 80)
+                                            {
+                                                <text>A</text>
+                                            }
+                                            else if (averageScore >= 70)
+                                            {
+                                                <text>B</text>
+                                            }
+                                            else if (averageScore >= 50)
+                                            {
+                                                <text>C</text>
+                                            }
+                                            else
+                                            {
+                                                <text>D</text>
+                                            }
+                                        </h3>
+                                        <p class="stat-label text-muted mb-0">Xếp loại</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Progress Overview -->
+                            @if (completedCount < totalCount)
+                            {
+                                <div class="mt-4">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Tiến độ hoàn thành khóa học</span>
+                                        <span class="fw-bold">@completedCount/@totalCount bài kiểm tra</span>
+                                    </div>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-primary progress-bar-striped progress-bar-animated" 
+                                             role="progressbar" 
+                                             style="width: @completionRate%" 
+                                             aria-valuenow="@completionRate" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                            @completionRate.ToString("F0")%
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
         }
-    </ul>
+    }
+    else
+    {
+        <!-- Empty State -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body text-center py-5">
+                        <div class="empty-state">
+                            <i class="fas fa-clipboard-list fa-4x text-muted mb-4"></i>
+                            <h4 class="text-muted">Chưa có bài kiểm tra</h4>
+                            <p class="text-muted mb-4">
+                                Khóa học này chưa có bài kiểm tra nào. Hãy quay lại sau nhé!
+                            </p>
+                            <a asp-controller="Course" asp-action="Details" asp-route-id="@course?.CourseID" 
+                               class="btn btn-primary btn-lg">
+                                <i class="fas fa-arrow-left"></i> Quay lại khóa học
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 </div>
+
+<style>
+    .hover-lift {
+        transition: all 0.3s ease;
+    }
+
+    .hover-lift:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .border-2 {
+        border-width: 2px !important;
+    }
+
+    .stat-card {
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+    }
+
+    .quiz-info {
+        font-size: 0.95rem;
+    }
+
+    .result-summary {
+        border-left: 4px solid var(--bs-success);
+    }
+
+    .empty-state i {
+        opacity: 0.3;
+    }
+</style>

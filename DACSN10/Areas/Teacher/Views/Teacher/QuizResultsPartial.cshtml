@@ -1,0 +1,66 @@
+﻿@model DACSN10.Models.Quiz
+
+<div class="quiz-results-partial">
+    <h5 class="mb-3">Thống kê & Kết quả cho: <strong>@Model.Title</strong></h5>
+
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <div class="small text-muted">Tổng lượt làm</div>
+            <div class="h5">@Model.QuizResults?.Count() ?? 0</div>
+        </div>
+        <div class="col-md-3">
+            <div class="small text-muted">Tổng câu hỏi</div>
+            <div class="h5">@Model.Questions?.Count() ?? 0</div>
+        </div>
+        <div class="col-md-3">
+            <div class="small text-muted">Điểm TB</div>
+            @{
+                var allResults = Model.QuizResults ?? new List<DACSN10.Models.QuizResult>();
+                var avg = allResults.Any() ? allResults.Average(r => r.Score) : 0;
+            }
+            <div class="h5">@avg.ToString("F1")</div>
+        </div>
+        <div class="col-md-3 text-end">
+            <div class="small text-muted">Thời gian:</div>
+            <div class="h6">@Model.DurationMinutes phút</div>
+        </div>
+    </div>
+
+    <hr />
+
+    @if (Model.QuizResults == null || !Model.QuizResults.Any())
+    {
+        <div class="alert alert-info">Chưa có học viên nào làm bài kiểm tra này.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Học viên</th>
+                        <th>Điểm</th>
+                        <th>Thời gian nộp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        int idx = 1;
+                        foreach (var r in Model.QuizResults.OrderByDescending(x => x.TakenAt))
+                        {
+                            var displayName = r.User?.HoTen ?? r.User?.UserName ?? r.UserID;
+                            <tr>
+                                <td>@idx</td>
+                                <td>@displayName</td>
+                                <td>@r.Score.ToString("F1")</td>
+                                <td>@r.TakenAt.ToString("g")</td>
+                            </tr>
+                            idx++;
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

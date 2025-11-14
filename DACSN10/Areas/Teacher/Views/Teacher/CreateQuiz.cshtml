@@ -9,9 +9,8 @@
     <link href="~/css/teacher-createquiz.css" rel="stylesheet" />
 }
 
-<!-- Page Header -->
-<div class="page-header" data-aos="fade-down">
-    <h1 class="page-title">Tạo bài kiểm tra mới</h1>
+<div class="page-header">
+    <h1>Tạo bài kiểm tra mới</h1>
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Teacher")">Dashboard</a></li>
@@ -22,65 +21,48 @@
     </nav>
 </div>
 
-<div class="create-quiz-container">
-    <!-- Step Indicator -->
-    <ul class="step-indicator" data-aos="fade-up">
-        <li class="step active" id="step1">
-            <div class="step-number">1</div>
-            <div class="step-label">Thông tin cơ bản</div>
-        </li>
-        <li class="step" id="step2">
-            <div class="step-number">2</div>
-            <div class="step-label">Thêm câu hỏi</div>
-        </li>
-        <li class="step" id="step3">
-            <div class="step-number">3</div>
-            <div class="step-label">Xem trước & Hoàn thành</div>
-        </li>
-    </ul>
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible">
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <strong>Lỗi!</strong> @TempData["Error"]
+    </div>
+}
 
-    <form asp-action="CreateQuiz" method="post" id="createQuizForm">
-        <input asp-for="CourseID" type="hidden" value="@course?.CourseID" />
+<div class="card">
+    <div class="card-body">
+        <form asp-action="CreateQuiz" method="post" id="quizForm">
+            @Html.AntiForgeryToken()
 
-        <!-- Step 1: Basic Information -->
-        <div class="step-content active" id="step1-content">
-            <div class="form-card" data-aos="fade-up">
-                <h3 class="section-title">
-                    <i class="fas fa-info-circle"></i>
-                    Thông tin bài kiểm tra
-                </h3>
+            <!-- Hidden CourseID -->
+            <input type="hidden" name="CourseID" value="@course?.CourseID" />
 
-                <div class="info-box">
-                    <i class="fas fa-lightbulb"></i>
-                    <p>Bài kiểm tra giúp đánh giá kiến thức học viên. Hãy tạo các câu hỏi rõ ràng và phù hợp với nội dung khóa học.</p>
-                </div>
+            <!-- Step 1: Thông tin cơ bản -->
+            <div class="mb-4">
+                <h4>Thông tin bài kiểm tra</h4>
 
-                <div class="mb-4">
-                    <label asp-for="Title" class="form-label">
-                        Tiêu đề bài kiểm tra <span class="required">*</span>
-                    </label>
-                    <input asp-for="Title" class="form-control"
-                           placeholder="VD: Kiểm tra kiến thức Chương 1"
-                           maxlength="200" />
-                    <div class="char-counter">
-                        <span id="titleCharCount">0</span>/200
-                    </div>
-                    <span asp-validation-for="Title" class="validation-error"></span>
+                <div class="mb-3">
+                    <label class="form-label">Tiêu đề <span class="text-danger">*</span></label>
+                    <input type="text"
+                           class="form-control"
+                           name="Title"
+                           id="Title"
+                           placeholder="Nhập tiêu đề bài kiểm tra"
+                           required />
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6 mb-4">
-                        <label class="form-label">
-                            Khóa học
-                        </label>
-                        <input type="text" class="form-control" value="@course?.TenKhoaHoc" disabled />
+                    <div class="col-md-6">
+                        <label class="form-label">Khóa học</label>
+                        <input type="text"
+                               class="form-control"
+                               value="@course?.TenKhoaHoc"
+                               disabled />
                     </div>
 
-                    <div class="col-md-6 mb-4">
-                        <label class="form-label">
-                            Thời gian làm bài
-                        </label>
-                        <select class="form-select" id="quizDuration">
+                    <div class="col-md-6">
+                        <label class="form-label">Thời gian làm bài</label>
+                        <select class="form-control" name="DurationMinutes">
                             <option value="15">15 phút</option>
                             <option value="30" selected>30 phút</option>
                             <option value="45">45 phút</option>
@@ -89,338 +71,281 @@
                         </select>
                     </div>
                 </div>
-
-                <div class="mb-4">
-                    <label class="form-label">
-                        Mô tả (tùy chọn)
-                    </label>
-                    <textarea class="form-control"
-                              id="quizDescription"
-                              placeholder="Mô tả ngắn về bài kiểm tra..."
-                              rows="3"></textarea>
-                </div>
             </div>
-        </div>
 
-        <!-- Step 2: Add Questions -->
-        <div class="step-content" id="step2-content">
-            <div class="form-card" data-aos="fade-up">
-                <h3 class="section-title">
-                    <i class="fas fa-list-ol"></i>
-                    Thêm câu hỏi
-                </h3>
+            <hr />
 
-                <div class="questions-container" id="questionsContainer">
+            <!-- Step 2: Câu hỏi -->
+            <div class="mb-4">
+                <h4>Câu hỏi</h4>
+                <div id="questionsContainer">
                     <!-- Questions will be added here -->
                 </div>
 
-                <button type="button" class="add-question-btn" onclick="addQuestion()">
-                    <i class="fas fa-plus"></i>
-                    Thêm câu hỏi
+                <button type="button" class="btn btn-secondary" onclick="addQuestion()">
+                    <i class="fas fa-plus"></i> Thêm câu hỏi
                 </button>
             </div>
+
+            <hr />
+
+            <!-- Submit buttons -->
+            <div class="text-end">
+                <a href="@Url.Action("CourseQuizzes", "Teacher", new { courseId = course?.CourseID })"
+                   class="btn btn-secondary">
+                    Hủy
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Tạo bài kiểm tra
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Template for question -->
+<template id="questionTemplate">
+    <div class="card mb-3 question-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><strong>Câu hỏi <span class="question-number">1</span></strong></span>
+            <button type="button" class="btn btn-sm btn-danger" onclick="removeQuestion(this)">
+                <i class="fas fa-trash"></i>
+            </button>
         </div>
+        <div class="card-body">
+            <!-- Question text -->
+            <div class="mb-3">
+                <label class="form-label">Nội dung câu hỏi <span class="text-danger">*</span></label>
+                <textarea class="form-control"
+                          name="questions[0].QuestionText"
+                          rows="3"
+                          required></textarea>
+            </div>
 
-        <!-- Step 3: Preview & Complete -->
-        <div class="step-content" id="step3-content">
-            <div class="form-card" data-aos="fade-up">
-                <h3 class="section-title">
-                    <i class="fas fa-eye"></i>
-                    Xem trước bài kiểm tra
-                </h3>
-
-                <div class="preview-section">
-                    <div class="preview-item">
-                        <h5>Thông tin bài kiểm tra</h5>
-                        <p><strong>Tiêu đề:</strong> <span id="previewTitle"></span></p>
-                        <p><strong>Khóa học:</strong> @course?.TenKhoaHoc</p>
-                        <p><strong>Thời gian:</strong> <span id="previewDuration"></span> phút</p>
-                        <p><strong>Số câu hỏi:</strong> <span id="previewQuestionCount">0</span></p>
+            <!-- Options -->
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Đáp án A <span class="text-danger">*</span></label>
+                    <input type="text"
+                           class="form-control"
+                           name="questions[0].OptionA"
+                           required />
+                    <div class="form-check mt-2">
+                        <input class="form-check-input"
+                               type="radio"
+                               name="questions[0].CorrectAnswer"
+                               value="A"
+                               required />
+                        <label class="form-check-label">Đáp án đúng</label>
                     </div>
+                </div>
 
-                    <div class="preview-item">
-                        <h5>Danh sách câu hỏi</h5>
-                        <div id="previewQuestions">
-                            <!-- Questions preview will be shown here -->
-                        </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Đáp án B <span class="text-danger">*</span></label>
+                    <input type="text"
+                           class="form-control"
+                           name="questions[0].OptionB"
+                           required />
+                    <div class="form-check mt-2">
+                        <input class="form-check-input"
+                               type="radio"
+                               name="questions[0].CorrectAnswer"
+                               value="B" />
+                        <label class="form-check-label">Đáp án đúng</label>
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Đáp án C</label>
+                    <input type="text"
+                           class="form-control"
+                           name="questions[0].OptionC" />
+                    <div class="form-check mt-2">
+                        <input class="form-check-input"
+                               type="radio"
+                               name="questions[0].CorrectAnswer"
+                               value="C" />
+                        <label class="form-check-label">Đáp án đúng</label>
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Đáp án D</label>
+                    <input type="text"
+                           class="form-control"
+                           name="questions[0].OptionD" />
+                    <div class="form-check mt-2">
+                        <input class="form-check-input"
+                               type="radio"
+                               name="questions[0].CorrectAnswer"
+                               value="D" />
+                        <label class="form-check-label">Đáp án đúng</label>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Form Actions -->
-        <div class="form-actions">
-            <a href="@Url.Action("CourseQuizzes", "Teacher", new { courseId = course?.CourseID })" class="btn-nav btn-prev">
-                <i class="fas fa-times"></i>
-                Hủy bỏ
-            </a>
-
-            <div class="btn-group-nav">
-                <button type="button" class="btn-nav btn-prev" id="btnPrev" onclick="previousStep()" style="display: none;">
-                    <i class="fas fa-arrow-left"></i>
-                    Quay lại
-                </button>
-                <button type="button" class="btn-nav btn-next" id="btnNext" onclick="nextStep()">
-                    Tiếp theo
-                    <i class="fas fa-arrow-right"></i>
-                </button>
-                <button type="submit" class="btn-nav btn-submit" id="btnSubmit" style="display: none;">
-                    <i class="fas fa-check"></i>
-                    Tạo bài kiểm tra
-                </button>
-            </div>
-        </div>
-    </form>
-</div>
-
-<!-- Question Template -->
-<template id="questionTemplate">
-    <div class="question-card">
-        <span class="question-number-badge">Câu <span class="question-number">1</span></span>
-        <button type="button" class="remove-question" onclick="removeQuestion(this)">
-            <i class="fas fa-times"></i>
-        </button>
-
-        <div class="mb-3">
-            <label class="form-label">Câu hỏi <span class="required">*</span></label>
-            <input type="text" class="form-control question-text"
-                   placeholder="Nhập câu hỏi..." required />
-        </div>
-
-        <div class="options-grid">
-            <div class="option-input-group">
-                <span class="option-label">A</span>
-                <input type="radio" name="correctAnswer_" value="A" required />
-                <input type="text" class="option-a" placeholder="Đáp án A" required />
-            </div>
-            <div class="option-input-group">
-                <span class="option-label">B</span>
-                <input type="radio" name="correctAnswer_" value="B" />
-                <input type="text" class="option-b" placeholder="Đáp án B" required />
-            </div>
-            <div class="option-input-group">
-                <span class="option-label">C</span>
-                <input type="radio" name="correctAnswer_" value="C" />
-                <input type="text" class="option-c" placeholder="Đáp án C" />
-            </div>
-            <div class="option-input-group">
-                <span class="option-label">D</span>
-                <input type="radio" name="correctAnswer_" value="D" />
-                <input type="text" class="option-d" placeholder="Đáp án D" />
-            </div>
-        </div>
-
-        <small class="text-muted mt-2 d-block">
-            <i class="fas fa-info-circle"></i> Chọn đáp án đúng bằng cách click vào ô tròn
-        </small>
     </div>
 </template>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        let currentStep = 1;
         let questionCount = 0;
-        let questions = [];
 
+        // Add first question on page load
         $(document).ready(function() {
-            // Character counter
-            $('#Title').on('input', function() {
-                const length = $(this).val().length;
-                $('#titleCharCount').text(length);
-            });
-
-            // Add first question by default
             addQuestion();
+            console.log('✅ Page loaded, added first question');
         });
 
-        function nextStep() {
-            if (validateCurrentStep()) {
-                if (currentStep < 3) {
-                    // Mark current step as completed
-                    $(`#step${currentStep}`).addClass('completed');
-
-                    // Move to next step
-                    currentStep++;
-                    updateStepDisplay();
-
-                    // Update preview if moving to step 3
-                    if (currentStep === 3) {
-                        updatePreview();
-                    }
-                }
-            }
-        }
-
-        function previousStep() {
-            if (currentStep > 1) {
-                currentStep--;
-                updateStepDisplay();
-            }
-        }
-
-        function updateStepDisplay() {
-            // Update step indicators
-            $('.step').removeClass('active');
-            $(`#step${currentStep}`).addClass('active');
-
-            // Update content
-            $('.step-content').removeClass('active');
-            $(`#step${currentStep}-content`).addClass('active');
-
-            // Update buttons
-            $('#btnPrev').toggle(currentStep > 1);
-            $('#btnNext').toggle(currentStep < 3);
-            $('#btnSubmit').toggle(currentStep === 3);
-        }
-
-        function validateCurrentStep() {
-            if (currentStep === 1) {
-                // Validate basic info
-                const title = $('#Title').val().trim();
-                if (!title) {
-                    toastr.error('Vui lòng nhập tiêu đề bài kiểm tra');
-                    $('#Title').focus();
-                    return false;
-                }
-                return true;
-            } else if (currentStep === 2) {
-                // Validate questions
-                if (questionCount === 0) {
-                    toastr.error('Vui lòng thêm ít nhất một câu hỏi');
-                    return false;
-                }
-
-                // Collect and validate all questions
-                questions = [];
-                let isValid = true;
-
-                $('.question-card').each(function(index) {
-                    const questionText = $(this).find('.question-text').val().trim();
-                    const optionA = $(this).find('.option-a').val().trim();
-                    const optionB = $(this).find('.option-b').val().trim();
-                    const optionC = $(this).find('.option-c').val().trim();
-                    const optionD = $(this).find('.option-d').val().trim();
-                    const correctAnswer = $(this).find('input[type="radio"]:checked').val();
-
-                    if (!questionText) {
-                        toastr.error(`Vui lòng nhập nội dung câu hỏi ${index + 1}`);
-                        isValid = false;
-                        return false;
-                    }
-
-                    if (!optionA || !optionB) {
-                        toastr.error(`Vui lòng nhập ít nhất 2 đáp án cho câu hỏi ${index + 1}`);
-                        isValid = false;
-                        return false;
-                    }
-
-                    if (!correctAnswer) {
-                        toastr.error(`Vui lòng chọn đáp án đúng cho câu hỏi ${index + 1}`);
-                        isValid = false;
-                        return false;
-                    }
-
-                    questions.push({
-                        questionText,
-                        optionA,
-                        optionB,
-                        optionC,
-                        optionD,
-                        correctAnswer
-                    });
-                });
-
-                return isValid;
-            }
-            return true;
-        }
-
         function addQuestion() {
-            questionCount++;
-
             const template = document.getElementById('questionTemplate');
             const clone = template.content.cloneNode(true);
 
             // Update question number
-            clone.querySelector('.question-number').textContent = questionCount;
+            clone.querySelector('.question-number').textContent = questionCount + 1;
 
-            // Update radio button names
-            const radioButtons = clone.querySelectorAll('input[type="radio"]');
-            radioButtons.forEach(radio => {
-                radio.name = `correctAnswer_${questionCount}`;
+            // Update all name attributes with current index
+            const textarea = clone.querySelector('textarea');
+            textarea.setAttribute('name', `questions[${questionCount}].QuestionText`);
+
+            const inputs = clone.querySelectorAll('input[type="text"]');
+            inputs[0].setAttribute('name', `questions[${questionCount}].OptionA`);
+            inputs[1].setAttribute('name', `questions[${questionCount}].OptionB`);
+            inputs[2].setAttribute('name', `questions[${questionCount}].OptionC`);
+            inputs[3].setAttribute('name', `questions[${questionCount}].OptionD`);
+
+            const radios = clone.querySelectorAll('input[type="radio"]');
+            radios.forEach(radio => {
+                radio.setAttribute('name', `questions[${questionCount}].CorrectAnswer`);
             });
 
-            // Add to container
+            // Append to container
             document.getElementById('questionsContainer').appendChild(clone);
+            questionCount++;
 
-            // Animate
-            $('.question-card').last().hide().fadeIn(300);
+            console.log(`✅ Added question ${questionCount}`);
         }
 
         function removeQuestion(button) {
-            if (questionCount > 1) {
-                $(button).closest('.question-card').fadeOut(300, function() {
-                    $(this).remove();
-                    questionCount--;
-                    updateQuestionNumbers();
+            if (questionCount <= 1) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Cảnh báo',
+                    text: 'Phải có ít nhất một câu hỏi!'
                 });
-            } else {
-                toastr.warning('Phải có ít nhất một câu hỏi');
+                return;
             }
-        }
 
-        function updateQuestionNumbers() {
-            $('.question-number').each(function(index) {
-                $(this).text(index + 1);
+            const card = button.closest('.question-card');
+            card.remove();
+            questionCount--;
+
+            // Re-number remaining questions
+            const cards = document.querySelectorAll('.question-card');
+            cards.forEach((card, index) => {
+                card.querySelector('.question-number').textContent = index + 1;
+
+                // Update name attributes
+                const textarea = card.querySelector('textarea');
+                textarea.setAttribute('name', `questions[${index}].QuestionText`);
+
+                const textInputs = card.querySelectorAll('input[type="text"]');
+                textInputs[0].setAttribute('name', `questions[${index}].OptionA`);
+                textInputs[1].setAttribute('name', `questions[${index}].OptionB`);
+                textInputs[2].setAttribute('name', `questions[${index}].OptionC`);
+                textInputs[3].setAttribute('name', `questions[${index}].OptionD`);
+
+                const radios = card.querySelectorAll('input[type="radio"]');
+                radios.forEach(radio => {
+                    radio.setAttribute('name', `questions[${index}].CorrectAnswer`);
+                });
             });
+
+            console.log(`✅ Removed question, count now: ${questionCount}`);
         }
 
-        function updatePreview() {
-            // Update basic info
-            $('#previewTitle').text($('#Title').val());
-            $('#previewDuration').text($('#quizDuration').val());
-            $('#previewQuestionCount').text(questions.length);
-
-            // Update questions
-            let questionsHtml = '<ol>';
-            questions.forEach((q, index) => {
-                questionsHtml += `
-                    <li class="mb-3">
-                        <strong>${q.questionText}</strong>
-                        <ul class="mt-1">
-                            <li ${q.correctAnswer === 'A' ? 'class="text-success fw-bold"' : ''}>A. ${q.optionA}</li>
-                            <li ${q.correctAnswer === 'B' ? 'class="text-success fw-bold"' : ''}>B. ${q.optionB}</li>
-                            ${q.optionC ? `<li ${q.correctAnswer === 'C' ? 'class="text-success fw-bold"' : ''}>C. ${q.optionC}</li>` : ''}
-                            ${q.optionD ? `<li ${q.correctAnswer === 'D' ? 'class="text-success fw-bold"' : ''}>D. ${q.optionD}</li>` : ''}
-                        </ul>
-                    </li>
-                `;
-            });
-            questionsHtml += '</ol>';
-
-            $('#previewQuestions').html(questionsHtml);
-        }
-
-        // Form submission
-        $('#createQuizForm').on('submit', function(e) {
+        // Form submission with validation
+        $('#quizForm').on('submit', function(e) {
             e.preventDefault();
 
+            // Validate
+            const title = $('#Title').val().trim();
+            if (!title) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi',
+                    text: 'Vui lòng nhập tiêu đề bài kiểm tra!'
+                });
+                return false;
+            }
+
+            if (questionCount === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi',
+                    text: 'Vui lòng thêm ít nhất một câu hỏi!'
+                });
+                return false;
+            }
+
+            // Validate each question
+            let isValid = true;
+            $('.question-card').each(function(index) {
+                const questionText = $(this).find('textarea').val().trim();
+                const optionA = $(this).find('input[type="text"]').eq(0).val().trim();
+                const optionB = $(this).find('input[type="text"]').eq(1).val().trim();
+                const correctAnswer = $(this).find('input[type="radio"]:checked').val();
+
+                if (!questionText) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: `Vui lòng nhập nội dung câu hỏi ${index + 1}!`
+                    });
+                    isValid = false;
+                    return false;
+                }
+
+                if (!optionA || !optionB) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: `Vui lòng nhập ít nhất 2 đáp án cho câu hỏi ${index + 1}!`
+                    });
+                    isValid = false;
+                    return false;
+                }
+
+                if (!correctAnswer) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: `Vui lòng chọn đáp án đúng cho câu hỏi ${index + 1}!`
+                    });
+                    isValid = false;
+                    return false;
+                }
+            });
+
+            if (!isValid) {
+                return false;
+            }
+
+            // Confirm before submit
             Swal.fire({
-                title: 'Xác nhận tạo bài kiểm tra',
-                text: `Bạn sắp tạo bài kiểm tra với ${questions.length} câu hỏi. Tiếp tục?`,
+                title: 'Xác nhận',
+                text: `Bạn có chắc muốn tạo bài kiểm tra với ${questionCount} câu hỏi?`,
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonColor: '#10b981',
-                cancelButtonColor: '#6b7280',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
                 confirmButtonText: 'Tạo bài kiểm tra',
-                cancelButtonText: 'Kiểm tra lại'
+                cancelButtonText: 'Hủy'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Show loading
                     Swal.fire({
-                        title: 'Đang tạo bài kiểm tra...',
+                        title: 'Đang tạo...',
                         text: 'Vui lòng đợi',
                         allowOutsideClick: false,
                         didOpen: () => {
@@ -428,20 +353,23 @@
                         }
                     });
 
-                    // Submit form with questions data
-                    // In real implementation, you would submit the questions data
-                    setTimeout(() => {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Tạo thành công!',
-                            text: 'Bài kiểm tra đã được tạo. Bạn có thể thêm câu hỏi sau.',
-                            confirmButtonColor: '#10b981'
-                        }).then(() => {
-                            window.location.href = '@Url.Action("EditQuiz", "Teacher", new { id = 1 })'; // Replace with actual quiz ID
-                        });
-                    }, 1500);
+                    console.log('=== SUBMITTING FORM ===');
+                    console.log('Title:', title);
+                    console.log('Question count:', questionCount);
+
+                    // Log form data
+                    const formData = new FormData(this);
+                    console.log('=== FORM DATA ===');
+                    for (let pair of formData.entries()) {
+                        console.log(pair[0] + ': ' + pair[1]);
+                    }
+
+                    // Submit the form normally
+                    this.submit();
                 }
             });
+
+            return false;
         });
     </script>
 }

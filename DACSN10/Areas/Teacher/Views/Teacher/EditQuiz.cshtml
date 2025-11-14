@@ -2,437 +2,1204 @@
 @{
     ViewData["Title"] = "Chỉnh sửa bài kiểm tra";
     Layout = "~/Areas/Teacher/Views/Shared/_TeacherLayout.cshtml";
+    var course = ViewBag.Course as DACSN10.Models.Course;
 }
 
-<div class="container-fluid" data-aos="fade-up">
-    <!-- Breadcrumb -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item">
-                        <a href="@Url.Action("Dashboard", "Teacher")">
-                            <i class="fas fa-home"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="breadcrumb-item">
-                        <a href="@Url.Action("MyCourses", "Teacher")">Khóa học của tôi</a>
-                    </li>
-                    <li class="breadcrumb-item">
-                        <a href="@Url.Action("CourseQuizzes", "Teacher", new { courseId = Model.CourseID })">
-                            @Model.Course.TenKhoaHoc
-                        </a>
-                    </li>
-                    <li class="breadcrumb-item active">Chỉnh sửa quiz</li>
-                </ol>
-            </nav>
-            <h1 class="page-title">
-                <i class="fas fa-edit text-primary"></i>
-                Chỉnh sửa bài kiểm tra: @Model.Title
-            </h1>
-        </div>
-        <a href="@Url.Action("CourseQuizzes", "Teacher", new { courseId = Model.CourseID })"
-           class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left"></i> Quay lại
-        </a>
-    </div>
+@section Styles {
+    <style>
+        /* ===== COMPLETE STYLES FOR EDIT QUIZ ===== */
 
-    <!-- Quiz Info -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-info">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <h5 class="card-title text-info">
-                                <i class="fas fa-question-circle"></i>
-                                @Model.Title
-                            </h5>
-                            <p class="text-muted mb-0">
-                                Khóa học: <strong>@Model.Course.TenKhoaHoc</strong>
-                            </p>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <div class="quiz-stats">
-                                <span class="badge bg-primary fs-6">
-                                    <i class="fas fa-list"></i>
-                                    @Model.Questions.Count câu hỏi
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        /* Page Header */
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .page-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 0 0 1rem 0;
+            display: flex;
+            align-items: center;
+        }
+
+            .page-title i {
+                margin-right: 1rem;
+            }
+
+        .breadcrumb {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            margin: 0;
+        }
+
+        .breadcrumb-item a {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+            .breadcrumb-item a:hover {
+                color: white;
+            }
+
+        .breadcrumb-item.active {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: "›";
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Quiz Info Card */
+        .quiz-info-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .quiz-header {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid #f1f5f9;
+            margin-bottom: 2rem;
+        }
+
+        .quiz-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2.5rem;
+            flex-shrink: 0;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .quiz-header-content {
+            flex: 1;
+        }
+
+        .quiz-title-display {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0 0 1rem 0;
+        }
+
+        .quiz-meta {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+            .quiz-meta .badge {
+                padding: 0.6rem 1.2rem;
+                border-radius: 10px;
+                font-weight: 600;
+                font-size: 0.95rem;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+        .badge-course {
+            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+            color: #3730a3;
+        }
+
+        .badge-questions {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            color: #1e40af;
+        }
+
+        .badge-attempts {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+        }
+
+        .badge-duration {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+        }
+
+        /* Edit Form */
+        .edit-quiz-form {
+            background: #f8fafc;
+            padding: 2rem;
+            border-radius: 15px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 1.5rem;
+            align-items: flex-end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #334155;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+            .form-label i {
+                color: #667eea;
+            }
+
+        .form-control {
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 0.875rem 1.25rem;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+            .form-control:focus {
+                border-color: #667eea;
+                box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+                outline: none;
+            }
+
+        .btn-save {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 0.875rem 2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+            .btn-save:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+            }
+
+        /* Questions Section */
+        .questions-section {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .section-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+            .section-title i {
+                color: #667eea;
+            }
+
+        .questions-count {
+            color: #64748b;
+            font-weight: 400;
+        }
+
+        .btn-add {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+            .btn-add:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            }
+
+        /* Question Cards */
+        .questions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .question-card {
+            background: linear-gradient(to right, #fafafa 0%, #ffffff 100%);
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 2rem;
+            transition: all 0.3s;
+        }
+
+            .question-card:hover {
+                border-color: #cbd5e1;
+                transform: translateX(5px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .question-number-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.3rem;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .question-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn-icon {
+            width: 45px;
+            height: 45px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            font-size: 1.1rem;
+        }
+
+        .btn-edit {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+        }
+
+            .btn-edit:hover {
+                background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%);
+                transform: scale(1.1) rotate(5deg);
+            }
+
+        .btn-delete {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #991b1b;
+        }
+
+            .btn-delete:hover {
+                background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+                transform: scale(1.1) rotate(-5deg);
+            }
+
+        .question-content {
+            padding: 1.5rem 0;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            padding: 1rem;
+            background: rgba(102, 126, 234, 0.05);
+            border-left: 4px solid #667eea;
+            border-radius: 0 10px 10px 0;
+        }
+
+        /* Options Grid */
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .option-item {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s;
+        }
+
+            .option-item:hover {
+                border-color: #cbd5e1;
+                transform: translateX(3px);
+            }
+
+            .option-item.correct {
+                background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+                border-color: #10b981;
+                box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+            }
+
+        .option-letter {
+            width: 40px;
+            height: 40px;
+            background: #e2e8f0;
+            color: #475569;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .option-item.correct .option-letter {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+        }
+
+        .option-text {
+            flex: 1;
+            color: #334155;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .correct-icon {
+            color: #10b981;
+            font-size: 1.5rem;
+            animation: bounce 1s infinite;
+        }
+
+        
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 5rem 2rem;
+        }
+
+        .empty-icon {
+            font-size: 6rem;
+            color: #cbd5e1;
+            margin-bottom: 2rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        
+
+        .empty-state h4 {
+            color: #475569;
+            font-weight: 600;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+
+        /* Form Actions */
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-group-right {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+            color: #475569;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+            .btn-secondary:hover {
+                background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(148, 163, 184, 0.3);
+            }
+
+        .btn-preview {
+            background: linear-gradient(135deg, #dbeafe 0%, #93c5fd 100%);
+            color: #1e40af;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+            .btn-preview:hover {
+                background: linear-gradient(135deg, #93c5fd 0%, #60a5fa 100%);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+            }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+            .btn-danger:hover {
+                background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+            }
+
+        /* Modal Styles */
+        .modal-content {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px 20px 0 0;
+            padding: 2rem;
+            border-bottom: none;
+        }
+
+        .modal-title {
+            font-weight: 700;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .modal-body {
+            padding: 2.5rem;
+        }
+
+        .modal-footer {
+            padding: 2rem;
+            border-top: 2px solid #f1f5f9;
+        }
+
+        .options-form {
+            background: #f8fafc;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-top: 1.5rem;
+        }
+
+        .input-group-text {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-right: none;
+        }
+
+        .input-group .form-control {
+            border-left: none;
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+            border: none;
+            color: #3730a3;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+        }
+
+        /* Animations */
+        .question-card {
+            animation: fadeInUp 0.5s ease-out;
+        }
+    </style>
+}
+
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="fas fa-edit"></i>Chỉnh sửa bài kiểm tra
+    </h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Teacher")"><i class="fas fa-home me-1"></i>Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="@Url.Action("MyCourses", "Teacher")">Khóa học</a></li>
+            <li class="breadcrumb-item"><a href="@Url.Action("CourseQuizzes", "Teacher", new { courseId = course?.CourseID })">Bài kiểm tra</a></li>
+            <li class="breadcrumb-item active">Chỉnh sửa</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Quiz Info Card -->
+<div class="quiz-info-card">
+    <div class="quiz-header">
+        <div class="quiz-icon">
+            <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="quiz-header-content">
+            <h2 class="quiz-title-display">@Model.Title</h2>
+            <div class="quiz-meta">
+                <span class="badge badge-course">
+                    <i class="fas fa-book"></i>@course?.TenKhoaHoc
+                </span>
+                <span class="badge badge-questions">
+                    <i class="fas fa-question-circle"></i>@(Model.Questions?.Count ?? 0) câu hỏi
+                </span>
+                <span class="badge badge-attempts">
+                    <i class="fas fa-users"></i>@(Model.QuizResults?.Count ?? 0) lượt làm
+                </span>
+                <span class="badge badge-duration">
+                    <i class="fas fa-clock"></i>@Model.DurationMinutes phút
+                </span>
             </div>
         </div>
     </div>
 
-    <div class="row">
-        <!-- Questions List -->
-        <div class="col-md-8">
-            <div class="card shadow-sm">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-list text-primary"></i>
-                        Danh sách câu hỏi
-                    </h5>
-                    <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addQuestionModal">
-                        <i class="fas fa-plus"></i> Thêm câu hỏi
-                    </button>
-                </div>
-                <div class="card-body">
-                    @if (Model.Questions.Any())
-                    {
-                        <div class="questions-list">
-                            @foreach (var question in Model.Questions.OrderBy(q => q.QuestionID))
+    <!-- Edit Form -->
+    <form asp-action="EditQuiz" asp-controller="Teacher" asp-area="Teacher" method="post" class="edit-quiz-form">
+        <input asp-for="QuizID" type="hidden" />
+        <input asp-for="CourseID" type="hidden" />
+        @Html.AntiForgeryToken()
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="Title" class="form-label">
+                    <i class="fas fa-heading"></i>Tiêu đề bài kiểm tra
+                </label>
+                <input asp-for="Title" class="form-control" placeholder="Nhập tiêu đề..." required />
+            </div>
+
+            <div class="form-group">
+                <label asp-for="DurationMinutes" class="form-label">
+                    <i class="fas fa-clock"></i>Thời gian (phút)
+                </label>
+                <input asp-for="DurationMinutes" type="number" min="1" class="form-control" required />
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn-save">
+                    <i class="fas fa-save"></i>Lưu thay đổi
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Questions Section -->
+<div class="questions-section">
+    <div class="section-header">
+        <h3 class="section-title">
+            <i class="fas fa-list-ol"></i>Danh sách câu hỏi
+            <span class="questions-count">(@(Model.Questions?.Count ?? 0) câu)</span>
+        </h3>
+        <button type="button" class="btn-add" onclick="showAddQuestionModal()">
+            <i class="fas fa-plus-circle"></i>Thêm câu hỏi mới
+        </button>
+    </div>
+
+    <div class="questions-list">
+        @if (Model.Questions != null && Model.Questions.Any())
+        {
+            int questionNumber = 1;
+            foreach (var question in Model.Questions.OrderBy(q => q.QuestionID))
+            {
+                <div class="question-card" data-question-id="@question.QuestionID">
+                    <div class="question-header">
+                        <div class="question-number-badge">
+                            <span>@questionNumber</span>
+                        </div>
+                        <div class="question-actions">
+                            <button class="btn-icon btn-edit" onclick="editQuestion(@question.QuestionID)" title="Chỉnh sửa">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-icon btn-delete" onclick="deleteQuestion(@question.QuestionID, '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(question.QuestionText))')" title="Xóa">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="question-content">
+                        <div class="question-text">
+                            @question.QuestionText
+                        </div>
+
+                        <div class="options-grid">
+                            <div class="option-item @(question.CorrectAnswer == "A" ? "correct" : "")">
+                                <span class="option-letter">A</span>
+                                <span class="option-text">@question.OptionA</span>
+                                @if (question.CorrectAnswer == "A")
+                                {
+                                    <i class="fas fa-check-circle correct-icon"></i>
+                                }
+                            </div>
+
+                            <div class="option-item @(question.CorrectAnswer == "B" ? "correct" : "")">
+                                <span class="option-letter">B</span>
+                                <span class="option-text">@question.OptionB</span>
+                                @if (question.CorrectAnswer == "B")
+                                {
+                                    <i class="fas fa-check-circle correct-icon"></i>
+                                }
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(question.OptionC))
                             {
-                                <div class="question-item border rounded p-3 mb-3" data-question-id="@question.QuestionID">
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <div class="question-content flex-grow-1">
-                                            <h6 class="question-text fw-bold text-dark">
-                                                <span class="question-number badge bg-secondary me-2">
-                                                    @(Model.Questions.OrderBy(q => q.QuestionID).ToList().IndexOf(question) + 1)
-                                                </span>
-                                                @question.QuestionText
-                                            </h6>
+                                <div class="option-item @(question.CorrectAnswer == "C" ? "correct" : "")">
+                                    <span class="option-letter">C</span>
+                                    <span class="option-text">@question.OptionC</span>
+                                    @if (question.CorrectAnswer == "C")
+                                    {
+                                        <i class="fas fa-check-circle correct-icon"></i>
+                                    }
+                                </div>
+                            }
 
-                                            <div class="options mt-2">
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <div class="option @(question.CorrectAnswer == "A" ? "correct-option" : "")">
-                                                            <strong>A.</strong> @question.OptionA
-                                                            @if (question.CorrectAnswer == "A")
-                                                            {
-                                                                <i class="fas fa-check-circle text-success ms-1"></i>
-                                                            }
-                                                        </div>
-                                                        <div class="option @(question.CorrectAnswer == "B" ? "correct-option" : "")">
-                                                            <strong>B.</strong> @question.OptionB
-                                                            @if (question.CorrectAnswer == "B")
-                                                            {
-                                                                <i class="fas fa-check-circle text-success ms-1"></i>
-                                                            }
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        @if (!string.IsNullOrEmpty(question.OptionC))
-                                                        {
-                                                            <div class="option @(question.CorrectAnswer == "C" ? "correct-option" : "")">
-                                                                <strong>C.</strong> @question.OptionC
-                                                                @if (question.CorrectAnswer == "C")
-                                                                {
-                                                                    <i class="fas fa-check-circle text-success ms-1"></i>
-                                                                }
-                                                            </div>
-                                                        }
-                                                        @if (!string.IsNullOrEmpty(question.OptionD))
-                                                        {
-                                                            <div class="option @(question.CorrectAnswer == "D" ? "correct-option" : "")">
-                                                                <strong>D.</strong> @question.OptionD
-                                                                @if (question.CorrectAnswer == "D")
-                                                                {
-                                                                    <i class="fas fa-check-circle text-success ms-1"></i>
-                                                                }
-                                                            </div>
-                                                        }
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="question-actions">
-                                            <button class="btn btn-sm btn-outline-danger delete-question"
-                                                    data-question-id="@question.QuestionID"
-                                                    title="Xóa câu hỏi">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </div>
+                            @if (!string.IsNullOrEmpty(question.OptionD))
+                            {
+                                <div class="option-item @(question.CorrectAnswer == "D" ? "correct" : "")">
+                                    <span class="option-letter">D</span>
+                                    <span class="option-text">@question.OptionD</span>
+                                    @if (question.CorrectAnswer == "D")
+                                    {
+                                        <i class="fas fa-check-circle correct-icon"></i>
+                                    }
                                 </div>
                             }
                         </div>
-                    }
-                    else
-                    {
-                        <div class="text-center py-5">
-                            <i class="fas fa-question-circle text-muted display-1"></i>
-                            <h4 class="text-muted mt-3">Chưa có câu hỏi nào</h4>
-                            <p class="text-muted">Hãy thêm câu hỏi đầu tiên cho bài kiểm tra này</p>
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-
-        <!-- Quiz Settings -->
-        <div class="col-md-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-info text-white">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-cog"></i>
-                        Cài đặt bài kiểm tra
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="quiz-info">
-                        <div class="info-item mb-3">
-                            <label class="fw-bold text-muted">Tổng số câu hỏi:</label>
-                            <div class="fs-4 text-primary fw-bold">
-                                @Model.Questions.Count câu
-                            </div>
-                        </div>
-
-                        <div class="info-item mb-3">
-                            <label class="fw-bold text-muted">Thời gian ước tính:</label>
-                            <div class="text-info">
-                                <i class="fas fa-clock"></i>
-                                @(Model.Questions.Count * 2) phút
-                            </div>
-                        </div>
-
-                        <div class="info-item mb-3">
-                            <label class="fw-bold text-muted">Trạng thái:</label>
-                            <div>
-                                @if (Model.Questions.Count > 0)
-                                {
-                                    <span class="badge bg-success">
-                                        <i class="fas fa-check"></i> Sẵn sàng
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-warning">
-                                        <i class="fas fa-exclamation-triangle"></i> Chưa hoàn thành
-                                    </span>
-                                }
-                            </div>
-                        </div>
-                    </div>
-
-                    <hr>
-
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addQuestionModal">
-                            <i class="fas fa-plus"></i> Thêm câu hỏi
-                        </button>
-                        <a href="@Url.Action("CourseQuizzes", "Teacher", new { courseId = Model.CourseID })"
-                           class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left"></i> Quay lại danh sách
-                        </a>
                     </div>
                 </div>
+                questionNumber++;
+            }
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-clipboard-question"></i>
+                </div>
+                <h4>Chưa có câu hỏi nào</h4>
+                <p>Bắt đầu thêm câu hỏi cho bài kiểm tra của bạn</p>
+                <button type="button" class="btn-add" onclick="showAddQuestionModal()">
+                    <i class="fas fa-plus-circle"></i>Thêm câu hỏi đầu tiên
+                </button>
             </div>
-        </div>
+        }
+    </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="form-actions">
+    <a href="@Url.Action("CourseQuizzes", "Teacher", new { courseId = Model.CourseID })" class="btn-secondary">
+        <i class="fas fa-arrow-left"></i>Quay lại
+    </a>
+
+    <div class="btn-group-right">
+        <button type="button" class="btn-preview" onclick="previewQuiz()">
+            <i class="fas fa-eye"></i>Xem trước
+        </button>
+        <button type="button" class="btn-danger" onclick="deleteQuiz()">
+            <i class="fas fa-trash"></i>Xóa bài kiểm tra
+        </button>
     </div>
 </div>
 
 <!-- Add Question Modal -->
 <div class="modal fade" id="addQuestionModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
+            <div class="modal-header">
                 <h5 class="modal-title">
-                    <i class="fas fa-plus-circle"></i>
-                    Thêm câu hỏi mới
+                    <i class="fas fa-plus-circle"></i>Thêm câu hỏi mới
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="addQuestionForm">
-                @Html.AntiForgeryToken()
-                <div class="modal-body">
-                    <div class="mb-3">
+            <div class="modal-body">
+                <form id="addQuestionForm">
+                    <input type="hidden" id="addQuizId" value="@Model.QuizID" />
+
+                    <div class="form-group mb-3">
                         <label class="form-label fw-bold">
-                            <i class="fas fa-question"></i>
                             Câu hỏi <span class="text-danger">*</span>
                         </label>
-                        <textarea name="QuestionText" class="form-control" rows="3"
-                                  placeholder="Nhập nội dung câu hỏi..." required></textarea>
+                        <textarea id="newQuestionText" class="form-control" rows="3" placeholder="Nhập nội dung câu hỏi..." required></textarea>
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Đáp án A <span class="text-danger">*</span></label>
-                                <input type="text" name="OptionA" class="form-control"
-                                       placeholder="Nhập đáp án A..." required />
+                    <div class="options-form">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Đáp án A <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <input type="radio" name="newCorrectAnswer" value="A" class="form-check-input mt-0">
+                                    </span>
+                                    <input type="text" id="newOptionA" class="form-control" placeholder="Nhập đáp án A..." required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Đáp án B <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <input type="radio" name="newCorrectAnswer" value="B" class="form-check-input mt-0">
+                                    </span>
+                                    <input type="text" id="newOptionB" class="form-control" placeholder="Nhập đáp án B..." required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Đáp án C <small class="text-muted">(Tùy chọn)</small></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <input type="radio" name="newCorrectAnswer" value="C" class="form-check-input mt-0">
+                                    </span>
+                                    <input type="text" id="newOptionC" class="form-control" placeholder="Nhập đáp án C...">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Đáp án D <small class="text-muted">(Tùy chọn)</small></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <input type="radio" name="newCorrectAnswer" value="D" class="form-check-input mt-0">
+                                    </span>
+                                    <input type="text" id="newOptionD" class="form-control" placeholder="Nhập đáp án D...">
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Đáp án B <span class="text-danger">*</span></label>
-                                <input type="text" name="OptionB" class="form-control"
-                                       placeholder="Nhập đáp án B..." required />
-                            </div>
+                        <div class="alert alert-info mt-3 mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <small>Chọn radio button để đánh dấu đáp án đúng</small>
                         </div>
                     </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i>Hủy
+                </button>
+                <button type="button" class="btn-save" onclick="saveNewQuestion()">
+                    <i class="fas fa-save"></i>Lưu câu hỏi
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Đáp án C</label>
-                                <input type="text" name="OptionC" class="form-control"
-                                       placeholder="Nhập đáp án C (tùy chọn)..." />
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Đáp án D</label>
-                                <input type="text" name="OptionD" class="form-control"
-                                       placeholder="Nhập đáp án D (tùy chọn)..." />
-                            </div>
-                        </div>
-                    </div>
+<!-- Edit Question Modal -->
+<div class="modal fade" id="editQuestionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit"></i>Chỉnh sửa câu hỏi
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editQuestionForm">
+                    <input type="hidden" id="editQuestionId" />
 
-                    <div class="mb-3">
+                    <div class="form-group mb-3">
                         <label class="form-label fw-bold">
-                            <i class="fas fa-check-circle text-success"></i>
-                            Đáp án đúng <span class="text-danger">*</span>
+                            Câu hỏi <span class="text-danger">*</span>
                         </label>
-                        <select name="CorrectAnswer" class="form-select" required>
-                            <option value="">-- Chọn đáp án đúng --</option>
-                            <option value="A">A</option>
-                            <option value="B">B</option>
-                            <option value="C">C</option>
-                            <option value="D">D</option>
-                        </select>
+                        <textarea id="editQuestionText" class="form-control" rows="3" required></textarea>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times"></i> Hủy
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Thêm câu hỏi
-                    </button>
-                </div>
-            </form>
+
+                    <div class="options-form">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Đáp án A <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <input type="radio" name="editCorrectAnswer" value="A" class="form-check-input mt-0">
+                                    </span>
+                                    <input type="text" id="editOptionA" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Đáp án B <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <input type="radio" name="editCorrectAnswer" value="B" class="form-check-input mt-0">
+                                    </span>
+                                    <input type="text" id="editOptionB" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Đáp án C <small class="text-muted">(Tùy chọn)</small></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <input type="radio" name="editCorrectAnswer" value="C" class="form-check-input mt-0">
+                                    </span>
+                                    <input type="text" id="editOptionC" class="form-control">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Đáp án D <small class="text-muted">(Tùy chọn)</small></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <input type="radio" name="editCorrectAnswer" value="D" class="form-check-input mt-0">
+                                    </span>
+                                    <input type="text" id="editOptionD" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i>Hủy
+                </button>
+                <button type="button" class="btn-save" onclick="saveEditedQuestion()">
+                    <i class="fas fa-save"></i>Cập nhật
+                </button>
+            </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        $(document).ready(function() {
-            // Add question
-            $('#addQuestionForm').on('submit', function(e) {
-                e.preventDefault();
+        // Show add question modal
+        function showAddQuestionModal() {
+            $('#addQuestionModal').modal('show');
+            $('#addQuestionForm')[0].reset();
+        }
 
-                const formData = {
-                    QuestionText: $('textarea[name="QuestionText"]').val(),
-                    OptionA: $('input[name="OptionA"]').val(),
-                    OptionB: $('input[name="OptionB"]').val(),
-                    OptionC: $('input[name="OptionC"]').val(),
-                    OptionD: $('input[name="OptionD"]').val(),
-                    CorrectAnswer: $('select[name="CorrectAnswer"]').val(),
-                    '__RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                };
+        // Save new question
+        function saveNewQuestion() {
+            const questionData = {
+                quizId: $('#addQuizId').val(),
+                questionText: $('#newQuestionText').val().trim(),
+                optionA: $('#newOptionA').val().trim(),
+                optionB: $('#newOptionB').val().trim(),
+                optionC: $('#newOptionC').val().trim(),
+                optionD: $('#newOptionD').val().trim(),
+                correctAnswer: $('input[name="newCorrectAnswer"]:checked').val()
+            };
 
-                $.post('@Url.Action("AddQuestion", "Teacher", new { quizId = Model.QuizID })', formData)
-                    .done(function(response) {
-                        if (response.success) {
-                            toastr.success(response.message);
-                            $('#addQuestionModal').modal('hide');
-                            location.reload();
-                        } else {
-                            toastr.error(response.message);
-                        }
-                    })
-                    .fail(function() {
-                        toastr.error('Có lỗi xảy ra khi thêm câu hỏi!');
-                    });
+            // Validate
+            if (!questionData.questionText) {
+                toastr.error('Vui lòng nhập nội dung câu hỏi');
+                return;
+            }
+            if (!questionData.optionA || !questionData.optionB) {
+                toastr.error('Vui lòng nhập ít nhất 2 đáp án (A và B)');
+                return;
+            }
+            if (!questionData.correctAnswer) {
+                toastr.error('Vui lòng chọn đáp án đúng');
+                return;
+            }
+
+            // Add CSRF token
+            questionData.__RequestVerificationToken = $('input[name="__RequestVerificationToken"]').val();
+
+            // Show loading
+            const btn = $('.btn-save[onclick="saveNewQuestion()"]');
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>Đang lưu...');
+
+            // Submit via AJAX
+            $.ajax({
+                url: '@Url.Action("AddQuestion", "Teacher", new { Area = "Teacher" })',
+                type: 'POST',
+                data: questionData,
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success(response.message || 'Thêm câu hỏi thành công!');
+                        $('#addQuestionModal').modal('hide');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        toastr.error(response.message || 'Có lỗi xảy ra');
+                        btn.prop('disabled', false).html('<i class="fas fa-save"></i>Lưu câu hỏi');
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Error:', xhr);
+                    toastr.error('Có lỗi xảy ra khi thêm câu hỏi');
+                    btn.prop('disabled', false).html('<i class="fas fa-save"></i>Lưu câu hỏi');
+                }
             });
+        }
 
-            // Delete question
-            $('.delete-question').on('click', function() {
-                const questionId = $(this).data('question-id');
-                const questionItem = $(this).closest('.question-item');
+        // Edit question
+        function editQuestion(questionId) {
+            console.log('Edit question:', questionId);
 
-                Swal.fire({
-                    title: 'Xác nhận xóa',
-                    text: 'Bạn có chắc chắn muốn xóa câu hỏi này?',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'Xóa',
-                    cancelButtonText: 'Hủy'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.post('@Url.Action("DeleteQuestion", "Teacher")', {
+            // Get question data from server
+            $.ajax({
+                url: '@Url.Action("GetQuestion", "Teacher", new { Area = "Teacher" })',
+                type: 'GET',
+                data: { id: questionId },
+                success: function(response) {
+                    console.log('GetQuestion response:', response);
+
+                    if (response.success && response.data) {
+                        const q = response.data;
+
+                        // Fill form
+                        $('#editQuestionId').val(q.questionID);
+                        $('#editQuestionText').val(q.questionText);
+                        $('#editOptionA').val(q.optionA);
+                        $('#editOptionB').val(q.optionB);
+                        $('#editOptionC').val(q.optionC || '');
+                        $('#editOptionD').val(q.optionD || '');
+
+                        // Check correct answer radio
+                        $(`input[name="editCorrectAnswer"][value="${q.correctAnswer}"]`).prop('checked', true);
+
+                        // Show modal
+                        $('#editQuestionModal').modal('show');
+                    } else {
+                        toastr.error('Không thể tải thông tin câu hỏi');
+                    }
+                },
+                error: function(xhr) {
+                    console.error('GetQuestion error:', xhr);
+                    toastr.error('Có lỗi xảy ra khi tải câu hỏi');
+                }
+            });
+        }
+
+        // Save edited question
+        function saveEditedQuestion() {
+            const questionData = {
+                id: $('#editQuestionId').val(),
+                questionText: $('#editQuestionText').val().trim(),
+                optionA: $('#editOptionA').val().trim(),
+                optionB: $('#editOptionB').val().trim(),
+                optionC: $('#editOptionC').val().trim(),
+                optionD: $('#editOptionD').val().trim(),
+                correctAnswer: $('input[name="editCorrectAnswer"]:checked').val()
+            };
+
+            // Validate
+            if (!questionData.questionText || !questionData.optionA || !questionData.optionB || !questionData.correctAnswer) {
+                toastr.error('Vui lòng điền đầy đủ thông tin câu hỏi');
+                return;
+            }
+
+            // Add CSRF token
+            questionData.__RequestVerificationToken = $('input[name="__RequestVerificationToken"]').val();
+
+            // Show loading
+            const btn = $('.btn-save[onclick="saveEditedQuestion()"]');
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>Đang cập nhật...');
+
+            // Submit via AJAX
+            $.ajax({
+                url: '@Url.Action("UpdateQuestion", "Teacher", new { Area = "Teacher" })',
+                type: 'POST',
+                data: questionData,
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success(response.message || 'Cập nhật câu hỏi thành công!');
+                        $('#editQuestionModal').modal('hide');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        toastr.error(response.message || 'Có lỗi xảy ra');
+                        btn.prop('disabled', false).html('<i class="fas fa-save"></i>Cập nhật');
+                    }
+                },
+                error: function() {
+                    toastr.error('Có lỗi xảy ra khi cập nhật câu hỏi');
+                    btn.prop('disabled', false).html('<i class="fas fa-save"></i>Cập nhật');
+                }
+            });
+        }
+
+        // Delete question
+        function deleteQuestion(questionId, questionText) {
+            Swal.fire({
+                title: 'Xác nhận xóa',
+                html: `Bạn có chắc chắn muốn xóa câu hỏi:<br><strong>"${questionText.substring(0, 80)}${questionText.length > 80 ? '...' : ''}"</strong>?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: '<i class="fas fa-trash me-2"></i>Xóa',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '@Url.Action("DeleteQuestion", "Teacher", new { Area = "Teacher" })',
+                        type: 'POST',
+                        data: {
                             id: questionId,
-                            '__RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                        })
-                        .done(function(response) {
+                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                        },
+                        success: function(response) {
                             if (response.success) {
-                                toastr.success(response.message);
-                                questionItem.fadeOut(300, function() {
+                                toastr.success(response.message || 'Xóa câu hỏi thành công!');
+                                $(`.question-card[data-question-id="${questionId}"]`).fadeOut(300, function() {
                                     $(this).remove();
                                     updateQuestionNumbers();
+
+                                    // Check if no questions left
+                                    if ($('.question-card').length === 0) {
+                                        location.reload();
+                                    }
                                 });
                             } else {
-                                toastr.error(response.message);
+                                toastr.error(response.message || 'Không thể xóa câu hỏi');
                             }
-                        })
-                        .fail(function() {
-                            toastr.error('Có lỗi xảy ra khi xóa câu hỏi!');
-                        });
-                    }
-                });
+                        },
+                        error: function() {
+                            toastr.error('Có lỗi xảy ra khi xóa câu hỏi');
+                        }
+                    });
+                }
+            });
+        }
+
+        // Update question numbers
+        function updateQuestionNumbers() {
+            $('.question-number-badge span').each(function(index) {
+                $(this).text(index + 1);
             });
 
-            // Update question numbers after deletion
-            function updateQuestionNumbers() {
-                $('.question-number').each(function(index) {
-                    $(this).text(index + 1);
+            // Update count in header
+            const count = $('.question-card').length;
+            $('.questions-count').text(`(${count} câu)`);
+        }
+
+        // Delete quiz
+        function deleteQuiz() {
+            Swal.fire({
+                title: 'Xác nhận xóa bài kiểm tra',
+                html: `Bạn có chắc chắn muốn xóa bài kiểm tra "<strong>@Model.Title</strong>"?<br><small class="text-danger">Hành động này không thể hoàn tác!</small>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: '<i class="fas fa-trash me-2"></i>Xóa bài kiểm tra',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Create form and submit
+                    const form = $('<form>', {
+                        'method': 'POST',
+                        'action': '@Url.Action("DeleteQuiz", "Teacher", new { Area = "Teacher" })'
+                    });
+
+                    form.append($('<input>', {
+                        'type': 'hidden',
+                        'name': 'id',
+                        'value': '@Model.QuizID'
+                    }));
+
+                    form.append($('<input>', {
+                        'type': 'hidden',
+                        'name': '__RequestVerificationToken',
+                        'value': $('input[name="__RequestVerificationToken"]').val()
+                    }));
+
+                    $('body').append(form);
+                    form.submit();
+                }
+            });
+        }
+
+        // Preview quiz
+        function previewQuiz() {
+            const url = '@Url.Action("Details", "Exam", new { id = Model.QuizID, Area = "" })';
+            window.open(url, '_blank');
+        }
+
+        // Initialize on document ready
+        $(document).ready(function() {
+            console.log('EditQuiz page loaded');
+
+            // Initialize AOS if available
+            if (typeof AOS !== 'undefined') {
+                AOS.init({
+                    duration: 800,
+                    easing: 'ease-out-quart',
+                    once: true
                 });
             }
-
-            // Clear modal form when closed
-            $('#addQuestionModal').on('hidden.bs.modal', function() {
-                $('#addQuestionForm')[0].reset();
-            });
         });
     </script>
-}
-
-@section Styles {
-    <style>
-        .question-item {
-            transition: all 0.3s ease;
-            background: #fff;
-        }
-
-            .question-item:hover {
-                box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-                transform: translateY(-2px);
-            }
-
-        .option {
-            padding: 0.5rem 0;
-            color: #6c757d;
-        }
-
-        .correct-option {
-            color: #198754;
-            font-weight: 600;
-        }
-
-        .question-number {
-            font-size: 0.75rem;
-        }
-
-        .quiz-stats .badge {
-            padding: 0.5rem 1rem;
-        }
-
-        .info-item label {
-            font-size: 0.875rem;
-            margin-bottom: 0.25rem;
-        }
-
-        .page-title {
-            font-size: 1.8rem;
-            font-weight: 600;
-            margin: 0;
-        }
-    </style>
 }

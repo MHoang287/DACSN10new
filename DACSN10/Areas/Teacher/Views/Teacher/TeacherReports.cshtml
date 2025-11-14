@@ -1,275 +1,187 @@
-﻿@{
+﻿@using DACSN10.Areas.Teacher.ViewModels
+@model TeacherReportViewModel
+@using System.Text.Json
+
+@{
     ViewData["Title"] = "Báo cáo & Phân tích";
     Layout = "~/Areas/Teacher/Views/Shared/_TeacherLayout.cshtml";
-    
-    var coursePerformance = ViewBag.CoursePerformance;
-    var monthlyRevenue = ViewBag.MonthlyRevenue;
+    var selectedPeriod = (string)(ViewBag.Period ?? "30d");
 }
 
 @section Styles {
     <style>
-        .report-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 2.5rem;
-            border-radius: 20px;
-            margin-bottom: 2rem;
-            position: relative;
-            overflow: hidden;
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit,minmax(230px,1fr));
+            gap: 1.2rem;
+            margin-bottom: 1.5rem
         }
 
-        .report-header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: pulse 4s ease-in-out infinite;
+        .summary-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 1rem 1.25rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,.07)
         }
 
-        .report-actions {
+        .summary-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
             display: flex;
-            gap: 1rem;
-            margin-top: 1.5rem;
-        }
-
-        .export-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.2rem;
+            margin-bottom: .5rem
         }
 
-        .export-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            border-color: rgba(255, 255, 255, 0.5);
-            transform: translateY(-2px);
-            color: white;
+        .summary-value {
+            font-size: 1.55rem;
+            font-weight: 700;
+            margin: 0;
+            color: #0f172a
+        }
+
+        .summary-label {
+            font-size: .75rem;
+            font-weight: 600;
+            color: #64748b;
+            letter-spacing: .5px;
+            text-transform: uppercase
         }
 
         .report-section {
-            background: white;
-            border-radius: 15px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            background: #fff;
+            border-radius: 16px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 6px 18px rgba(0,0,0,.06)
         }
 
         .section-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid #f1f5f9;
+            margin-bottom: 1rem
         }
 
         .section-title {
-            font-size: 1.25rem;
+            font-size: 1.05rem;
             font-weight: 600;
-            color: #1e293b;
+            color: #0f172a;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: .6rem
+        }
+
+        .filters {
+            display: flex;
+            gap: .5rem;
+            align-items: center
         }
 
         .performance-table {
             width: 100%;
             border-collapse: separate;
-            border-spacing: 0;
+            border-spacing: 0
         }
 
-        .performance-table th {
-            background: #f8fafc;
-            padding: 1rem;
-            text-align: left;
-            font-weight: 600;
-            color: #475569;
-            border-bottom: 2px solid #e2e8f0;
-        }
+            .performance-table th {
+                background: #f8fafc;
+                padding: .65rem .75rem;
+                font-size: .7rem;
+                text-transform: uppercase;
+                font-weight: 600;
+                color: #475569
+            }
 
-        .performance-table td {
-            padding: 1rem;
-            border-bottom: 1px solid #f1f5f9;
-            vertical-align: middle;
-        }
-
-        .performance-table tbody tr {
-            transition: all 0.3s ease;
-        }
-
-        .performance-table tbody tr:hover {
-            background: #f8fafc;
-            transform: translateX(5px);
-        }
+            .performance-table td {
+                padding: .6rem .75rem;
+                border-bottom: 1px solid #f1f5f9;
+                font-size: .8rem;
+                color: #334155;
+                vertical-align: middle
+            }
 
         .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 500;
+            padding: .25rem .55rem;
+            border-radius: 18px;
+            font-size: .55rem;
+            font-weight: 600;
+            text-transform: uppercase
         }
 
         .status-active {
             background: #dcfce7;
-            color: #16a34a;
-        }
-
-        .status-inactive {
-            background: #f3f4f6;
-            color: #6b7280;
+            color: #15803d
         }
 
         .status-pending {
-            background: #fef3c7;
-            color: #d97706;
+            background: #fef9c3;
+            color: #d97706
         }
 
-        .revenue-trend {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-
-        .trend-up {
-            color: #16a34a;
-        }
-
-        .trend-down {
-            color: #dc2626;
-        }
-
-        .chart-container {
-            height: 400px;
-            position: relative;
-        }
-
-        .summary-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .summary-card {
-            background: white;
-            border-radius: 15px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-        }
-
-        .summary-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        }
-
-        .summary-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            color: white;
-            margin-bottom: 1rem;
-        }
-
-        .summary-value {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: #1e293b;
-            margin-bottom: 0.25rem;
-        }
-
-        .summary-label {
-            color: #64748b;
-            font-size: 0.9rem;
-        }
-
-        .summary-change {
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-            margin-top: 0.5rem;
-            font-size: 0.875rem;
-        }
-
-        .date-range-picker {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            background: #f8fafc;
-            padding: 0.75rem 1rem;
-            border-radius: 10px;
-        }
-
-        .date-input {
-            padding: 0.5rem 1rem;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 0.9rem;
+        .status-inactive {
+            background: #f1f5f9;
+            color: #64748b
         }
 
         .progress-bar-custom {
-            height: 8px;
+            height: 6px;
             background: #e2e8f0;
             border-radius: 10px;
-            overflow: hidden;
+            overflow: hidden
         }
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
-            transition: width 0.3s ease;
+            background: linear-gradient(90deg,#3b82f6,#1d4ed8)
         }
 
-        .insights-box {
-            background: #eff6ff;
-            border: 2px solid #3b82f6;
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-top: 2rem;
+        .chart-container {
+            height: 360px;
+            position: relative
         }
 
-        .insight-item {
+        .mini-chart-container {
+            height: 280px
+        }
+
+        .distribution-legend {
             display: flex;
-            align-items: start;
-            gap: 1rem;
-            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: .6rem;
+            margin-top: .75rem
         }
 
-        .insight-item:last-child {
-            margin-bottom: 0;
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+            font-size: .7rem
         }
 
-        .insight-icon {
-            color: #3b82f6;
-            font-size: 1.25rem;
-            flex-shrink: 0;
+        .legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 4px
         }
 
-        .insight-text {
-            color: #1e40af;
-            line-height: 1.6;
+        .empty-hint {
+            font-size: .75rem;
+            color: #64748b;
+            margin-top: .5rem
+        }
+
+        .rating-note {
+            font-size: .65rem;
+            color: #64748b;
+            margin-top: .25rem
         }
     </style>
 }
 
-<!-- Page Header -->
 <div class="page-header" data-aos="fade-down">
     <h1 class="page-title">Báo cáo & Phân tích</h1>
     <nav aria-label="breadcrumb">
@@ -280,110 +192,69 @@
     </nav>
 </div>
 
-<!-- Report Header -->
-<div class="report-header" data-aos="fade-up">
-    <h2 class="mb-3">Báo cáo tổng hợp hoạt động giảng dạy</h2>
-    <p class="mb-0 opacity-90">Phân tích chi tiết hiệu suất khóa học và doanh thu</p>
-    
-    <div class="report-actions">
-        <button class="export-btn" onclick="exportPDF()">
-            <i class="fas fa-file-pdf"></i>
-            Xuất PDF
-        </button>
-        <button class="export-btn" onclick="exportExcel()">
-            <i class="fas fa-file-excel"></i>
-            Xuất Excel
-        </button>
-        <button class="export-btn" onclick="printReport()">
-            <i class="fas fa-print"></i>
-            In báo cáo
-        </button>
-    </div>
-</div>
-
-<!-- Summary Cards -->
-<div class="summary-cards" data-aos="fade-up" data-aos-delay="100">
-    <div class="summary-card">
-        <div class="summary-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
-            <i class="fas fa-chart-line"></i>
-        </div>
-        <div class="summary-value">15.2M₫</div>
-        <div class="summary-label">Doanh thu tháng này</div>
-        <div class="summary-change trend-up">
-            <i class="fas fa-arrow-up"></i>
-            <span>+23% so với tháng trước</span>
-        </div>
-    </div>
-    
-    <div class="summary-card">
-        <div class="summary-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
-            <i class="fas fa-user-plus"></i>
-        </div>
-        <div class="summary-value">47</div>
-        <div class="summary-label">Học viên mới</div>
-        <div class="summary-change trend-up">
-            <i class="fas fa-arrow-up"></i>
-            <span>+15% so với tháng trước</span>
-        </div>
-    </div>
-    
-    <div class="summary-card">
-        <div class="summary-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-            <i class="fas fa-star"></i>
-        </div>
-        <div class="summary-value">4.8/5</div>
-        <div class="summary-label">Đánh giá trung bình</div>
-        <div class="summary-change trend-up">
-            <i class="fas fa-arrow-up"></i>
-            <span>+0.2 điểm</span>
-        </div>
-    </div>
-    
-    <div class="summary-card">
-        <div class="summary-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
-            <i class="fas fa-graduation-cap"></i>
-        </div>
-        <div class="summary-value">82%</div>
-        <div class="summary-label">Tỷ lệ hoàn thành</div>
-        <div class="summary-change trend-down">
-            <i class="fas fa-arrow-down"></i>
-            <span>-3% so với tháng trước</span>
-        </div>
-    </div>
-</div>
-
-<!-- Revenue Chart -->
-<div class="report-section" data-aos="fade-up" data-aos-delay="200">
+<!-- Bộ lọc kỳ thời gian -->
+<div class="report-section" data-aos="fade-up">
     <div class="section-header">
-        <h3 class="section-title">
-            <i class="fas fa-dollar-sign text-success"></i>
-            Biểu đồ doanh thu
-        </h3>
-        <div class="date-range-picker">
-            <input type="date" class="date-input" id="startDate">
-            <span>đến</span>
-            <input type="date" class="date-input" id="endDate">
-            <button class="btn btn-sm btn-primary" onclick="updateDateRange()">
-                <i class="fas fa-sync-alt"></i>
-            </button>
+        <h3 class="section-title"><i class="fas fa-filter text-primary"></i>Khoảng thời gian</h3>
+        <div class="filters">
+            <select id="periodSelect" class="form-select form-select-sm" onchange="onPeriodChange(this.value)">
+                <option value="30d" @(selectedPeriod == "30d" ? "selected" : "")>30 ngày qua</option>
+                <option value="month" @(selectedPeriod == "month" ? "selected" : "")>Tháng hiện tại</option>
+                <option value="prev-month" @(selectedPeriod == "prev-month" ? "selected" : "")>Tháng trước</option>
+                <option value="range" @(selectedPeriod == "range" ? "selected" : "")>Khoảng ngày...</option>
+            </select>
+            <input type="date" id="rangeStart" class="form-control form-control-sm" style="display:@(selectedPeriod == "range" ? "block" : "none")" />
+            <input type="date" id="rangeEnd" class="form-control form-control-sm" style="display:@(selectedPeriod == "range" ? "block" : "none")" />
+            <button id="applyRange" class="btn btn-sm btn-primary" style="display:@(selectedPeriod == "range" ? "inline-block" : "none")" onclick="applyRange()">Áp dụng</button>
         </div>
     </div>
-    
-    <div class="chart-container">
-        <canvas id="revenueChart"></canvas>
+
+    <div class="summary-cards">
+        <div class="summary-card">
+            <div class="summary-icon" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8)"><i class="fas fa-chart-line"></i></div>
+            <div class="summary-value">@Model.Summary.PeriodRevenue.ToString("N0")₫</div>
+            <div class="summary-label">Doanh thu (@Model.Summary.PeriodLabel)</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-icon" style="background:linear-gradient(135deg,#10b981,#059669)"><i class="fas fa-user-plus"></i></div>
+            <div class="summary-value">@Model.Summary.PeriodNewStudents</div>
+            <div class="summary-label">Học viên mới (@Model.Summary.PeriodLabel)</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706)"><i class="fas fa-star"></i></div>
+            <div class="summary-value">@Model.Summary.AverageRating.ToString("F1")/5</div>
+            <div class="summary-label">Đánh giá TB</div>
+            @if (Model.Summary.AverageRating == 0)
+            {
+                <div class="rating-note">Chưa có dữ liệu Quiz để tính rating</div>
+            }
+        </div>
+        <div class="summary-card">
+            <div class="summary-icon" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed)"><i class="fas fa-graduation-cap"></i></div>
+            <div class="summary-value">@Model.Summary.GlobalCompletionRate.ToString("F1")%</div>
+            <div class="summary-label">Tỷ lệ hoàn thành</div>
+        </div>
     </div>
 </div>
 
-<!-- Course Performance -->
-<div class="report-section" data-aos="fade-up" data-aos-delay="300">
+<!-- Biểu đồ doanh thu 6 tháng -->
+<div class="report-section" data-aos="fade-up" data-aos-delay="100">
     <div class="section-header">
-        <h3 class="section-title">
-            <i class="fas fa-trophy text-warning"></i>
-            Hiệu suất khóa học
-        </h3>
+        <h3 class="section-title"><i class="fas fa-dollar-sign text-success"></i>Biểu đồ doanh thu 6 tháng</h3>
     </div>
-    
-    @if (coursePerformance != null && coursePerformance.Any())
+    <div class="chart-container"><canvas id="revenueChart"></canvas></div>
+    @if (!Model.MonthlyRevenue.Any())
+    {
+        <div class="empty-hint">Chưa có giao dịch thành công trong 6 tháng gần đây.</div>
+    }
+</div>
+
+<!-- Hiệu suất khóa học -->
+<div class="report-section" data-aos="fade-up" data-aos-delay="140">
+    <div class="section-header">
+        <h3 class="section-title"><i class="fas fa-trophy text-warning"></i>Hiệu suất khóa học</h3>
+    </div>
+    @if (Model.CoursePerformance.Any())
     {
         <div class="table-responsive">
             <table class="performance-table">
@@ -391,42 +262,29 @@
                     <tr>
                         <th>Khóa học</th>
                         <th>Trạng thái</th>
-                        <th>Học viên</th>
-                        <th>Doanh thu</th>
+                        <th>HV (lifetime)</th>
+                        <th>HV (@Model.Summary.PeriodLabel)</th>
+                        <th>Doanh thu lifetime</th>
+                        <th>Doanh thu (@Model.Summary.PeriodLabel)</th>
                         <th>Tiến độ TB</th>
-                        <th>Xu hướng</th>
+                        <th>Hoàn thành (%)</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var course in coursePerformance)
+                    @foreach (var c in Model.CoursePerformance)
                     {
                         <tr>
+                            <td><strong>@c.TenKhoaHoc</strong></td>
+                            <td><span class="status-badge status-@c.TrangThai?.ToLower()">@c.TrangThai</span></td>
+                            <td>@c.TotalStudents</td>
+                            <td>@c.PeriodNewStudents</td>
+                            <td>@c.TotalRevenue.ToString("N0")₫</td>
+                            <td>@c.PeriodRevenue.ToString("N0")₫</td>
                             <td>
-                                <strong>@course.TenKhoaHoc</strong>
+                                <div class="progress-bar-custom"><div class="progress-fill" style="width:@c.AverageProgress.ToString("F0")%"></div></div>
+                                <small>@c.AverageProgress.ToString("F1")%</small>
                             </td>
-                            <td>
-                                <span class="status-badge status-@course.TrangThai.ToLower()">
-                                    @course.TrangThai
-                                </span>
-                            </td>
-                            <td>@course.StudentCount</td>
-                            <td>
-                                <strong>@course.Revenue.ToString("N0")₫</strong>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center gap-2">
-                                    <div class="progress-bar-custom flex-grow-1">
-                                        <div class="progress-fill" style="width: @course.AverageProgress%"></div>
-                                    </div>
-                                    <span>@course.AverageProgress.ToString("F0")%</span>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="revenue-trend trend-up">
-                                    <i class="fas fa-arrow-up"></i>
-                                    +12%
-                                </span>
-                            </td>
+                            <td>@c.CompletionRateCourse.ToString("F1")%</td>
                         </tr>
                     }
                 </tbody>
@@ -435,230 +293,106 @@
     }
     else
     {
-        <p class="text-center text-muted py-4">Chưa có dữ liệu hiệu suất khóa học</p>
+        <p class="text-muted">Chưa có khóa học nào.</p>
     }
 </div>
 
 <div class="row">
-    <!-- Student Analytics -->
-    <div class="col-lg-6" data-aos="fade-up" data-aos-delay="400">
+    <div class="col-lg-6" data-aos="fade-up" data-aos-delay="180">
         <div class="report-section">
-            <h3 class="section-title">
-                <i class="fas fa-users text-info"></i>
-                Phân tích học viên
-            </h3>
-            <div class="chart-container" style="height: 300px;">
-                <canvas id="studentAnalyticsChart"></canvas>
-            </div>
+            <div class="section-header"><h3 class="section-title"><i class="fas fa-users text-info"></i>Phân tích học viên (4 tuần)</h3></div>
+            <div class="mini-chart-container"><canvas id="studentAnalyticsChart"></canvas></div>
         </div>
     </div>
-    
-    <!-- Course Categories -->
-    <div class="col-lg-6" data-aos="fade-up" data-aos-delay="500">
+    <div class="col-lg-6" data-aos="fade-up" data-aos-delay="200">
         <div class="report-section">
-            <h3 class="section-title">
-                <i class="fas fa-tags text-purple"></i>
-                Phân bố theo danh mục
-            </h3>
-            <div class="chart-container" style="height: 300px;">
-                <canvas id="categoryChart"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Insights -->
-<div class="report-section" data-aos="fade-up" data-aos-delay="600">
-    <h3 class="section-title mb-3">
-        <i class="fas fa-lightbulb text-warning"></i>
-        Gợi ý cải thiện
-    </h3>
-    
-    <div class="insights-box">
-        <div class="insight-item">
-            <i class="fas fa-check-circle insight-icon"></i>
-            <div class="insight-text">
-                <strong>Điểm mạnh:</strong> Tỷ lệ hoàn thành khóa học của bạn cao hơn 20% so với trung bình. 
-                Tiếp tục duy trì chất lượng giảng dạy tốt!
-            </div>
-        </div>
-        
-        <div class="insight-item">
-            <i class="fas fa-arrow-up insight-icon"></i>
-            <div class="insight-text">
-                <strong>Cơ hội tăng trưởng:</strong> Khóa học "Lập trình Web" có nhu cầu cao. 
-                Cân nhắc tạo thêm khóa học nâng cao cho học viên đã hoàn thành.
-            </div>
-        </div>
-        
-        <div class="insight-item">
-            <i class="fas fa-exclamation-triangle insight-icon"></i>
-            <div class="insight-text">
-                <strong>Cần chú ý:</strong> Một số học viên phản hồi về tốc độ bài giảng. 
-                Xem xét điều chỉnh tempo cho phù hợp với đa số học viên.
-            </div>
+            <div class="section-header"><h3 class="section-title"><i class="fas fa-tags text-purple"></i>Phân bố theo danh mục</h3></div>
+            <div class="mini-chart-container"><canvas id="categoryChart"></canvas></div>
+            <div id="categoryLegend" class="distribution-legend"></div>
+            @if (!Model.CategoryDistribution.Any())
+            {
+                <div class="empty-hint">Chưa có khóa học nào gắn danh mục.</div>
+            }
         </div>
     </div>
 </div>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
-        // Revenue Chart
-        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-        const revenueChart = new Chart(revenueCtx, {
+        function onPeriodChange(val){
+            if(val === 'range'){
+                document.getElementById('rangeStart').style.display='block';
+                document.getElementById('rangeEnd').style.display='block';
+                document.getElementById('applyRange').style.display='inline-block';
+            }else{
+                window.location = `@Url.Action("TeacherReports", "Teacher", new { area = "Teacher" })?period=${val}`;
+            }
+        }
+        function applyRange(){
+            const s = document.getElementById('rangeStart').value;
+            const e = document.getElementById('rangeEnd').value;
+            if(!s || !e){ alert('Chọn đủ ngày bắt đầu/kết thúc'); return; }
+            window.location = `@Url.Action("TeacherReports", "Teacher", new { area = "Teacher" })?period=range&start=${s}&end=${e}`;
+        }
+
+        const monthlyRevenue = @Html.Raw(JsonSerializer.Serialize(Model.MonthlyRevenue));
+        const weeklyAnalytics = @Html.Raw(JsonSerializer.Serialize(Model.WeeklyAnalytics));
+        const categoryDistribution = @Html.Raw(JsonSerializer.Serialize(Model.CategoryDistribution));
+
+        // Revenue chart (6 tháng)
+        const revLabels = monthlyRevenue.map(r => `T${r.Month}/${r.Year}`);
+        const revData = monthlyRevenue.map(r => r.Revenue);
+        new Chart(document.getElementById('revenueChart'), {
             type: 'line',
             data: {
-                labels: @Html.Raw(Json.Serialize((monthlyRevenue?.Select((Func<dynamic, string>)(m => $"T{m.Month}/{m.Year}")).ToArray() ?? new string[] { }).Cast<object>())),
+                labels: revLabels,
                 datasets: [{
-                    label: 'Doanh thu',
-                    data: @Html.Raw(Json.Serialize((monthlyRevenue?.Select((Func<dynamic, decimal>)(m => m.Revenue)).ToArray() ?? new decimal[] { }).Cast<object>())),
+                    label: 'Doanh thu (₫)',
+                    data: revData,
                     borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    backgroundColor: 'rgba(59,130,246,0.15)',
                     borderWidth: 3,
-                    tension: 0.4,
-                    fill: true,
-                    pointBackgroundColor: '#fff',
-                    pointBorderColor: '#3b82f6',
-                    pointBorderWidth: 2,
-                    pointRadius: 5,
-                    pointHoverRadius: 7
+                    pointRadius: 4,
+                    tension: .35,
+                    fill: true
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return 'Doanh thu: ' + context.parsed.y.toLocaleString('vi-VN') + '₫';
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return value.toLocaleString('vi-VN') + '₫';
-                            }
-                        },
-                        grid: {
-                            borderDash: [5, 5]
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                }
+                responsive:true,
+                maintainAspectRatio:false,
+                plugins:{ legend:{ display:false } },
+                scales:{ y:{ beginAtZero:true, ticks:{ callback:v=>v.toLocaleString('vi-VN')+'₫' } } }
             }
         });
-        
-        // Student Analytics Chart
-        const studentCtx = document.getElementById('studentAnalyticsChart').getContext('2d');
-        const studentChart = new Chart(studentCtx, {
+
+        // Weekly analytics
+        const weekLabels = weeklyAnalytics.map(w => w.Label);
+        new Chart(document.getElementById('studentAnalyticsChart'), {
             type: 'bar',
             data: {
-                labels: ['Tuần 1', 'Tuần 2', 'Tuần 3', 'Tuần 4'],
-                datasets: [{
-                    label: 'Học viên mới',
-                    data: [12, 19, 15, 21],
-                    backgroundColor: 'rgba(59, 130, 246, 0.8)'
-                }, {
-                    label: 'Học viên hoàn thành',
-                    data: [8, 11, 9, 14],
-                    backgroundColor: 'rgba(16, 185, 129, 0.8)'
-                }]
+                labels: weekLabels,
+                datasets: [
+                    { label:'Học viên mới', data: weeklyAnalytics.map(w=>w.NewStudents), backgroundColor:'rgba(59,130,246,.8)' },
+                    { label:'Hoàn thành', data: weeklyAnalytics.map(w=>w.CompletedStudents), backgroundColor:'rgba(16,185,129,.8)' }
+                ]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
+            options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom' } }, scales:{ y:{ beginAtZero:true, precision:0 } } }
         });
-        
-        // Category Chart
-        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-        const categoryChart = new Chart(categoryCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Lập trình', 'Thiết kế', 'Marketing', 'Kinh doanh', 'Khác'],
-                datasets: [{
-                    data: [35, 25, 20, 15, 5],
-                    backgroundColor: [
-                        '#3b82f6',
-                        '#10b981',
-                        '#f59e0b',
-                        '#8b5cf6',
-                        '#6b7280'
-                    ],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: {
-                            padding: 15
-                        }
-                    }
-                }
-            }
+
+        // Category distribution
+        const catColors = ['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#0ea5e9','#84cc16','#ec4899'];
+        const catData = { labels: categoryDistribution.map(c=>c.CategoryName),
+                          datasets:[{ data: categoryDistribution.map(c=>c.CourseCount), backgroundColor: catColors.slice(0, categoryDistribution.length), borderWidth:0 }] };
+        new Chart(document.getElementById('categoryChart'), { type:'doughnut', data: catData, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } } } });
+
+        const legend = document.getElementById('categoryLegend');
+        categoryDistribution.forEach((c,i)=>{
+            const el=document.createElement('div');
+            el.className='legend-item';
+            el.innerHTML=`<span class="legend-color" style="background:${catColors[i%catColors.length]}"></span>
+                          <span><strong>${c.CategoryName}</strong> • ${c.CourseCount} KH • ${c.StudentCount} HV • ${c.Revenue.toLocaleString('vi-VN')}₫</span>`;
+            legend.appendChild(el);
         });
-        
-        // Export functions
-        function exportPDF() {
-            toastr.info('Đang chuẩn bị file PDF...');
-            setTimeout(() => {
-                toastr.success('File PDF đã được tải xuống!');
-            }, 2000);
-        }
-        
-        function exportExcel() {
-            toastr.info('Đang xuất file Excel...');
-            setTimeout(() => {
-                toastr.success('File Excel đã được tải xuống!');
-            }, 2000);
-        }
-        
-        function printReport() {
-            window.print();
-        }
-        
-        function updateDateRange() {
-            const startDate = $('#startDate').val();
-            const endDate = $('#endDate').val();
-            
-            if (startDate && endDate) {
-                toastr.info('Đang cập nhật dữ liệu...');
-                // Update charts with new date range
-            } else {
-                toastr.warning('Vui lòng chọn khoảng thời gian');
-            }
-        }
-        
-        // Set default dates
-        const today = new Date();
-        const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        $('#endDate').val(today.toISOString().split('T')[0]);
-        $('#startDate').val(lastMonth.toISOString().split('T')[0]);
     </script>
 }

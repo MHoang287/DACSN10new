@@ -1,27 +1,437 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+@model DACSN10.Models.Quiz
+
 @{
+    ViewData["Title"] = $"Làm bài kiểm tra - {Model.Title}";
+    var hasSubmitted = ViewBag.HasSubmitted ?? false;
 }
-<div class="container mt-5">
-    <h2 class="mb-4">Chi tiết bài kiểm tra</h2>
-    <form method="post" action="/Exam/Submit">
-        <input type="hidden" name="quizId" value="1" />
-        @for (int i = 1; i <= 3; i++)
-        {
-            <div class="mb-3">
-                <label class="form-label">Câu hỏi @i: Đây là nội dung câu hỏi?</label>
-                <div>
-                    @for (char c = 'A'; c <= 'D'; c++)
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-9 mx-auto">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a asp-controller="Course" asp-action="Index">
+                            <i class="fas fa-home"></i> Trang chủ
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a asp-controller="Course" asp-action="Details" asp-route-id="@Model.CourseID">
+                            @Model.Course?.TenKhoaHoc
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a asp-controller="Exam" asp-action="Index" asp-route-courseId="@Model.CourseID">
+                            Bài kiểm tra
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">@Model.Title</li>
+                </ol>
+            </nav>
+
+            <!-- Quiz Header Card -->
+            <div class="card shadow-sm mb-4 border-0">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-clipboard-list"></i>
+                            @Model.Title
+                        </h4>
+                        @if (!hasSubmitted && Model.DurationMinutes > 0)
+                        {
+                            <div class="timer-display">
+                                <i class="far fa-clock"></i>
+                                <span id="timer-display" class="fw-bold fs-5">@Model.DurationMinutes:00</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex gap-3 flex-wrap align-items-center">
+                        <div class="badge bg-info text-white px-3 py-2">
+                            <i class="far fa-clock"></i>
+                            Thời gian: 
+                            @if (Model.DurationMinutes > 0)
+                            {
+                                <span>@Model.DurationMinutes phút</span>
+                            }
+                            else
+                            {
+                                <span>Không giới hạn</span>
+                            }
+                        </div>
+                        <div class="badge bg-secondary px-3 py-2">
+                            <i class="fas fa-question-circle"></i>
+                            @Model.Questions?.Count ?? 0 câu hỏi
+                        </div>
+                        @if (hasSubmitted)
+                        {
+                            <div class="badge bg-success px-3 py-2">
+                                <i class="fas fa-check-circle"></i>
+                                Đã hoàn thành - Điểm: @ViewBag.UserScore
+                            </div>
+                        }
+                    </div>
+
+                    @if (!hasSubmitted)
                     {
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="answers[@(i - 1)]" value="@c" />
-                            <label class="form-check-label">Đáp án @c</label>
+                        <div class="alert alert-info mt-3 mb-0">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Lưu ý:</strong> Bạn chỉ có một lần làm bài. Hãy đọc kỹ và kiểm tra câu trả lời trước khi nộp bài.
                         </div>
                     }
                 </div>
             </div>
-        }
-        <button type="submit" class="btn btn-success">Nộp bài</button>
-    </form>
+
+            @if (hasSubmitted)
+            {
+                <!-- Already Submitted Message -->
+                <div class="card shadow-sm border-success">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                        <h4 class="text-success mb-3">Bạn đã hoàn thành bài kiểm tra này</h4>
+                        <p class="text-muted mb-2">Điểm số: <strong class="fs-4 text-success">@ViewBag.UserScore/100</strong></p>
+                        <p class="text-muted mb-4">Thời gian làm bài: @ViewBag.TakenAt</p>
+                        <div class="d-flex gap-2 justify-content-center">
+                            <a asp-controller="Exam" asp-action="Index" asp-route-courseId="@Model.CourseID" 
+                               class="btn btn-primary">
+                                <i class="fas fa-list"></i> Danh sách bài kiểm tra
+                            </a>
+                            <a asp-controller="Course" asp-action="Details" asp-route-id="@Model.CourseID" 
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-book"></i> Quay lại khóa học
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <!-- Quiz Form -->
+                <form asp-controller="Exam" asp-action="Submit" method="post" id="quizForm" onsubmit="return confirmSubmit()">
+                    <input type="hidden" name="quizId" value="@Model.QuizID" />
+                    @Html.AntiForgeryToken()
+
+                    @if (Model.Questions != null && Model.Questions.Any())
+                    {
+                        @for (int i = 0; i < Model.Questions.Count; i++)
+                        {
+                            var question = Model.Questions.ElementAt(i);
+                            <div class="card shadow-sm mb-4 question-card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-start mb-3">
+                                        <span class="badge bg-primary me-3 fs-6 px-3 py-2">
+                                            Câu @(i + 1)
+                                        </span>
+                                        <h5 class="card-title mb-0 flex-grow-1">
+                                            @question.QuestionText
+                                        </h5>
+                                    </div>
+
+                                    <div class="options ms-2">
+                                        <div class="form-check mb-3 option-item">
+                                            <input class="form-check-input" 
+                                                   type="radio" 
+                                                   name="answers[@question.QuestionID]" 
+                                                   id="q@(question.QuestionID)_a" 
+                                                   value="A" 
+                                                   required>
+                                            <label class="form-check-label w-100" for="q@(question.QuestionID)_a">
+                                                <div class="option-content">
+                                                    <strong class="option-letter">A</strong>
+                                                    <span class="option-text">@question.OptionA</span>
+                                                </div>
+                                            </label>
+                                        </div>
+
+                                        <div class="form-check mb-3 option-item">
+                                            <input class="form-check-input" 
+                                                   type="radio" 
+                                                   name="answers[@question.QuestionID]" 
+                                                   id="q@(question.QuestionID)_b" 
+                                                   value="B" 
+                                                   required>
+                                            <label class="form-check-label w-100" for="q@(question.QuestionID)_b">
+                                                <div class="option-content">
+                                                    <strong class="option-letter">B</strong>
+                                                    <span class="option-text">@question.OptionB</span>
+                                                </div>
+                                            </label>
+                                        </div>
+
+                                        <div class="form-check mb-3 option-item">
+                                            <input class="form-check-input" 
+                                                   type="radio" 
+                                                   name="answers[@question.QuestionID]" 
+                                                   id="q@(question.QuestionID)_c" 
+                                                   value="C" 
+                                                   required>
+                                            <label class="form-check-label w-100" for="q@(question.QuestionID)_c">
+                                                <div class="option-content">
+                                                    <strong class="option-letter">C</strong>
+                                                    <span class="option-text">@question.OptionC</span>
+                                                </div>
+                                            </label>
+                                        </div>
+
+                                        <div class="form-check mb-0 option-item">
+                                            <input class="form-check-input" 
+                                                   type="radio" 
+                                                   name="answers[@question.QuestionID]" 
+                                                   id="q@(question.QuestionID)_d" 
+                                                   value="D" 
+                                                   required>
+                                            <label class="form-check-label w-100" for="q@(question.QuestionID)_d">
+                                                <div class="option-content">
+                                                    <strong class="option-letter">D</strong>
+                                                    <span class="option-text">@question.OptionD</span>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Progress Card -->
+                        <div class="card shadow-sm mb-4 bg-light">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted">
+                                        <i class="fas fa-tasks"></i> Tiến độ làm bài
+                                    </span>
+                                    <span class="fw-bold">
+                                        <span id="answered-count">0</span>/@(Model.Questions?.Count ?? 0)
+                                    </span>
+                                </div>
+                                <div class="progress" style="height: 25px;">
+                                    <div class="progress-bar progress-bar-striped" 
+                                         role="progressbar" 
+                                         id="progress-bar" 
+                                         style="width: 0%" 
+                                         aria-valuenow="0" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                        0%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Section -->
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body text-center py-4">
+                                <p class="text-muted mb-3">
+                                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                                    Hãy kiểm tra kỹ các câu trả lời trước khi nộp bài. 
+                                    <strong>Bạn chỉ có thể nộp bài một lần duy nhất.</strong>
+                                </p>
+                                <div class="d-flex gap-2 justify-content-center flex-wrap">
+                                    <button type="submit" class="btn btn-success btn-lg px-5">
+                                        <i class="fas fa-paper-plane"></i>
+                                        Nộp bài kiểm tra
+                                    </button>
+                                    <a asp-controller="Exam" asp-action="Index" asp-route-courseId="@Model.CourseID" 
+                                       class="btn btn-outline-secondary btn-lg px-5">
+                                        <i class="fas fa-times"></i>
+                                        Hủy
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Bài kiểm tra này chưa có câu hỏi nào.
+                        </div>
+                    }
+                </form>
+            }
+        </div>
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Confirmation before submit
+        function confirmSubmit() {
+            const totalQuestions = @(Model.Questions?.Count ?? 0);
+            const answeredQuestions = document.querySelectorAll('input[type="radio"]:checked').length;
+
+            if (answeredQuestions < totalQuestions) {
+                return confirm(`Bạn chưa trả lời tất cả câu hỏi (${answeredQuestions}/${totalQuestions}). Bạn có chắc chắn muốn nộp bài không?`);
+            }
+
+            return confirm('Bạn có chắc chắn muốn nộp bài kiểm tra? Bạn không thể thay đổi sau khi nộp.');
+        }
+
+        // Track progress
+        document.addEventListener('DOMContentLoaded', function() {
+            const totalQuestions = @(Model.Questions?.Count ?? 0);
+            
+            if (totalQuestions > 0) {
+                const radioButtons = document.querySelectorAll('input[type="radio"]');
+                
+                function updateProgress() {
+                    const answeredQuestions = new Set();
+                    radioButtons.forEach(radio => {
+                        if (radio.checked) {
+                            answeredQuestions.add(radio.name);
+                        }
+                    });
+                    
+                    const count = answeredQuestions.size;
+                    const percentage = Math.round((count / totalQuestions) * 100);
+                    
+                    document.getElementById('answered-count').textContent = count;
+                    const progressBar = document.getElementById('progress-bar');
+                    progressBar.style.width = percentage + '%';
+                    progressBar.setAttribute('aria-valuenow', percentage);
+                    progressBar.textContent = percentage + '%';
+                    
+                    // Change color based on progress
+                    if (percentage === 100) {
+                        progressBar.className = 'progress-bar bg-success';
+                    } else if (percentage >= 50) {
+                        progressBar.className = 'progress-bar bg-info progress-bar-striped';
+                    } else {
+                        progressBar.className = 'progress-bar bg-warning progress-bar-striped';
+                    }
+                }
+                
+                radioButtons.forEach(radio => {
+                    radio.addEventListener('change', updateProgress);
+                });
+            }
+        });
+
+        @* Timer (if time limit exists) *@
+        @if (Model.DurationMinutes > 0 && !hasSubmitted)
+        {
+            @:let timeLeft = @Model.DurationMinutes * 60; // Convert to seconds
+            @:
+            @:function updateTimer() {
+            @:    const minutes = Math.floor(timeLeft / 60);
+            @:    const seconds = timeLeft % 60;
+            @:    
+            @:    const timerDisplay = document.getElementById('timer-display');
+            @:    if (timerDisplay) {
+            @:        timerDisplay.textContent = minutes + ':' + seconds.toString().padStart(2, '0');
+            @:        
+            @:        if (timeLeft @Html.Raw("<=") 300) { // Last 5 minutes
+            @:            timerDisplay.classList.add('text-danger', 'pulse');
+            @:        }
+            @:
+            @:        if (timeLeft @Html.Raw("<=") 60) { // Last 1 minute
+            @:            timerDisplay.closest('.timer-display').classList.add('bg-danger', 'px-3', 'py-2', 'rounded');
+            @:        }
+            @:    }
+            @:    
+            @:    if (timeLeft @Html.Raw("<=") 0) {
+            @:        alert('Hết thời gian làm bài! Hệ thống sẽ tự động nộp bài của bạn.');
+            @:        document.getElementById('quizForm').submit();
+            @:    }
+            @:    
+            @:    timeLeft--;
+            @:}
+            @:
+            @:setInterval(updateTimer, 1000);
+            @:updateTimer(); // Initial call
+        }
+
+        // Prevent accidental page leave
+        let formSubmitted = false;
+        
+        document.getElementById('quizForm')?.addEventListener('submit', function() {
+            formSubmitted = true;
+        });
+        
+        window.addEventListener('beforeunload', function(e) {
+            if (!formSubmitted && !@hasSubmitted.ToString().ToLower()) {
+                e.preventDefault();
+                e.returnValue = 'Bạn có chắc chắn muốn rời khỏi trang? Dữ liệu bài làm của bạn sẽ bị mất.';
+                return e.returnValue;
+            }
+        });
+    </script>
+}
+
+<style>
+    .question-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+
+    .question-card:hover {
+        border-left-color: var(--bs-primary);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .option-item {
+        transition: all 0.2s ease;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 12px;
+    }
+
+    .option-item:hover {
+        background-color: #f8f9fa;
+        border-color: #dee2e6;
+    }
+
+    .option-item input[type="radio"]:checked + .form-check-label {
+        background-color: #e7f3ff;
+    }
+
+    .option-item input[type="radio"]:checked + .form-check-label .option-content {
+        font-weight: 500;
+        color: var(--bs-primary);
+    }
+
+    .form-check-input {
+        margin-top: 0.5rem;
+        width: 1.25rem;
+        height: 1.25rem;
+        cursor: pointer;
+    }
+
+    .form-check-label {
+        cursor: pointer;
+        padding: 8px 12px;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+    }
+
+    .option-content {
+        display: flex;
+        align-items: start;
+        gap: 12px;
+    }
+
+    .option-letter {
+        min-width: 25px;
+        color: var(--bs-primary);
+    }
+
+    .option-text {
+        flex: 1;
+    }
+
+    .timer-display {
+        background-color: rgba(255, 255, 255, 0.2);
+        padding: 8px 16px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .pulse {
+        animation: pulse 1s infinite;
+    }
+
+    .card {
+        animation: fadeInUp 0.5s ease-out;
+    }
+</style>

@@ -33,11 +33,11 @@
 <!-- Statistics Cards -->
 <div class="stats-cards" data-aos="fade-up">
     <div class="stat-card">
-        <div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
-            <i class="fas fa-users"></i>
+        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+            <i class="fas fa-clock"></i>
         </div>
-        <div class="stat-value">@Model.Count</div>
-        <div class="stat-label">Tổng học viên</div>
+        <div class="stat-value">@Model.Count(e => e.EnrollDate >= DateTime.Now.AddDays(-30))</div>
+        <div class="stat-label">Học viên mới (30 ngày)</div>
     </div>
 
     <div class="stat-card">

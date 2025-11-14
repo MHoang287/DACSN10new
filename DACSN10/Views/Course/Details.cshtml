@@ -282,9 +282,9 @@
                                     </div>
                                     @if (isEnrolled || hasPaid)
                                     {
-                                        <button class="btn btn-warning w-100" onclick="startQuiz(@quiz.QuizID)">
+                                        <a href="@Url.Action("Details", "Exam", new { id = quiz.QuizID })" class="btn btn-warning w-100">
                                             <i class="fas fa-play me-2"></i>Làm bài kiểm tra
-                                        </button>
+                                        </a>
                                     }
                                     else
                                     {
@@ -522,62 +522,62 @@
         function toggleFavorite(courseId) {
         @if (User.Identity.IsAuthenticated)
         {
-            <text>
-                    const action = @Html.Raw(isFavorite.ToString().ToLower()) ? 'RemoveFromFavorite' : 'AddToFavorite';
+                <text>
+                        const action = @Html.Raw(isFavorite.ToString().ToLower()) ? 'RemoveFromFavorite' : 'AddToFavorite';
 
-                    $.post('@Url.Action("")' + action, {
-                        courseId: courseId,
-                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
-                    })
-                    .done(function(response) {
-                        if (response.success) {
-                            toastr.success(response.message);
-                            setTimeout(() => location.reload(), 1000);
-                        } else {
-                            toastr.error(response.message);
-                        }
-                    })
-                    .fail(function() {
-                        toastr.error('Có lỗi xảy ra khi thực hiện thao tác!');
-                    });
-            </text>
+                        $.post('@Url.Action("")' + action, {
+                            courseId: courseId,
+                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                        })
+                        .done(function(response) {
+                            if (response.success) {
+                                toastr.success(response.message);
+                                setTimeout(() => location.reload(), 1000);
+                            } else {
+                                toastr.error(response.message);
+                            }
+                        })
+                        .fail(function() {
+                            toastr.error('Có lỗi xảy ra khi thực hiện thao tác!');
+                        });
+                </text>
         }
         else
         {
-            <text>
-                    window.location.href = '/Identity/Account/Login';
-            </text>
+                <text>
+                        window.location.href = '/Identity/Account/Login';
+                </text>
         }
         }
 
         function toggleFollow(courseId) {
         @if (User.Identity.IsAuthenticated)
         {
-            <text>
-                    const action = @Html.Raw(isFollowed.ToString().ToLower()) ? 'UnfollowCourse' : 'FollowCourse';
+                <text>
+                        const action = @Html.Raw(isFollowed.ToString().ToLower()) ? 'UnfollowCourse' : 'FollowCourse';
 
-                    $.post('@Url.Action("")' + action, {
-                        courseId: courseId,
-                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
-                    })
-                    .done(function(response) {
-                        if (response.success) {
-                            toastr.success(response.message);
-                            setTimeout(() => location.reload(), 1000);
-                        } else {
-                            toastr.error(response.message);
-                        }
-                    })
-                    .fail(function() {
-                        toastr.error('Có lỗi xảy ra khi thực hiện thao tác!');
-                    });
-            </text>
+                        $.post('@Url.Action("")' + action, {
+                            courseId: courseId,
+                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                        })
+                        .done(function(response) {
+                            if (response.success) {
+                                toastr.success(response.message);
+                                setTimeout(() => location.reload(), 1000);
+                            } else {
+                                toastr.error(response.message);
+                            }
+                        })
+                        .fail(function() {
+                            toastr.error('Có lỗi xảy ra khi thực hiện thao tác!');
+                        });
+                </text>
         }
         else
         {
-            <text>
-                    window.location.href = '/Identity/Account/Login';
-            </text>
+                <text>
+                        window.location.href = '/Identity/Account/Login';
+                </text>
         }
         }
 
@@ -588,9 +588,7 @@
         }
 
         function startQuiz(quizId) {
-            toastr.info('Đang mở bài kiểm tra...');
-            // Implement quiz logic here
-            console.log('Starting quiz:', quizId);
+            window.location.href = '@Url.Action("Details", "Exam")' + '?id=' + quizId;
         }
 
         function viewAssignment(assignmentId) {

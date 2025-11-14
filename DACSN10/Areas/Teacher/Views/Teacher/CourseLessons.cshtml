@@ -314,6 +314,282 @@
         }
 
         }
+    .quizzes-container {
+        background: white;
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        margin-bottom: 2rem;
+    }
+
+    .quizzes-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 3px solid #f1f5f9;
+    }
+
+    .quizzes-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+        .quizzes-title i {
+            color: #667eea;
+            font-size: 2rem;
+        }
+
+    .add-quiz-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        border: none;
+        cursor: pointer;
+    }
+
+        .add-quiz-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+
+        .add-quiz-btn i {
+            font-size: 1.1rem;
+        }
+
+    /* Quiz List */
+    .quizzes-list {
+        display: grid;
+        gap: 1.5rem;
+    }
+
+    /* Quiz Item Card */
+    .quiz-item {
+        background: linear-gradient(to right, #fafafa 0%, #ffffff 100%);
+        border: 2px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 2rem;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 2rem;
+        align-items: center;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .quiz-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .quiz-item:hover {
+            border-color: #cbd5e1;
+            transform: translateX(8px);
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12);
+        }
+
+            .quiz-item:hover::before {
+                transform: scaleY(1);
+            }
+
+    /* Quiz Number Badge */
+    .quiz-number {
+        width: 70px;
+        height: 70px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.8rem;
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        flex-shrink: 0;
+    }
+
+    /* Quiz Content */
+    .quiz-content {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .quiz-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0 0 1.25rem 0;
+        line-height: 1.4;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+        .quiz-title i {
+            color: #667eea;
+        }
+
+    /* Quiz Stats */
+    .quiz-stats {
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .stat-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 1.2rem;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+        .stat-item i {
+            font-size: 1.1rem;
+        }
+
+        /* Different colors for each stat */
+        .stat-item:nth-child(1) {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            color: #1e40af;
+        }
+
+        .stat-item:nth-child(2) {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+        }
+
+        .stat-item:nth-child(3) {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+        }
+
+        .stat-item:hover {
+            transform: scale(1.05);
+        }
+
+    /* Quiz Actions */
+    .quiz-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        flex-shrink: 0;
+    }
+
+        .quiz-actions .action-btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border: none;
+            cursor: pointer;
+            min-width: 150px;
+            white-space: nowrap;
+        }
+
+            .quiz-actions .action-btn i {
+                font-size: 1rem;
+            }
+
+        /* Button Styles */
+        .quiz-actions .btn-edit {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+        }
+
+            .quiz-actions .btn-edit:hover {
+                background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(252, 211, 77, 0.4);
+            }
+
+        .quiz-actions .btn-preview {
+            background: linear-gradient(135deg, #dbeafe 0%, #93c5fd 100%);
+            color: #1e40af;
+        }
+
+            .quiz-actions .btn-preview:hover {
+                background: linear-gradient(135deg, #93c5fd 0%, #60a5fa 100%);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+            }
+
+        .quiz-actions .btn-delete {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #991b1b;
+        }
+
+            .quiz-actions .btn-delete:hover {
+                background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+            }
+
+    /* Empty State */
+    .quizzes-container .empty-state {
+        text-align: center;
+        padding: 5rem 2rem;
+    }
+
+    .quizzes-container .empty-icon {
+        font-size: 6rem;
+        color: #cbd5e1;
+        margin-bottom: 2rem;
+        animation: float 3s ease-in-out infinite;
+    }
+
+
+    .quizzes-container .empty-state h3 {
+        color: #475569;
+        font-weight: 600;
+        font-size: 1.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .quizzes-container .empty-state p {
+        color: #94a3b8;
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+    }
+
+
+    /* Animation for new items */
+    .quiz-item {
+        animation: fadeInUp 0.5s ease-out;
+    }
     </style>
 }
 
@@ -464,7 +740,75 @@
         </div>
     }
 </div>
+<!-- Lessons Quizzes-->
+<div class="quizzes-container" data-aos="fade-up" data-aos-delay="250">
+    <div class="quizzes-header">
+        <h3 class="quizzes-title">
+            <i class="fas fa-clipboard-check"></i>
+            Bài kiểm tra
+        </h3>
+        <a href="@Url.Action("CreateQuiz", "Teacher", new { courseId = course?.CourseID })" class="add-quiz-btn">
+            <i class="fas fa-plus"></i>
+            Tạo bài kiểm tra mới
+        </a>
+    </div>
 
+    @if (course?.Quizzes != null && course.Quizzes.Any())
+    {
+        <div class="quizzes-list">
+            @{
+                int quizNumber = 1;
+            }
+            @foreach (var quiz in course.Quizzes.OrderBy(q => q.QuizID))
+            {
+                <div class="quiz-item" data-quiz-id="@quiz.QuizID">
+                    <div class="quiz-number">@quizNumber</div>
+                    
+                    <div class="quiz-content">
+                        <h4 class="quiz-title">@quiz.Title</h4>
+                        
+                        <div class="quiz-stats">
+                            <div class="stat-item">
+                                <i class="fas fa-question-circle"></i>
+                                <span>@(quiz.Questions?.Count ?? 0) câu hỏi</span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-clock"></i>
+                                <span>@quiz.DurationMinutes phút</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="quiz-actions">
+                        <a href="@Url.Action("EditQuiz", "Teacher", new { id = quiz.QuizID })" class="action-btn btn-edit">
+                            <i class="fas fa-edit"></i>
+                            Chỉnh sửa
+                        </a>
+                        <button class="action-btn btn-delete" onclick="deleteQuiz(@quiz.QuizID, '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(quiz.Title))' )">
+                            <i class="fas fa-trash"></i>
+                            Xóa
+                        </button>
+                    </div>
+                </div>
+                quizNumber++;
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-clipboard-list"></i>
+            </div>
+            <h3>Chưa có bài kiểm tra nào</h3>
+            <p class="text-muted mb-4">Tạo bài kiểm tra để đánh giá kiến thức học viên</p>
+            <a href="@Url.Action("CreateQuiz", "Teacher", new { courseId = course?.CourseID })" class="add-quiz-btn mx-auto">
+                <i class="fas fa-plus"></i>
+                Tạo bài kiểm tra
+            </a>
+        </div>
+    }
+</div>
 <!-- Additional Actions -->
 <div class="text-center mt-4" data-aos="fade-up" data-aos-delay="300">
     <a href="@Url.Action("CourseQuizzes", "Teacher", new { courseId = course?.CourseID })" class="btn btn-outline-primary me-2">
