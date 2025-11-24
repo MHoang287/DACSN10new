@@ -230,7 +230,7 @@
 
             <div class="metric-row">
                 <span class="metric-label">Kích thước database</span>
-                <span class="metric-value">2.4 GB</span>
+                <span class="metric-value" id="dbSize">2.4 GB</span>
             </div>
 
             <div class="metric-row">
@@ -277,7 +277,7 @@
                 </div>
                 <div>
                     <div class="fw-semibold">Sao lưu cuối cùng</div>
-                    <small class="text-muted">Hôm nay, 02:00 AM - Thành công</small>
+                    <small class="text-muted" id="lastBackupInfo">Hôm nay, 02:00 AM - Thành công</small>
                 </div>
             </div>
 
@@ -485,16 +485,20 @@
     </div>
 </div>
 
+<!-- (nội dung HTML giống bản bạn gửi, không đổi, chỉ JS quan trọng ở cuối) -->
 @section Scripts {
     <script>
-        $(document).ready(function() {
+        function getCsrfToken() {
+            return $('input[name="__RequestVerificationToken"]').val();
+        }
+
+        $(document).ready(function () {
             initializeProgressRings();
             startRealTimeMonitoring();
             loadSystemStatus();
         });
 
         function initializeProgressRings() {
-            // Set progress ring values
             setProgressRing('systemHealth', 92);
             setProgressRing('serverPerformance', 85);
             setProgressRing('databaseHealth', 76);
@@ -503,31 +507,28 @@
 
         function setProgressRing(id, percentage) {
             const circle = document.getElementById(id);
-            const circumference = 2 * Math.PI * 30; // r = 30
+            if (!circle) return;
+
+            const circumference = 2 * Math.PI * 30;
             const offset = circumference - (percentage / 100) * circumference;
 
             circle.style.strokeDashoffset = offset;
 
-            // Change color based on percentage
             if (percentage >= 80) {
-                circle.style.stroke = '#10b981'; // Green
+                circle.style.stroke = '#10b981';
             } else if (percentage >= 60) {
-                circle.style.stroke = '#f59e0b'; // Yellow
+                circle.style.stroke = '#f59e0b';
             } else {
-                circle.style.stroke = '#ef4444'; // Red
+                circle.style.stroke = '#ef4444';
             }
         }
 
         function startRealTimeMonitoring() {
-            // Update system metrics every 30 seconds
             setInterval(updateMetrics, 30000);
-
-            // Update logs every 10 seconds
             setInterval(updateLogs, 10000);
         }
 
         function updateMetrics() {
-            // Simulate real-time metric updates
             const metrics = {
                 cpuUsage: (Math.random() * 20 + 40).toFixed(1) + '%',
                 memoryUsage: (Math.random() * 2 + 6).toFixed(1) + 'GB / 16GB',
@@ -540,7 +541,6 @@
         }
 
         function updateLogs() {
-            // Add new log entry (simulate)
             const logTypes = ['INFO', 'WARNING', 'ERROR'];
             const messages = [
                 'User authentication successful',
@@ -569,7 +569,6 @@
             const logsContainer = $('#systemLogs');
             logsContainer.prepend(newLog);
 
-            // Keep only last 50 entries
             const entries = logsContainer.find('.log-entry');
             if (entries.length > 50) {
                 entries.slice(50).remove();
@@ -577,6 +576,7 @@
         }
 
         function loadSystemStatus() {
+            // hiện tại vẫn demo, nếu muốn có API có thể map từ GetSystemHealthData trong controller
             showInfo('Hệ thống đang hoạt động bình thường');
         }
 
@@ -602,11 +602,26 @@
                 if (result.isConfirmed) {
                     showLoading();
 
-                    setTimeout(() => {
-                        hideLoading();
-                        showSuccess('Tối ưu hóa cơ sở dữ liệu thành công! Hiệu suất cải thiện 18%.');
-                        setProgressRing('databaseHealth', 94);
-                    }, 3000);
+                    $.ajax({
+                        url: '/Admin/Admin/OptimizeDatabase',
+                        type: 'POST',
+                        headers: {
+                            'RequestVerificationToken': getCsrfToken()
+                        },
+                        success: function (response) {
+                            hideLoading();
+                            if (response.success) {
+                                showSuccess(response.message || 'Tối ưu hóa cơ sở dữ liệu thành công!');
+                                setProgressRing('databaseHealth', 94);
+                            } else {
+                                showError(response.message || 'Lỗi khi tối ưu hóa cơ sở dữ liệu');
+                            }
+                        },
+                        error: function () {
+                            hideLoading();
+                            showError('Lỗi khi tối ưu hóa cơ sở dữ liệu');
+                        }
+                    });
                 }
             });
         }
@@ -614,10 +629,25 @@
         function createBackup() {
             showLoading();
 
-            setTimeout(() => {
-                hideLoading();
-                showSuccess('Sao lưu dữ liệu thành công! Kích thước: 1.9GB');
-            }, 2000);
+            $.ajax({
+                url: '/Admin/Admin/BackupDatabase',
+                type: 'POST',
+                headers: {
+                    'RequestVerificationToken': getCsrfToken()
+                },
+                success: function (response) {
+                    hideLoading();
+                    if (response.success) {
+                        showSuccess(response.message || 'Sao lưu dữ liệu thành công!');
+                    } else {
+                        showError(response.message || 'Lỗi khi sao lưu dữ liệu');
+                    }
+                },
+                error: function () {
+                    hideLoading();
+                    showError('Lỗi khi sao lưu dữ liệu');
+                }
+            });
         }
 
         function restoreBackup() {
@@ -646,12 +676,7 @@
                 confirmButtonColor: '#f59e0b'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    showLoading();
-
-                    setTimeout(() => {
-                        hideLoading();
-                        showSuccess('Khôi phục dữ liệu thành công!');
-                    }, 4000);
+                    showWarning('Chức năng khôi phục cần được triển khai bởi kỹ thuật viên.');
                 }
             });
         }
@@ -664,56 +689,93 @@
         function clearCache() {
             showLoading();
 
-            setTimeout(() => {
-                hideLoading();
-                showSuccess('Đã xóa cache thành công! Hệ thống hoạt động nhanh hơn.');
-            }, 1500);
+            $.ajax({
+                url: '/Admin/Admin/ClearCache',
+                type: 'POST',
+                headers: {
+                    'RequestVerificationToken': getCsrfToken()
+                },
+                success: function (response) {
+                    hideLoading();
+                    if (response.success) {
+                        showSuccess(response.message || 'Đã xóa cache thành công!');
+                    } else {
+                        showError(response.message || 'Lỗi khi xóa cache');
+                    }
+                },
+                error: function () {
+                    hideLoading();
+                    showError('Lỗi khi xóa cache');
+                }
+            });
         }
 
         function runDiagnostics() {
             showLoading();
 
-            setTimeout(() => {
-                hideLoading();
-                Swal.fire({
-                    title: 'Kết quả chẩn đoán hệ thống',
-                    html: `
-                        <div class="text-start">
-                            <h6 class="text-success"><i class="fas fa-check me-2"></i>Hoạt động tốt:</h6>
-                            <ul class="mb-3">
-                                <li>Web server phản hồi nhanh</li>
-                                <li>Database kết nối ổn định</li>
-                                <li>Bảo mật hoạt động tốt</li>
-                                <li>Backup service bình thường</li>
-                            </ul>
+            $.ajax({
+                url: '/Admin/Admin/RunDiagnostics',
+                type: 'POST',
+                headers: {
+                    'RequestVerificationToken': getCsrfToken()
+                },
+                success: function (response) {
+                    hideLoading();
+                    Swal.fire({
+                        title: 'Kết quả chẩn đoán hệ thống',
+                        html: `
+                            <div class="text-start">
+                                <h6 class="text-success"><i class="fas fa-check me-2"></i>Hoạt động tốt:</h6>
+                                <ul class="mb-3">
+                                    <li>Web server phản hồi nhanh</li>
+                                    <li>Database kết nối ổn định</li>
+                                    <li>Bảo mật hoạt động tốt</li>
+                                    <li>Backup service bình thường</li>
+                                </ul>
 
-                            <h6 class="text-warning"><i class="fas fa-exclamation-triangle me-2"></i>Cần chú ý:</h6>
-                            <ul class="mb-3">
-                                <li>Email service phản hồi chậm</li>
-                                <li>Disk usage cao (57%)</li>
-                            </ul>
+                                <h6 class="text-warning"><i class="fas fa-exclamation-triangle me-2"></i>Cần chú ý:</h6>
+                                <ul class="mb-3">
+                                    <li>Email service phản hồi chậm</li>
+                                    <li>Disk usage cao (57%)</li>
+                                </ul>
 
-                            <h6 class="text-primary"><i class="fas fa-lightbulb me-2"></i>Khuyến nghị:</h6>
-                            <ul>
-                                <li>Tối ưu hóa cơ sở dữ liệu</li>
-                                <li>Dọn dẹp file log cũ</li>
-                                <li>Kiểm tra cấu hình email</li>
-                            </ul>
-                        </div>
-                    `,
-                    confirmButtonText: 'Đóng'
-                });
-            }, 2000);
+                                <h6 class="text-primary"><i class="fas fa-lightbulb me-2"></i>Khuyến nghị:</h6>
+                                <ul>
+                                    <li>Tối ưu hóa cơ sở dữ liệu</li>
+                                    <li>Dọn dẹp file log cũ</li>
+                                    <li>Kiểm tra cấu hình email</li>
+                                </ul>
+                            </div>
+                        `,
+                        confirmButtonText: 'Đóng'
+                    });
+                },
+                error: function () {
+                    hideLoading();
+                    showError('Lỗi khi chẩn đoán hệ thống');
+                }
+            });
         }
 
         function generateReport() {
             showLoading();
 
-            setTimeout(() => {
-                hideLoading();
-                showSuccess('Đã tạo báo cáo tình trạng hệ thống thành công!');
-                console.log('System health report generated');
-            }, 1500);
+            $.ajax({
+                url: '/Admin/Admin/GenerateSystemReport',
+                type: 'POST',
+                headers: {
+                    'RequestVerificationToken': getCsrfToken()
+                },
+                success: function (response) {
+                    hideLoading();
+                    showSuccess(response.message || 'Đã tạo báo cáo tình trạng hệ thống thành công!');
+                    console.log('System health report generated');
+                },
+                error: function () {
+                    hideLoading();
+                    showError('Lỗi khi tạo báo cáo tình trạng hệ thống');
+                }
+            });
         }
 
         function performMaintenance() {
@@ -726,7 +788,7 @@
 
             setTimeout(() => {
                 hideLoading();
-                showSuccess(`Bảo trì ${type} ${scheduled ? 'đã được lên lịch' : 'hoàn thành'} thành công!`);
+                showSuccess(`Bảo trì ${type} ${scheduled ? 'đã được lên lịch' : 'hoàn thành'} (demo)!`);
             }, 2000);
         }
 
@@ -745,9 +807,25 @@
         function clearLogs() {
             confirmDelete('Xóa nhật ký hệ thống?',
                 'Bạn có chắc chắn muốn xóa tất cả nhật ký? Hành động này không thể hoàn tác!',
-                function() {
-                    $('#systemLogs').empty();
-                    showSuccess('Đã xóa nhật ký hệ thống!');
+                function () {
+                    $.ajax({
+                        url: '/Admin/Admin/ClearSystemLogs',
+                        type: 'POST',
+                        headers: {
+                            'RequestVerificationToken': getCsrfToken()
+                        },
+                        success: function (response) {
+                            if (response.success) {
+                                $('#systemLogs').empty();
+                                showSuccess(response.message || 'Đã xóa nhật ký hệ thống!');
+                            } else {
+                                showError(response.message || 'Lỗi khi xóa nhật ký hệ thống');
+                            }
+                        },
+                        error: function () {
+                            showError('Lỗi khi xóa nhật ký hệ thống');
+                        }
+                    });
                 }
             );
         }
@@ -755,10 +833,21 @@
         function downloadLogs() {
             showLoading();
 
-            setTimeout(() => {
-                hideLoading();
-                showSuccess('Đã tải xuống file nhật ký hệ thống!');
-            }, 1000);
+            $.ajax({
+                url: '/Admin/Admin/DownloadSystemLogs',
+                type: 'POST',
+                headers: {
+                    'RequestVerificationToken': getCsrfToken()
+                },
+                success: function (response) {
+                    hideLoading();
+                    showSuccess(response.message || 'Đã tải xuống file nhật ký hệ thống!');
+                },
+                error: function () {
+                    hideLoading();
+                    showError('Lỗi khi tải nhật ký hệ thống');
+                }
+            });
         }
 
         function restartAllServices() {
@@ -773,10 +862,25 @@
                 if (result.isConfirmed) {
                     showLoading();
 
-                    setTimeout(() => {
-                        hideLoading();
-                        showSuccess('Đã khởi động lại tất cả dịch vụ thành công!');
-                    }, 3000);
+                    $.ajax({
+                        url: '/Admin/Admin/RestartAllServices',
+                        type: 'POST',
+                        headers: {
+                            'RequestVerificationToken': getCsrfToken()
+                        },
+                        success: function (response) {
+                            hideLoading();
+                            if (response.success) {
+                                showSuccess(response.message || 'Đã khởi động lại tất cả dịch vụ thành công!');
+                            } else {
+                                showError(response.message || 'Lỗi khi khởi động lại tất cả dịch vụ');
+                            }
+                        },
+                        error: function () {
+                            hideLoading();
+                            showError('Lỗi khi khởi động lại tất cả dịch vụ');
+                        }
+                    });
                 }
             });
         }

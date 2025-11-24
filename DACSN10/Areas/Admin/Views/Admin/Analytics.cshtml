@@ -326,64 +326,42 @@
             initializeCharts();
             loadAnalyticsData();
 
-            // Set default dates
             const today = new Date();
-            const lastMonth = new Date(today.setMonth(today.getMonth() - 1));
+            const lastMonth = new Date();
+            lastMonth.setMonth(today.getMonth() - 1);
             $('#fromDate').val(lastMonth.toISOString().split('T')[0]);
             $('#toDate').val(new Date().toISOString().split('T')[0]);
         });
 
+        function formatCurrency(value) {
+            return Number(value).toLocaleString('vi-VN') + '₫';
+        }
+
+        function showLoading(selector) {
+            $(selector).removeClass('d-none');
+        }
+
+        function hideLoading(selector) {
+            $(selector).addClass('d-none');
+        }
+
         function initializeCharts() {
-            // User Growth Chart
             const userCtx = document.getElementById('userGrowthChart').getContext('2d');
             userGrowthChart = new Chart(userCtx, {
                 type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Học viên',
-                        data: [],
-                        borderColor: 'rgb(75, 192, 192)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        tension: 0.4
-                    }, {
-                        label: 'Giảng viên',
-                        data: [],
-                        borderColor: 'rgb(255, 99, 132)',
-                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                        tension: 0.4
-                    }]
-                },
+                data: { labels: [], datasets: [] },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
+                    plugins: { legend: { position: 'top' } },
+                    scales: { y: { beginAtZero: true } }
                 }
             });
 
-            // Revenue Growth Chart
             const revenueCtx = document.getElementById('revenueGrowthChart').getContext('2d');
             revenueGrowthChart = new Chart(revenueCtx, {
                 type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Doanh thu (VNĐ)',
-                        data: [],
-                        borderColor: 'rgb(54, 162, 235)',
-                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                        tension: 0.4
-                    }]
-                },
+                data: { labels: [], datasets: [] },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
@@ -391,58 +369,28 @@
                         y: {
                             beginAtZero: true,
                             ticks: {
-                                callback: function(value) {
-                                    return formatCurrency(value);
-                                }
+                                callback: function(value) { return formatCurrency(value); }
                             }
                         }
                     }
                 }
             });
 
-            // Course Distribution Chart
             const courseCtx = document.getElementById('courseDistributionChart').getContext('2d');
             courseDistributionChart = new Chart(courseCtx, {
                 type: 'doughnut',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        data: [],
-                        backgroundColor: [
-                            'rgba(255, 99, 132, 0.8)',
-                            'rgba(54, 162, 235, 0.8)',
-                            'rgba(255, 205, 86, 0.8)',
-                            'rgba(75, 192, 192, 0.8)',
-                            'rgba(153, 102, 255, 0.8)',
-                            'rgba(255, 159, 64, 0.8)'
-                        ]
-                    }]
-                },
+                data: { labels: [], datasets: [] },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
+                    plugins: { legend: { position: 'bottom' } }
                 }
             });
 
-            // Category Performance Chart
             const categoryCtx = document.getElementById('categoryPerformanceChart').getContext('2d');
             categoryPerformanceChart = new Chart(categoryCtx, {
                 type: 'bar',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Doanh thu',
-                        data: [],
-                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
-                        borderColor: 'rgba(102, 126, 234, 1)',
-                        borderWidth: 1
-                    }]
-                },
+                data: { labels: [], datasets: [] },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
@@ -450,9 +398,7 @@
                         y: {
                             beginAtZero: true,
                             ticks: {
-                                callback: function(value) {
-                                    return formatCurrency(value);
-                                }
+                                callback: function(value) { return formatCurrency(value); }
                             }
                         }
                     }
@@ -463,7 +409,6 @@
         function loadAnalyticsData() {
             showLoading('#chartLoading');
 
-            // Load all analytics data
             Promise.all([
                 loadUserGrowthData(),
                 loadRevenueData(),
@@ -484,85 +429,85 @@
             return $.get('@Url.Action("GetDetailedChartData", "Admin")', {
                 type: 'user-growth',
                 period: $('#periodSelect').val()
-            }).done(function(data) {
+            }).done(function (data) {
                 userGrowthChart.data = data;
                 userGrowthChart.update();
+
+                const totalStudents = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                const totalTeachers = data.datasets[1].data.reduce((a, b) => a + b, 0);
+                $('#totalUsers').text((totalStudents + totalTeachers).toString());
             });
         }
 
         function loadRevenueData() {
-            return $.get('@Url.Action("GetChartData", "Admin")', {
-                type: 'revenue',
-                fromDate: $('#fromDate').val(),
-                toDate: $('#toDate').val()
-            }).done(function(data) {
-                revenueGrowthChart.data = data;
-                revenueGrowthChart.update();
-
-                // Update revenue metric
-                const totalRevenue = data.datasets[0].data.reduce((a, b) => a + b, 0);
-                $('#totalRevenue').text(formatCurrency(totalRevenue));
-            });
+            // Sử dụng AnalyzeRevenueTrends thông qua một endpoint riêng nếu bạn tạo thêm.
+            // Ở đây tạm thời dùng GetDetailedChartData('revenue-by-category') chỉ để có ví dụ.
+            return $.get('@Url.Action("AnalyzeRevenueTrends", "Admin")')
+                .done(function (data) {
+                    // Nếu bạn không có endpoint JSON cho AnalyzeRevenueTrends,
+                    // hãy tạo tương tự GetDetailedChartData. Ở đây chỉ là placeholder.
+                })
+                .fail(function () {
+                    console.log('Chưa cài đặt API doanh thu chi tiết cho Analytics.');
+                });
         }
 
         function loadCourseDistribution() {
             return $.get('@Url.Action("GetDetailedChartData", "Admin")', {
                 type: 'course-popularity'
-            }).done(function(data) {
+            }).done(function (data) {
                 courseDistributionChart.data = data;
                 courseDistributionChart.update();
+
+                const totalEnrollments = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                $('#totalEnrollments').text(totalEnrollments.toString());
             });
         }
 
         function loadCategoryPerformance() {
             return $.get('@Url.Action("GetDetailedChartData", "Admin")', {
                 type: 'revenue-by-category'
-            }).done(function(data) {
+            }).done(function (data) {
                 categoryPerformanceChart.data = data;
                 categoryPerformanceChart.update();
+
+                const totalRevenue = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                $('#totalRevenue').text(formatCurrency(totalRevenue));
             });
         }
 
         function loadTopCourses() {
-            // Simulate data loading - replace with actual API call
-            const topCourses = [
-                { name: 'JavaScript Căn Bản', students: 150, revenue: 15000000 },
-                { name: 'React Advanced', students: 120, revenue: 24000000 },
-                { name: 'Node.js Backend', students: 90, revenue: 18000000 }
-            ];
-
-            let html = '';
-            topCourses.forEach(course => {
-                html += `
-                    <tr>
-                        <td>${course.name}</td>
-                        <td><span class="badge bg-primary">${course.students}</span></td>
-                        <td><strong>${formatCurrency(course.revenue)}</strong></td>
-                    </tr>
-                `;
-            });
-            $('#topCoursesTable').html(html);
+            return $.get('@Url.Action("GetTopCourses", "Admin")')
+                .done(function (topCourses) {
+                    let html = '';
+                    topCourses.forEach(course => {
+                        html += `
+                            <tr>
+                                <td>${course.name}</td>
+                                <td><span class="badge bg-primary">${course.students}</span></td>
+                                <td><strong>${formatCurrency(course.revenue)}</strong></td>
+                            </tr>
+                        `;
+                    });
+                    $('#topCoursesTable').html(html);
+                });
         }
 
         function loadTopTeachers() {
-            // Simulate data loading - replace with actual API call
-            const topTeachers = [
-                { name: 'Nguyễn Văn A', students: 300, revenue: 50000000 },
-                { name: 'Trần Thị B', students: 250, revenue: 42000000 },
-                { name: 'Lê Văn C', students: 200, revenue: 35000000 }
-            ];
-
-            let html = '';
-            topTeachers.forEach(teacher => {
-                html += `
-                    <tr>
-                        <td>${teacher.name}</td>
-                        <td><span class="badge bg-success">${teacher.students}</span></td>
-                        <td><strong>${formatCurrency(teacher.revenue)}</strong></td>
-                    </tr>
-                `;
-            });
-            $('#topTeachersTable').html(html);
+            return $.get('@Url.Action("GetTopTeachers", "Admin")')
+                .done(function (topTeachers) {
+                    let html = '';
+                    topTeachers.forEach(teacher => {
+                        html += `
+                            <tr>
+                                <td>${teacher.name}</td>
+                                <td><span class="badge bg-success">${teacher.students}</span></td>
+                                <td><strong>${formatCurrency(teacher.revenue)}</strong></td>
+                            </tr>
+                        `;
+                    });
+                    $('#topTeachersTable').html(html);
+                });
         }
 
         function applyFilters() {
@@ -576,21 +521,17 @@
         }
 
         function exportAnalytics() {
-            // Implementation for exporting analytics
             toastr.info('Đang xuất báo cáo...');
-
             setTimeout(() => {
                 toastr.success('Báo cáo đã được xuất thành công');
             }, 2000);
         }
 
-        // Tab switching
         $('.chart-tabs a').on('click', function(e) {
             e.preventDefault();
             $(this).tab('show');
         });
 
-        // Period change handler
         $('#periodSelect').on('change', function() {
             loadUserGrowthData();
         });

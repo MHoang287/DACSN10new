@@ -4,6 +4,7 @@ using DACSN10.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DACSN10.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251124162251_Update_SystemSettings_AllowNull")]
+    partial class Update_SystemSettings_AllowNull
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -506,6 +509,7 @@ namespace DACSN10.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("AccountLockMinutes")
+                        .IsRequired()
                         .HasMaxLength(16)
                         .HasColumnType("nvarchar(16)");
 
@@ -516,6 +520,7 @@ namespace DACSN10.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("ContactAddress")
+                        .IsRequired()
                         .HasMaxLength(512)
                         .HasColumnType("nvarchar(512)");
 
@@ -525,10 +530,12 @@ namespace DACSN10.Migrations
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("ContactPhone")
+                        .IsRequired()
                         .HasMaxLength(32)
                         .HasColumnType("nvarchar(32)");
 
                     b.Property<string>("DefaultLanguage")
+                        .IsRequired()
                         .HasMaxLength(8)
                         .HasColumnType("nvarchar(8)");
 
@@ -567,6 +574,7 @@ namespace DACSN10.Migrations
                         .HasColumnType("nvarchar(64)");
 
                     b.Property<string>("FontFamily")
+                        .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
 
@@ -574,14 +582,17 @@ namespace DACSN10.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("GoogleAnalyticsId")
+                        .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
 
                     b.Property<string>("HotjarSiteId")
+                        .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
 
                     b.Property<string>("MainApiKeyMasked")
+                        .IsRequired()
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
 
@@ -589,10 +600,12 @@ namespace DACSN10.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("MaxLoginFailures")
+                        .IsRequired()
                         .HasMaxLength(16)
                         .HasColumnType("nvarchar(16)");
 
                     b.Property<string>("NotificationFromEmail")
+                        .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
@@ -612,10 +625,12 @@ namespace DACSN10.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("PasswordComplexityLevel")
+                        .IsRequired()
                         .HasMaxLength(16)
                         .HasColumnType("nvarchar(16)");
 
                     b.Property<string>("PrimaryColor")
+                        .IsRequired()
                         .HasMaxLength(7)
                         .HasColumnType("nvarchar(7)");
 
@@ -623,10 +638,12 @@ namespace DACSN10.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("SessionTimeoutMinutes")
+                        .IsRequired()
                         .HasMaxLength(16)
                         .HasColumnType("nvarchar(16)");
 
                     b.Property<string>("SiteDescription")
+                        .IsRequired()
                         .HasMaxLength(1024)
                         .HasColumnType("nvarchar(1024)");
 
@@ -639,14 +656,17 @@ namespace DACSN10.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("SmtpServer")
+                        .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("Theme")
+                        .IsRequired()
                         .HasMaxLength(32)
                         .HasColumnType("nvarchar(32)");
 
                     b.Property<string>("TimeZone")
+                        .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
 
@@ -654,6 +674,7 @@ namespace DACSN10.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("WebhookApiKeyMasked")
+                        .IsRequired()
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
 

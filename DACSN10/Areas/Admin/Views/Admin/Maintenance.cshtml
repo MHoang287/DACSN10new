@@ -3,6 +3,11 @@
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 }
 
+<!-- Anti-forgery cho tất cả AJAX -->
+<form id="__AjaxAntiForgeryForm" method="post">
+    @Html.AntiForgeryToken()
+</form>
+
 @section Breadcrumb {
     <li class="breadcrumb-item active">Bảo trì hệ thống</li>
 }
@@ -397,11 +402,15 @@
 
 @section Scripts {
     <script>
+        function getCsrfToken() {
+            return $('input[name="__RequestVerificationToken"]').val();
+        }
+
         // Database maintenance functions
         function cleanupDatabase() {
             confirmAction('Dọn dẹp cơ sở dữ liệu',
                 'Bạn có chắc chắn muốn dọn dẹp dữ liệu? Hành động này sẽ xóa các bản ghi cũ.',
-                function() {
+                function () {
                     performMaintenance('CleanupDatabase', 'Đang dọn dẹp cơ sở dữ liệu...');
                 });
         }
@@ -409,7 +418,7 @@
         function optimizeDatabase() {
             confirmAction('Tối ưu hóa cơ sở dữ liệu',
                 'Quá trình tối ưu có thể mất vài phút. Tiếp tục?',
-                function() {
+                function () {
                     performMaintenance('OptimizeDatabase', 'Đang tối ưu hóa cơ sở dữ liệu...');
                 });
         }
@@ -417,7 +426,7 @@
         function backupDatabase() {
             confirmAction('Sao lưu cơ sở dữ liệu',
                 'Tạo bản sao lưu toàn bộ dữ liệu hiện tại?',
-                function() {
+                function () {
                     performMaintenance('BackupDatabase', 'Đang tạo bản sao lưu...');
                 });
         }
@@ -426,50 +435,100 @@
             showLoading();
             addLog('INFO', 'Bắt đầu kiểm tra hiệu suất database...');
 
-            setTimeout(function() {
-                hideLoading();
-                showSuccess('Kiểm tra hiệu suất hoàn tất. Không phát hiện vấn đề.');
-                addLog('INFO', 'Kiểm tra hiệu suất hoàn tất - Kết quả: Tốt');
-            }, 3000);
+            $.ajax({
+                url: '/Admin/Admin/OptimizeDatabase',
+                type: 'POST',
+                headers: {
+                    'RequestVerificationToken': getCsrfToken()
+                },
+                success: function (response) {
+                    hideLoading();
+                    if (response.success) {
+                        showSuccess('Kiểm tra & tối ưu hiệu suất hoàn tất.');
+                        addLog('INFO', response.message || 'Kiểm tra hiệu suất hoàn tất - Kết quả: Tốt');
+                    } else {
+                        showError(response.message || 'Có lỗi khi kiểm tra hiệu suất');
+                        addLog('ERROR', response.message || 'Kiểm tra hiệu suất thất bại');
+                    }
+                },
+                error: function () {
+                    hideLoading();
+                    showError('Lỗi khi thực hiện thao tác');
+                    addLog('ERROR', 'Kiểm tra hiệu suất thất bại');
+                }
+            });
         }
 
-        // System maintenance functions
+        // System maintenance
         function clearCache() {
             confirmAction('Xóa Cache',
                 'Xóa tất cả file cache có thể ảnh hưởng đến hiệu suất tạm thời. Tiếp tục?',
-                function() {
+                function () {
                     showLoading();
                     addLog('INFO', 'Đang xóa cache...');
 
-                    setTimeout(function() {
-                        hideLoading();
-                        showSuccess('Cache đã được xóa thành công!');
-                        addLog('INFO', 'Cache cleared successfully');
-                    }, 2000);
+                    $.ajax({
+                        url: '/Admin/Admin/ClearCache',
+                        type: 'POST',
+                        headers: {
+                            'RequestVerificationToken': getCsrfToken()
+                        },
+                        success: function (response) {
+                            hideLoading();
+                            if (response.success) {
+                                showSuccess(response.message);
+                                addLog('INFO', response.message);
+                            } else {
+                                showError(response.message);
+                                addLog('ERROR', response.message);
+                            }
+                        },
+                        error: function () {
+                            hideLoading();
+                            showError('Lỗi khi xóa cache');
+                            addLog('ERROR', 'Clear cache failed');
+                        }
+                    });
                 });
         }
 
         function restartServices() {
             confirmAction('Khởi động lại dịch vụ',
                 'Khởi động lại có thể gây gián đoạn dịch vụ tạm thời. Bạn có chắc chắn?',
-                function() {
+                function () {
                     showLoading();
                     addLog('WARN', 'Đang khởi động lại dịch vụ...');
 
-                    setTimeout(function() {
-                        hideLoading();
-                        showSuccess('Dịch vụ đã được khởi động lại thành công!');
-                        addLog('INFO', 'Services restarted successfully');
-                    }, 5000);
+                    $.ajax({
+                        url: '/Admin/Admin/RestartServices',
+                        type: 'POST',
+                        headers: {
+                            'RequestVerificationToken': getCsrfToken()
+                        },
+                        success: function (response) {
+                            hideLoading();
+                            if (response.success) {
+                                showSuccess(response.message);
+                                addLog('INFO', response.message);
+                            } else {
+                                showError(response.message);
+                                addLog('ERROR', response.message);
+                            }
+                        },
+                        error: function () {
+                            hideLoading();
+                            showError('Lỗi khi khởi động lại dịch vụ');
+                            addLog('ERROR', 'Restart services failed');
+                        }
+                    });
                 });
         }
 
         function viewSystemLogs() {
-            // Simulate real-time log viewing
             Swal.fire({
                 title: 'Nhật ký hệ thống',
                 html: '<div style="text-align: left; max-height: 400px; overflow-y: auto;">' +
-                      '<pre id="liveLog"></pre></div>',
+                    '<pre id="liveLog"></pre></div>',
                 width: 800,
                 showCloseButton: true,
                 showConfirmButton: false,
@@ -483,14 +542,31 @@
             showLoading();
             addLog('INFO', 'Bắt đầu quét bảo mật...');
 
-            setTimeout(function() {
-                hideLoading();
-                showSuccess('Quét bảo mật hoàn tất. Hệ thống an toàn.');
-                addLog('INFO', 'Security scan completed - No threats detected');
-            }, 4000);
+            $.ajax({
+                url: '/Admin/Admin/SecurityScan',
+                type: 'POST',
+                headers: {
+                    'RequestVerificationToken': getCsrfToken()
+                },
+                success: function (response) {
+                    hideLoading();
+                    if (response.success) {
+                        showSuccess(response.message);
+                        addLog('INFO', response.message);
+                    } else {
+                        showError(response.message);
+                        addLog('ERROR', response.message);
+                    }
+                },
+                error: function () {
+                    hideLoading();
+                    showError('Lỗi khi quét bảo mật');
+                    addLog('ERROR', 'Security scan failed');
+                }
+            });
         }
 
-        // Emergency functions
+        // Emergency
         function enableMaintenanceMode() {
             Swal.fire({
                 title: 'Kích hoạt chế độ bảo trì?',
@@ -503,8 +579,27 @@
                 cancelButtonText: 'Hủy'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    showSuccess('Chế độ bảo trì đã được kích hoạt!');
-                    addLog('WARN', 'Maintenance mode enabled');
+                    $.ajax({
+                        url: '/Admin/Admin/ToggleMaintenanceMode',
+                        type: 'POST',
+                        data: { enable: true },
+                        headers: {
+                            'RequestVerificationToken': getCsrfToken()
+                        },
+                        success: function (response) {
+                            if (response.success) {
+                                showSuccess(response.message);
+                                addLog('WARN', 'Maintenance mode enabled');
+                            } else {
+                                showError(response.message);
+                                addLog('ERROR', response.message);
+                            }
+                        },
+                        error: function () {
+                            showError('Lỗi khi kích hoạt chế độ bảo trì');
+                            addLog('ERROR', 'Enable maintenance mode failed');
+                        }
+                    });
                 }
             });
         }
@@ -528,22 +623,14 @@
         }
 
         function contactSupport() {
-            Swal.fire({
-                title: 'Liên hệ hỗ trợ kỹ thuật',
-                html: `
-                    <div class="text-start">
-                        <p><i class="fas fa-phone text-primary me-2"></i><strong>Hotline:</strong> 1900-1234</p>
-                        <p><i class="fas fa-envelope text-primary me-2"></i><strong>Email:</strong> support@onlinelearning.com</p>
-                        <hr>
-                        <small class="text-muted">Thời gian hỗ trợ: 24/7</small>
-                    </div>
-                `,
-                showCloseButton: true,
-                showConfirmButton: false
-            });
+            Swal.fire(
+                'Liên hệ hỗ trợ',
+                'Vui lòng gọi hotline 1900 9999 hoặc gửi email support@onlinelearning.com',
+                'info'
+            );
         }
 
-        // Utility functions
+        // Utilities
         function performMaintenance(action, message) {
             showLoading();
             addLog('INFO', message);
@@ -552,9 +639,9 @@
                 url: '/Admin/Admin/' + action,
                 type: 'POST',
                 headers: {
-                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    'RequestVerificationToken': getCsrfToken()
                 },
-                success: function(response) {
+                success: function (response) {
                     hideLoading();
                     if (response.success) {
                         showSuccess(response.message);
@@ -564,7 +651,7 @@
                         addLog('ERROR', response.message);
                     }
                 },
-                error: function() {
+                error: function () {
                     hideLoading();
                     showError('Lỗi khi thực hiện thao tác');
                     addLog('ERROR', 'Maintenance operation failed');
@@ -609,7 +696,6 @@
 
             $('#systemLogs').prepend(logEntry);
 
-            // Keep only last 20 logs
             const logs = $('#systemLogs > div');
             if (logs.length > 20) {
                 logs.slice(20).remove();
@@ -660,27 +746,14 @@
             }, 500);
         }
 
-        // Auto refresh system status every 30 seconds
-        setInterval(function() {
-            // Simulate system status updates
-            const metrics = [
-                { selector: '.metric-card:nth-child(1) h3', value: 'Online' },
-                { selector: '.metric-card:nth-child(2) h3', value: 'Healthy' },
-                { selector: '.metric-card:nth-child(3) h3', value: Math.floor(Math.random() * 20 + 60) + '%' },
-                { selector: '.metric-card:nth-child(4) h3', value: Math.floor(Math.random() * 10 + 40) + '%' }
-            ];
-
-            // Update randomly
+        setInterval(function () {
             if (Math.random() > 0.7) {
                 addLog('DEBUG', 'System metrics updated automatically');
             }
         }, 30000);
 
-        // Initialize page
-        $(document).ready(function() {
+        $(document).ready(function () {
             addLog('INFO', 'Maintenance page loaded');
-
-            // Add some initial logs
             setTimeout(() => addLog('DEBUG', 'Checking system health...'), 1000);
             setTimeout(() => addLog('INFO', 'All systems operational'), 2000);
         });

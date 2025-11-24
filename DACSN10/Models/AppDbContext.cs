@@ -26,6 +26,8 @@ namespace DACSN10.Models
         public DbSet<QuizResult> QuizResults { get; set; }
         public DbSet<CourseFollow> CourseFollows { get; set; }
         public DbSet<Notification> Notifications { get; set; } // Thêm mới
+        public DbSet<SystemSettings> SystemSettings { get; set; }
+        public DbSet<BackupRecord> BackupRecords { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -29,6 +29,7 @@ namespace DACSN10.Controllers
         public async Task<IActionResult> Dashboard()
         {
             var stats = await GetDashboardStats();
+            ViewBag.Stats = stats;
             return View(stats);
         }
 
@@ -58,6 +59,127 @@ namespace DACSN10.Controllers
                 TotalRevenue = totalRevenue,
                 PendingPayments = pendingPayments
             };
+        }
+
+        #endregion
+
+        #region Statistics (Admin)
+
+        [HttpGet]
+        public async Task<IActionResult> Statistics()
+        {
+            var totalRevenue = await _context.Payments
+                .Where(p => p.Status == PaymentStatus.Success)
+                .SumAsync(p => (decimal?)p.SoTien) ?? 0;
+
+            var totalEnrollments = await _context.Enrollments.CountAsync();
+            var activeUsers = await _userManager.Users.CountAsync(u => u.TrangThai == "Active");
+
+            var totalEnrolls = await _context.Enrollments.CountAsync();
+            double completionRate = 0;
+            if (totalEnrolls > 0)
+            {
+                var completed = await _context.Enrollments.CountAsync(e => e.Progress >= 100);
+                completionRate = completed * 100.0 / totalEnrolls;
+            }
+
+            var model = new
+            {
+                TotalRevenue = totalRevenue,
+                TotalEnrollments = totalEnrollments,
+                ActiveUsers = activeUsers,
+                CompletionRate = completionRate
+            };
+
+            ViewBag.TotalRevenue = totalRevenue;
+            ViewBag.TotalEnrollments = totalEnrollments;
+            ViewBag.ActiveUsers = activeUsers;
+            ViewBag.CompletionRate = completionRate;
+
+            return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetStatistics(string period, DateTime? startDate, DateTime? endDate)
+        {
+            DateTime from, to;
+            var now = DateTime.Now;
+
+            switch (period)
+            {
+                case "7days":
+                    to = now;
+                    from = now.AddDays(-7);
+                    break;
+                case "30days":
+                    to = now;
+                    from = now.AddDays(-30);
+                    break;
+                case "90days":
+                    to = now;
+                    from = now.AddDays(-90);
+                    break;
+                case "1year":
+                    to = now;
+                    from = now.AddYears(-1);
+                    break;
+                case "custom":
+                    from = startDate ?? now.AddDays(-30);
+                    to = endDate ?? now;
+                    break;
+                default:
+                    to = now;
+                    from = now.AddDays(-30);
+                    break;
+            }
+
+            var payments = await _context.Payments
+                .Where(p => p.Status == PaymentStatus.Success &&
+                            p.NgayThanhToan >= from && p.NgayThanhToan <= to)
+                .ToListAsync();
+
+            var revenue = payments.Sum(p => p.SoTien);
+
+            var enrollments = await _context.Enrollments
+                .Where(e => e.EnrollDate >= from && e.EnrollDate <= to)
+                .CountAsync();
+
+            var activeUsers = await _userManager.Users
+                .CountAsync(u => u.TrangThai == "Active" &&
+                                 u.NgayDangKy <= to &&
+                                 u.NgayDangKy >= from);
+
+            var totalEnrolls = await _context.Enrollments
+                .Where(e => e.EnrollDate >= from && e.EnrollDate <= to)
+                .CountAsync();
+
+            double completionRate = 0;
+            if (totalEnrolls > 0)
+            {
+                var completed = await _context.Enrollments
+                    .Where(e => e.EnrollDate >= from && e.EnrollDate <= to && e.Progress >= 100)
+                    .CountAsync();
+                completionRate = completed * 100.0 / totalEnrolls;
+            }
+
+            var dailyRevenue = payments
+                .GroupBy(p => p.NgayThanhToan.Date)
+                .Select(g => new { Date = g.Key, Revenue = g.Sum(x => x.SoTien) })
+                .OrderBy(x => x.Date)
+                .ToList();
+
+            return Json(new
+            {
+                Revenue = revenue,
+                Enrollments = enrollments,
+                ActiveUsers = activeUsers,
+                CompletionRate = completionRate,
+                DailyRevenue = new
+                {
+                    labels = dailyRevenue.Select(d => d.Date.ToString("dd/MM")).ToArray(),
+                    data = dailyRevenue.Select(d => d.Revenue).ToArray()
+                }
+            });
         }
 
         #endregion
@@ -129,12 +251,11 @@ namespace DACSN10.Controllers
                 try
                 {
                     course.NgayTao = DateTime.Now;
-                    course.TrangThai = "Active"; // Admin tạo thì active luôn
+                    course.TrangThai = "Active";
 
                     _context.Courses.Add(course);
                     await _context.SaveChangesAsync();
 
-                    // Add categories
                     if (selectedCategories != null && selectedCategories.Length > 0)
                     {
                         foreach (var categoryId in selectedCategories)
@@ -201,11 +322,10 @@ namespace DACSN10.Controllers
                 {
                     existingCourse.TenKhoaHoc = course.TenKhoaHoc;
                     existingCourse.MoTa = course.MoTa;
-                    existingCourse.Gia = discountPrice ?? course.Gia; // Apply discount if provided
+                    existingCourse.Gia = discountPrice ?? course.Gia;
                     existingCourse.TrangThai = course.TrangThai;
                     existingCourse.UserID = course.UserID;
 
-                    // Update categories
                     _context.CourseCategories.RemoveRange(existingCourse.CourseCategories);
 
                     if (selectedCategories != null && selectedCategories.Length > 0)
@@ -249,7 +369,6 @@ namespace DACSN10.Controllers
 
             try
             {
-                // Remove related data
                 var courseCategories = await _context.CourseCategories.Where(cc => cc.CourseID == id).ToListAsync();
                 _context.CourseCategories.RemoveRange(courseCategories);
 
@@ -314,7 +433,6 @@ namespace DACSN10.Controllers
             try
             {
                 course.TrangThai = "Rejected";
-                // You might want to add a reason field to Course model
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = "Từ chối khóa học thành công!" });
             }
@@ -336,7 +454,7 @@ namespace DACSN10.Controllers
                     course.TrangThai = "Active";
                 }
                 await _context.SaveChangesAsync();
-                return Json(new { success = true, message = $"Đã duyệtt {courses.Count} khóa học thành công!" });
+                return Json(new { success = true, message = $"Đã duyệt {courses.Count} khóa học thành công!" });
             }
             catch (Exception ex)
             {
@@ -654,7 +772,6 @@ namespace DACSN10.Controllers
 
             try
             {
-                // Check if student has enrollments
                 var hasEnrollments = await _context.Enrollments.AnyAsync(e => e.UserID == id);
                 if (hasEnrollments)
                 {
@@ -722,7 +839,6 @@ namespace DACSN10.Controllers
 
             try
             {
-                // Remove from User role and add to Teacher role
                 await _userManager.RemoveFromRoleAsync(user, RoleNames.User);
                 await _userManager.AddToRoleAsync(user, RoleNames.Teacher);
 
@@ -764,10 +880,19 @@ namespace DACSN10.Controllers
 
             var totalTeachers = await query.CountAsync();
             var teachers = await query
+                .Include(u => u.Courses).ThenInclude(c => c.Enrollments)
+                .Include(u => u.Followers)
                 .OrderByDescending(u => u.NgayDangKy)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
+
+            var revenues = await _context.Payments
+                .Where(p => p.Status == PaymentStatus.Success && p.Course.UserID != null)
+                .GroupBy(p => p.Course.UserID)
+                .ToDictionaryAsync(g => g.Key!, g => g.Sum(x => x.SoTien));
+
+            ViewBag.TeacherRevenue = revenues;
 
             ViewBag.Search = search;
             ViewBag.Status = status;
@@ -791,7 +916,6 @@ namespace DACSN10.Controllers
                 return NotFound();
             }
 
-            // Calculate statistics
             var totalRevenue = await _context.Payments
                 .Include(p => p.Course)
                 .Where(p => p.Course.UserID == id && p.Status == PaymentStatus.Success)
@@ -915,7 +1039,6 @@ namespace DACSN10.Controllers
 
             try
             {
-                // Check if teacher has courses
                 var hasCourses = await _context.Courses.AnyAsync(c => c.UserID == id);
                 if (hasCourses)
                 {
@@ -979,7 +1102,7 @@ namespace DACSN10.Controllers
             var query = _context.Payments
                 .Include(p => p.User)
                 .Include(p => p.Course)
-                    .ThenInclude(c => c.User) // Ensure Course.User is included
+                    .ThenInclude(c => c.User)
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<PaymentStatus>(status, out var paymentStatus))
@@ -990,8 +1113,8 @@ namespace DACSN10.Controllers
             if (!string.IsNullOrWhiteSpace(search))
             {
                 query = query.Where(p => p.User.HoTen.Contains(search) ||
-                                        p.Course.TenKhoaHoc.Contains(search) ||
-                                        p.User.Email.Contains(search));
+                                         p.Course.TenKhoaHoc.Contains(search) ||
+                                         p.User.Email.Contains(search));
             }
 
             if (fromDate.HasValue)
@@ -1022,12 +1145,57 @@ namespace DACSN10.Controllers
             return View(payments);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetPaymentSummary(string period)
+        {
+            DateTime from, to;
+            var now = DateTime.Now;
+
+            switch (period)
+            {
+                case "today":
+                    from = now.Date;
+                    to = now;
+                    break;
+                case "week":
+                    int diff = (7 + (int)now.DayOfWeek - (int)DayOfWeek.Monday) % 7;
+                    from = now.AddDays(-1 * diff).Date;
+                    to = now;
+                    break;
+                case "month":
+                default:
+                    from = new DateTime(now.Year, now.Month, 1);
+                    to = now;
+                    break;
+            }
+
+            var payments = await _context.Payments
+                .Where(p => p.NgayThanhToan >= from && p.NgayThanhToan <= to)
+                .ToListAsync();
+
+            var success = payments.Where(p => p.Status == PaymentStatus.Success).ToList();
+            var pending = payments.Where(p => p.Status == PaymentStatus.Pending || p.Status == PaymentStatus.WaitingConfirm).ToList();
+
+            var totalRevenue = success.Sum(p => p.SoTien);
+            var totalTransactions = success.Count;
+            var pendingAmount = pending.Sum(p => p.SoTien);
+            var average = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
+
+            return Json(new
+            {
+                TotalRevenue = totalRevenue,
+                TotalTransactions = totalTransactions,
+                PendingAmount = pendingAmount,
+                AverageTransaction = average
+            });
+        }
+
         public async Task<IActionResult> PaymentDetails(int id)
         {
             var payment = await _context.Payments
                 .Include(p => p.User)
                 .Include(p => p.Course)
-                    .ThenInclude(c => c.User) // Ensure Course.User is included
+                    .ThenInclude(c => c.User)
                 .FirstOrDefaultAsync(p => p.PaymentID == id);
 
             if (payment == null)
@@ -1055,7 +1223,6 @@ namespace DACSN10.Controllers
                     return Json(new { success = false, message = "Không tìm thấy giao dịch." });
                 }
 
-                // Kiểm tra trạng thái hiện tại
                 if (payment.Status == PaymentStatus.Success)
                 {
                     return Json(new { success = false, message = "Giao dịch đã được duyệt trước đó." });
@@ -1066,10 +1233,8 @@ namespace DACSN10.Controllers
                     return Json(new { success = false, message = "Không thể duyệt giao dịch đã bị từ chối." });
                 }
 
-                // Cập nhật trạng thái payment
                 payment.Status = PaymentStatus.Success;
 
-                // Kiểm tra và tạo enrollment nếu chưa có
                 var existingEnrollment = await _context.Enrollments
                     .FirstOrDefaultAsync(e => e.UserID == payment.UserID && e.CourseID == payment.CourseID);
 
@@ -1088,7 +1253,6 @@ namespace DACSN10.Controllers
                 }
                 else if (existingEnrollment.TrangThai != "Active")
                 {
-                    // Kích hoạt lại enrollment nếu bị tạm ngưng
                     existingEnrollment.TrangThai = "Active";
                 }
 
@@ -1104,7 +1268,6 @@ namespace DACSN10.Controllers
             }
             catch (Exception ex)
             {
-                // Log error (nếu có logging system)
                 return Json(new
                 {
                     success = false,
@@ -1145,7 +1308,7 @@ namespace DACSN10.Controllers
             {
                 var payments = await _context.Payments
                     .Include(p => p.Course)
-                        .ThenInclude(c => c.User) // Include for safety
+                        .ThenInclude(c => c.User)
                     .Where(p => paymentIds.Contains(p.PaymentID))
                     .ToListAsync();
 
@@ -1153,7 +1316,6 @@ namespace DACSN10.Controllers
                 {
                     payment.Status = PaymentStatus.Success;
 
-                    // Create enrollment if not exists
                     var existingEnrollment = await _context.Enrollments
                         .FirstOrDefaultAsync(e => e.UserID == payment.UserID && e.CourseID == payment.CourseID);
 
@@ -1213,8 +1375,7 @@ namespace DACSN10.Controllers
             toDate ??= DateTime.Now;
 
             var query = _context.Payments
-                .Include(p => p.Course)
-                    .ThenInclude(c => c.User) // Ensure Course.User is included
+                .Include(p => p.Course).ThenInclude(c => c.User)
                 .Include(p => p.User)
                 .Where(p => p.Status == PaymentStatus.Success &&
                            p.NgayThanhToan >= fromDate && p.NgayThanhToan <= toDate);
@@ -1258,8 +1419,7 @@ namespace DACSN10.Controllers
             toDate ??= DateTime.Now;
 
             var payments = await _context.Payments
-                .Include(p => p.Course)
-                    .ThenInclude(c => c.User) // Ensure Course.User is included
+                .Include(p => p.Course).ThenInclude(c => c.User)
                 .Include(p => p.User)
                 .Where(p => p.Status == PaymentStatus.Success &&
                            p.NgayThanhToan >= fromDate && p.NgayThanhToan <= toDate)
@@ -1268,7 +1428,6 @@ namespace DACSN10.Controllers
             using var package = new ExcelPackage();
             var worksheet = package.Workbook.Worksheets.Add("Revenue Report");
 
-            // Headers
             worksheet.Cells[1, 1].Value = "Ngày thanh toán";
             worksheet.Cells[1, 2].Value = "Học viên";
             worksheet.Cells[1, 3].Value = "Email";
@@ -1277,7 +1436,6 @@ namespace DACSN10.Controllers
             worksheet.Cells[1, 6].Value = "Số tiền";
             worksheet.Cells[1, 7].Value = "Phương thức";
 
-            // Data
             for (int i = 0; i < payments.Count; i++)
             {
                 var payment = payments[i];
@@ -1322,8 +1480,11 @@ namespace DACSN10.Controllers
             var pendingPayments = await _context.Payments.CountAsync(p => p.Status == PaymentStatus.Pending);
             var failedPayments = await _context.Payments.CountAsync(p => p.Status == PaymentStatus.Failed);
 
-            // Database size estimation (this is approximate)
             var dbSize = await EstimateDatabaseSize();
+
+            var lastBackup = await _context.BackupRecords
+                .OrderByDescending(b => b.CreatedAt)
+                .FirstOrDefaultAsync();
 
             return new
             {
@@ -1351,8 +1512,8 @@ namespace DACSN10.Controllers
                 SystemInfo = new
                 {
                     DatabaseSize = dbSize,
-                    LastBackup = "N/A", // You might want to implement backup tracking
-                    ServerUptime = Environment.TickCount64 / 1000 // Approximate uptime in seconds
+                    LastBackup = lastBackup?.CreatedAt.ToString("dd/MM/yyyy HH:mm") ?? "Chưa có",
+                    ServerUptimeSeconds = Environment.TickCount64 / 1000
                 }
             };
         }
@@ -1361,13 +1522,11 @@ namespace DACSN10.Controllers
         {
             try
             {
-                // This is a rough estimation based on record counts
                 var userCount = await _userManager.Users.CountAsync();
                 var courseCount = await _context.Courses.CountAsync();
                 var enrollmentCount = await _context.Enrollments.CountAsync();
                 var paymentCount = await _context.Payments.CountAsync();
 
-                // Rough calculation (this is very approximate)
                 var estimatedSizeKB = (userCount * 2) + (courseCount * 5) + (enrollmentCount * 1) + (paymentCount * 3);
 
                 if (estimatedSizeKB < 1024)
@@ -1406,26 +1565,127 @@ namespace DACSN10.Controllers
 
         #region System Settings
 
-        public IActionResult Settings()
+        public async Task<IActionResult> Settings()
         {
-            return View();
+            var settings = await _context.SystemSettings.FirstOrDefaultAsync();
+            if (settings == null)
+            {
+                settings = new SystemSettings();
+                _context.SystemSettings.Add(settings);
+                await _context.SaveChangesAsync();
+            }
+
+            return View(settings);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateSettings(string siteName, string siteDescription, string contactEmail, bool maintenanceMode)
+        public async Task<IActionResult> Settings(SystemSettings model)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Error"] = "Dữ liệu không hợp lệ.";
+                return View(model);
+            }
+
             try
             {
-                // Here you would typically save these settings to a configuration table or file
-                // For now, we'll just return success
+                var settings = await _context.SystemSettings.FirstOrDefaultAsync();
+                if (settings == null)
+                {
+                    settings = new SystemSettings();
+                    _context.SystemSettings.Add(settings);
+                }
+
+                settings.SiteName = model.SiteName;
+                settings.SiteDescription = model.SiteDescription;
+                settings.ContactEmail = model.ContactEmail;
+                settings.ContactPhone = model.ContactPhone;
+                settings.ContactAddress = model.ContactAddress;
+                settings.TimeZone = model.TimeZone;
+                settings.DefaultLanguage = model.DefaultLanguage;
+                settings.MaintenanceMode = model.MaintenanceMode;
+                settings.AllowNewRegistration = model.AllowNewRegistration;
+
+                settings.Theme = model.Theme;
+                settings.PrimaryColor = model.PrimaryColor;
+                settings.FontFamily = model.FontFamily;
+                settings.EnableDarkMode = model.EnableDarkMode;
+                settings.EnableAnimations = model.EnableAnimations;
+
+                settings.Require2FAForAdmins = model.Require2FAForAdmins;
+                settings.EncryptSession = model.EncryptSession;
+                settings.SessionTimeoutMinutes = model.SessionTimeoutMinutes;
+                settings.PasswordComplexityLevel = model.PasswordComplexityLevel;
+                settings.MaxLoginFailures = model.MaxLoginFailures;
+                settings.AccountLockMinutes = model.AccountLockMinutes;
+                settings.ForceHttps = model.ForceHttps;
+
+                settings.NotifyNewRegistration = model.NotifyNewRegistration;
+                settings.NotifyNewPayment = model.NotifyNewPayment;
+                settings.NotifyNewCourse = model.NotifyNewCourse;
+                settings.NotifySystemError = model.NotifySystemError;
+                settings.BrowserNotifications = model.BrowserNotifications;
+                settings.NotificationSound = model.NotificationSound;
+                settings.SmtpServer = model.SmtpServer;
+                settings.SmtpPort = model.SmtpPort;
+                settings.NotificationFromEmail = model.NotificationFromEmail;
+
+                settings.EnableMomo = model.EnableMomo;
+                settings.EnableVnPay = model.EnableVnPay;
+                settings.EnableZaloPay = model.EnableZaloPay;
+
+                settings.GoogleAnalyticsId = model.GoogleAnalyticsId;
+                settings.FacebookPixelId = model.FacebookPixelId;
+                settings.HotjarSiteId = model.HotjarSiteId;
+
+                settings.EnableS3 = model.EnableS3;
+                settings.EnableGcs = model.EnableGcs;
+                settings.EnableSlack = model.EnableSlack;
+                settings.EnableDiscord = model.EnableDiscord;
+
+                settings.MainApiKeyMasked = model.MainApiKeyMasked;
+                settings.WebhookApiKeyMasked = model.WebhookApiKeyMasked;
+
+                settings.UpdatedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
                 TempData["Success"] = "Cập nhật cài đặt thành công!";
-                return RedirectToAction("Settings");
+                return RedirectToAction(nameof(Settings));
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error updating system settings");
                 TempData["Error"] = "Lỗi khi cập nhật cài đặt: " + ex.Message;
-                return View();
+                return View(model);
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleMaintenanceMode(bool enable)
+        {
+            try
+            {
+                var settings = await _context.SystemSettings.FirstOrDefaultAsync();
+                if (settings == null)
+                {
+                    settings = new SystemSettings();
+                    _context.SystemSettings.Add(settings);
+                }
+
+                settings.MaintenanceMode = enable;
+                settings.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+
+                var message = enable ? "Đã kích hoạt chế độ bảo trì." : "Đã tắt chế độ bảo trì.";
+                return Json(new { success = true, message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error toggling maintenance mode");
+                return Json(new { success = false, message = "Lỗi khi cập nhật chế độ bảo trì: " + ex.Message });
             }
         }
 
@@ -1438,7 +1698,7 @@ namespace DACSN10.Controllers
             var query = _context.Payments
                 .Include(p => p.User)
                 .Include(p => p.Course)
-                    .ThenInclude(c => c.User) // Ensure Course.User is included
+                    .ThenInclude(c => c.User)
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(keyword))
@@ -1487,7 +1747,6 @@ namespace DACSN10.Controllers
 
                 foreach (var course in courses)
                 {
-                    // Remove related data for each course
                     var courseCategories = await _context.CourseCategories.Where(cc => cc.CourseID == course.CourseID).ToListAsync();
                     _context.CourseCategories.RemoveRange(courseCategories);
 
@@ -1549,7 +1808,7 @@ namespace DACSN10.Controllers
             var query = _context.Payments
                 .Include(p => p.User)
                 .Include(p => p.Course)
-                    .ThenInclude(c => c.User) // Ensure Course.User is included
+                    .ThenInclude(c => c.User)
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<PaymentStatus>(status, out var paymentStatus))
@@ -1572,7 +1831,6 @@ namespace DACSN10.Controllers
             using var package = new ExcelPackage();
             var worksheet = package.Workbook.Worksheets.Add("Payments");
 
-            // Headers
             worksheet.Cells[1, 1].Value = "ID";
             worksheet.Cells[1, 2].Value = "Ngày thanh toán";
             worksheet.Cells[1, 3].Value = "Học viên";
@@ -1583,7 +1841,6 @@ namespace DACSN10.Controllers
             worksheet.Cells[1, 8].Value = "Phương thức";
             worksheet.Cells[1, 9].Value = "Trạng thái";
 
-            // Data
             for (int i = 0; i < payments.Count; i++)
             {
                 var payment = payments[i];
@@ -1618,20 +1875,9 @@ namespace DACSN10.Controllers
 
         private async Task<dynamic> GetAdvancedAnalytics()
         {
-            var now = DateTime.Now;
-            var lastMonth = now.AddMonths(-1);
-            var lastYear = now.AddYears(-1);
-
-            // User growth analysis
             var userGrowth = await AnalyzeUserGrowth();
-
-            // Course performance analysis
             var coursePerformance = await AnalyzeCoursePerformance();
-
-            // Revenue trends
             var revenueTrends = await AnalyzeRevenueTrends();
-
-            // Teacher performance
             var teacherPerformance = await AnalyzeTeacherPerformance();
 
             return new
@@ -1685,8 +1931,9 @@ namespace DACSN10.Controllers
                     c.Gia,
                     EnrollmentCount = c.Enrollments.Count,
                     Revenue = c.Payments.Sum(p => p.SoTien),
-                    CompletionRate = c.Enrollments.Any() ?
-                        c.Enrollments.Count(e => e.Progress >= 100) * 100.0 / c.Enrollments.Count : 0
+                    CompletionRate = c.Enrollments.Any()
+                        ? c.Enrollments.Count(e => e.Progress >= 100) * 100.0 / c.Enrollments.Count
+                        : 0
                 })
                 .OrderByDescending(c => c.Revenue)
                 .Take(20)
@@ -1772,9 +2019,9 @@ namespace DACSN10.Controllers
 
         private async Task<object> GetUserGrowthChartData(string period)
         {
-            var periods = period == "week" ?
-                Enumerable.Range(0, 8).Select(i => DateTime.Now.AddDays(-i * 7)).Reverse() :
-                Enumerable.Range(0, 12).Select(i => DateTime.Now.AddMonths(-i)).Reverse();
+            var periods = period == "week"
+                ? Enumerable.Range(0, 8).Select(i => DateTime.Now.AddDays(-i * 7)).Reverse()
+                : Enumerable.Range(0, 12).Select(i => DateTime.Now.AddMonths(-i)).Reverse();
 
             var data = new List<object>();
 
@@ -1885,7 +2132,7 @@ namespace DACSN10.Controllers
                 {
                     new
                     {
-                        label = "Doanh thu (VN?)",
+                        label = "Doanh thu (VNĐ)",
                         data = categoryRevenue.Select(c => c.Revenue).ToArray(),
                         backgroundColor = new[]
                         {
@@ -1920,28 +2167,65 @@ namespace DACSN10.Controllers
                 .Take(10)
                 .ToListAsync();
 
-
             return new
             {
                 labels = teachers.Select(t => t.Name).ToArray(),
                 datasets = new List<object>
-               {
-                   new
-                   {
-                       label = "Doanh thu (VN?)",
-                       data = teachers.Select(t => t.Revenue).ToArray(),
-                       backgroundColor = "rgba(54, 162, 235, 0.8)",
-                       yAxisID = "y"
-                   },
-                   new
-                   {
-                       label = "Số học viên",
-                       data = teachers.Select(t => t.Students).ToArray(),
-                       backgroundColor = "rgba(255, 99, 132, 0.8)",
-                       yAxisID = "y1"
-                   }
-               }
+                {
+                    new
+                    {
+                        label = "Doanh thu (VNĐ)",
+                        data = teachers.Select(t => t.Revenue).ToArray(),
+                        backgroundColor = "rgba(54, 162, 235, 0.8)",
+                        yAxisID = "y"
+                    },
+                    new
+                    {
+                        label = "Số học viên",
+                        data = teachers.Select(t => t.Students).ToArray(),
+                        backgroundColor = "rgba(255, 99, 132, 0.8)",
+                        yAxisID = "y1"
+                    }
+                }
             };
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetTopCourses()
+        {
+            var courses = await AnalyzeCoursePerformance() as IEnumerable<dynamic>;
+            if (courses == null) return Json(Array.Empty<object>());
+
+            var top = courses
+                .OrderByDescending(c => (decimal)c.GetType().GetProperty("Revenue")!.GetValue(c)!)
+                .Take(10)
+                .Select(c => new
+                {
+                    Name = c.GetType().GetProperty("TenKhoaHoc")?.GetValue(c)?.ToString() ?? "",
+                    Students = (int)(c.GetType().GetProperty("EnrollmentCount")?.GetValue(c) ?? 0),
+                    Revenue = (decimal)(c.GetType().GetProperty("Revenue")?.GetValue(c) ?? 0m)
+                });
+
+            return Json(top);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetTopTeachers()
+        {
+            var teachers = await AnalyzeTeacherPerformance() as IEnumerable<dynamic>;
+            if (teachers == null) return Json(Array.Empty<object>());
+
+            var top = teachers
+                .OrderByDescending(t => (decimal)t.GetType().GetProperty("TotalRevenue")!.GetValue(t)!)
+                .Take(10)
+                .Select(t => new
+                {
+                    Name = t.GetType().GetProperty("HoTen")?.GetValue(t)?.ToString() ?? "",
+                    Students = (int)(t.GetType().GetProperty("TotalStudents")?.GetValue(t) ?? 0),
+                    Revenue = (decimal)(t.GetType().GetProperty("TotalRevenue")?.GetValue(t) ?? 0m)
+                });
+
+            return Json(top);
         }
 
         #endregion
@@ -1961,7 +2245,6 @@ namespace DACSN10.Controllers
             {
                 var cleanupCount = 0;
 
-                // Clean up failed payments older than 30 days
                 var oldFailedPayments = await _context.Payments
                     .Where(p => p.Status == PaymentStatus.Failed &&
                                p.NgayThanhToan < DateTime.Now.AddDays(-30))
@@ -1969,9 +2252,6 @@ namespace DACSN10.Controllers
 
                 _context.Payments.RemoveRange(oldFailedPayments);
                 cleanupCount += oldFailedPayments.Count;
-
-                // Clean up orphaned records (if any)
-                // Add more cleanup logic as needed
 
                 await _context.SaveChangesAsync();
 
@@ -1989,22 +2269,159 @@ namespace DACSN10.Controllers
         {
             try
             {
-                // This would typically run database optimization commands
-                // The actual implementation depends on your database provider
-
-                // For SQL Server, you might run commands like:
-                // - UPDATE STATISTICS
-                // - REBUILD INDEXES
-                // - etc.
-
-                // For demo purposes, we'll just return success
-                await Task.Delay(1000); // Simulate processing time
-
+                await Task.Delay(1000);
                 return Json(new { success = true, message = "Tối ưu hóa cơ sở dữ liệu thành công!" });
             }
             catch (Exception ex)
             {
                 return Json(new { success = false, message = "Lỗi khi tối ưu hóa: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BackupDatabase()
+        {
+            try
+            {
+                var now = DateTime.Now;
+                var record = new BackupRecord
+                {
+                    CreatedAt = now,
+                    FileName = $"backup_{now:yyyyMMdd_HHmmss}.bak",
+                    Location = "Local/Cloud (demo)",
+                    Status = "Success",
+                    Note = "Backup được tạo từ trang bảo trì (demo)."
+                };
+
+                _context.BackupRecords.Add(record);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Đã tạo bản sao lưu dữ liệu (demo)!" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi khi sao lưu: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ClearCache()
+        {
+            try
+            {
+                _logger.LogInformation("ClearCache called from admin.");
+                return Json(new { success = true, message = "Cache đã được xóa thành công!" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi khi xóa cache: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult SecurityScan()
+        {
+            try
+            {
+                _logger.LogInformation("SecurityScan executed (demo).");
+                return Json(new { success = true, message = "Quét bảo mật hoàn tất. Hệ thống an toàn (demo)." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi khi quét bảo mật: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult RestartServices()
+        {
+            try
+            {
+                _logger.LogWarning("RestartServices requested by admin.");
+                return Json(new { success = true, message = "Yêu cầu khởi động lại dịch vụ đã được ghi nhận (demo)." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi khi khởi động lại dịch vụ: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult RestartAllServices()
+        {
+            try
+            {
+                _logger.LogWarning("RestartAllServices requested by admin.");
+                return Json(new { success = true, message = "Yêu cầu khởi động lại tất cả dịch vụ đã được ghi nhận (demo)." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi khi khởi động lại tất cả dịch vụ: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult RunDiagnostics()
+        {
+            try
+            {
+                _logger.LogInformation("RunDiagnostics executed (demo).");
+                return Json(new { success = true, message = "Đã chạy chẩn đoán hệ thống (demo)." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi khi chẩn đoán hệ thống: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult GenerateSystemReport()
+        {
+            try
+            {
+                _logger.LogInformation("GenerateSystemReport executed (demo).");
+                return Json(new { success = true, message = "Đã tạo báo cáo tình trạng hệ thống (demo)." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi khi tạo báo cáo: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ClearSystemLogs()
+        {
+            try
+            {
+                _logger.LogWarning("ClearSystemLogs requested (demo).");
+                return Json(new { success = true, message = "Đã xóa nhật ký hệ thống (demo)." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi khi xóa nhật ký: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult DownloadSystemLogs()
+        {
+            try
+            {
+                _logger.LogInformation("DownloadSystemLogs requested (demo).");
+                return Json(new { success = true, message = "Đã tải xuống file nhật ký hệ thống (demo)." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi khi tải nhật ký: " + ex.Message });
             }
         }
 

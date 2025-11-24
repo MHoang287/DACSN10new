@@ -1,4 +1,5 @@
-﻿@{
+﻿@model DACSN10.Models.SystemSettings
+@{
     ViewData["Title"] = "Cài đặt hệ thống";
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 }
@@ -196,7 +197,7 @@
 }
 
 <!-- Maintenance Banner -->
-<div class="maintenance-banner" id="maintenanceBanner">
+<div class="maintenance-banner" id="maintenanceBanner" @(Model.MaintenanceMode ? "" : "style=\"display:none;\"")>
     <div class="d-flex justify-content-between align-items-center">
         <div>
             <i class="fas fa-tools me-2"></i>
@@ -248,14 +249,20 @@
                 <i class="fas fa-cog me-2"></i>Cài đặt chung
             </h5>
 
-            <form id="generalSettingsForm">
+            <form id="generalSettingsForm"
+                  asp-action="Settings"
+                  asp-controller="Admin"
+                  asp-area="Admin"
+                  method="post">
+                @Html.AntiForgeryToken()
+
                 <div class="setting-item">
                     <div class="setting-info">
                         <div class="setting-title">Tên website</div>
                         <div class="setting-description">Tên hiển thị của website trên trình duyệt</div>
                     </div>
                     <div class="setting-control">
-                        <input type="text" class="form-control" value="OnlineLearning - Nền tảng học trực tuyến">
+                        <input asp-for="SiteName" class="form-control" />
                     </div>
                 </div>
 
@@ -265,7 +272,7 @@
                         <div class="setting-description">Mô tả ngắn về website cho SEO</div>
                     </div>
                     <div class="setting-control">
-                        <textarea class="form-control" rows="2">Nền tảng học trực tuyến hàng đầu Việt Nam với hàng ngàn khóa học chất lượng</textarea>
+                        <textarea asp-for="SiteDescription" class="form-control" rows="2"></textarea>
                     </div>
                 </div>
 
@@ -275,7 +282,7 @@
                         <div class="setting-description">Email chính để nhận liên hệ từ người dùng</div>
                     </div>
                     <div class="setting-control">
-                        <input type="email" class="form-control" value="admin@onlinelearning.com">
+                        <input asp-for="ContactEmail" class="form-control" />
                     </div>
                 </div>
 
@@ -285,7 +292,7 @@
                         <div class="setting-description">Số điện thoại hỗ trợ khách hàng</div>
                     </div>
                     <div class="setting-control">
-                        <input type="tel" class="form-control" value="1900-1234">
+                        <input asp-for="ContactPhone" class="form-control" />
                     </div>
                 </div>
 
@@ -295,7 +302,7 @@
                         <div class="setting-description">Địa chỉ trụ sở chính</div>
                     </div>
                     <div class="setting-control">
-                        <input type="text" class="form-control" value="123 Nguyễn Văn Cừ, Q.5, TP.HCM">
+                        <input asp-for="ContactAddress" class="form-control" />
                     </div>
                 </div>
 
@@ -305,8 +312,8 @@
                         <div class="setting-description">Múi giờ mặc định của hệ thống</div>
                     </div>
                     <div class="setting-control">
-                        <select class="form-select">
-                            <option value="Asia/Ho_Chi_Minh" selected>GMT+7 (Việt Nam)</option>
+                        <select asp-for="TimeZone" class="form-select">
+                            <option value="Asia/Ho_Chi_Minh">GMT+7 (Việt Nam)</option>
                             <option value="Asia/Bangkok">GMT+7 (Bangkok)</option>
                             <option value="Asia/Singapore">GMT+8 (Singapore)</option>
                             <option value="UTC">UTC</option>
@@ -320,8 +327,8 @@
                         <div class="setting-description">Ngôn ngữ hiển thị mặc định cho người dùng mới</div>
                     </div>
                     <div class="setting-control">
-                        <select class="form-select">
-                            <option value="vi" selected>Tiếng Việt</option>
+                        <select asp-for="DefaultLanguage" class="form-select">
+                            <option value="vi">Tiếng Việt</option>
                             <option value="en">English</option>
                             <option value="zh">中文</option>
                             <option value="ja">日本語</option>
@@ -336,7 +343,7 @@
                     </div>
                     <div class="setting-control">
                         <label class="toggle-switch">
-                            <input type="checkbox" id="maintenanceMode" onchange="toggleMaintenance(this.checked)">
+                            <input asp-for="MaintenanceMode" type="checkbox" id="maintenanceMode" />
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
@@ -349,7 +356,7 @@
                     </div>
                     <div class="setting-control">
                         <label class="toggle-switch">
-                            <input type="checkbox" checked>
+                            <input asp-for="AllowNewRegistration" type="checkbox" />
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
@@ -374,7 +381,23 @@
                 <i class="fas fa-palette me-2"></i>Cài đặt giao diện
             </h5>
 
-            <form id="appearanceSettingsForm">
+            <form id="appearanceSettingsForm"
+                  asp-action="Settings"
+                  asp-controller="Admin"
+                  asp-area="Admin"
+                  method="post">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" asp-for="SiteName" />
+                <input type="hidden" asp-for="SiteDescription" />
+                <input type="hidden" asp-for="ContactEmail" />
+                <input type="hidden" asp-for="ContactPhone" />
+                <input type="hidden" asp-for="ContactAddress" />
+                <input type="hidden" asp-for="TimeZone" />
+                <input type="hidden" asp-for="DefaultLanguage" />
+                <input type="hidden" asp-for="MaintenanceMode" />
+                <input type="hidden" asp-for="AllowNewRegistration" />
+
                 <div class="setting-item">
                     <div class="setting-info">
                         <div class="setting-title">Logo website</div>
@@ -407,12 +430,23 @@
                     </div>
                     <div class="setting-control">
                         <div class="d-flex gap-2">
-                            <div class="theme-preview active" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)" onclick="selectTheme('blue')"></div>
-                            <div class="theme-preview" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%)" onclick="selectTheme('green')"></div>
-                            <div class="theme-preview" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%)" onclick="selectTheme('orange')"></div>
-                            <div class="theme-preview" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)" onclick="selectTheme('purple')"></div>
-                            <div class="theme-preview" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%)" onclick="selectTheme('red')"></div>
+                            <div class="theme-preview @(Model.Theme == "blue" ? "active" : "")"
+                                 style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)"
+                                 onclick="selectTheme('blue')"></div>
+                            <div class="theme-preview @(Model.Theme == "green" ? "active" : "")"
+                                 style="background: linear-gradient(135deg, #10b981 0%, #059669 100%)"
+                                 onclick="selectTheme('green')"></div>
+                            <div class="theme-preview @(Model.Theme == "orange" ? "active" : "")"
+                                 style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
+                                 onclick="selectTheme('orange')"></div>
+                            <div class="theme-preview @(Model.Theme == "purple" ? "active" : "")"
+                                 style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)"
+                                 onclick="selectTheme('purple')"></div>
+                            <div class="theme-preview @(Model.Theme == "red" ? "active" : "")"
+                                 style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"
+                                 onclick="selectTheme('red')"></div>
                         </div>
+                        <input asp-for="Theme" type="hidden" id="selectedTheme" />
                     </div>
                 </div>
 
@@ -423,8 +457,8 @@
                     </div>
                     <div class="setting-control">
                         <div class="d-flex gap-2 align-items-center">
-                            <input type="color" class="color-picker" value="#3b82f6">
-                            <input type="text" class="form-control" value="#3b82f6" style="width: 100px;">
+                            <input asp-for="PrimaryColor" type="color" class="color-picker" />
+                            <input asp-for="PrimaryColor" type="text" class="form-control" style="width: 100px;">
                         </div>
                     </div>
                 </div>
@@ -435,8 +469,8 @@
                         <div class="setting-description">Font chữ mặc định cho website</div>
                     </div>
                     <div class="setting-control">
-                        <select class="form-select">
-                            <option value="Inter" selected>Inter (Hiện tại)</option>
+                        <select asp-for="FontFamily" class="form-select">
+                            <option value="Inter">Inter (Hiện tại)</option>
                             <option value="Roboto">Roboto</option>
                             <option value="Open Sans">Open Sans</option>
                             <option value="Lato">Lato</option>
@@ -452,7 +486,7 @@
                     </div>
                     <div class="setting-control">
                         <label class="toggle-switch">
-                            <input type="checkbox">
+                            <input asp-for="EnableDarkMode" type="checkbox" />
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
@@ -465,7 +499,7 @@
                     </div>
                     <div class="setting-control">
                         <label class="toggle-switch">
-                            <input type="checkbox" checked>
+                            <input asp-for="EnableAnimations" type="checkbox" />
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
@@ -500,7 +534,28 @@
                 </div>
             </div>
 
-            <form id="securitySettingsForm">
+            <form id="securitySettingsForm"
+                  asp-action="Settings"
+                  asp-controller="Admin"
+                  asp-area="Admin"
+                  method="post">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" asp-for="SiteName" />
+                <input type="hidden" asp-for="SiteDescription" />
+                <input type="hidden" asp-for="ContactEmail" />
+                <input type="hidden" asp-for="ContactPhone" />
+                <input type="hidden" asp-for="ContactAddress" />
+                <input type="hidden" asp-for="TimeZone" />
+                <input type="hidden" asp-for="DefaultLanguage" />
+                <input type="hidden" asp-for="MaintenanceMode" />
+                <input type="hidden" asp-for="AllowNewRegistration" />
+                <input type="hidden" asp-for="Theme" />
+                <input type="hidden" asp-for="PrimaryColor" />
+                <input type="hidden" asp-for="FontFamily" />
+                <input type="hidden" asp-for="EnableDarkMode" />
+                <input type="hidden" asp-for="EnableAnimations" />
+
                 <div class="setting-item">
                     <div class="setting-info">
                         <div class="setting-title">Xác thực 2 lớp (2FA)</div>
@@ -508,7 +563,7 @@
                     </div>
                     <div class="setting-control">
                         <label class="toggle-switch">
-                            <input type="checkbox" checked>
+                            <input asp-for="Require2FAForAdmins" type="checkbox" />
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
@@ -521,7 +576,7 @@
                     </div>
                     <div class="setting-control">
                         <label class="toggle-switch">
-                            <input type="checkbox" checked>
+                            <input asp-for="EncryptSession" type="checkbox" />
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
@@ -533,9 +588,9 @@
                         <div class="setting-description">Thời gian tự động đăng xuất khi không hoạt động</div>
                     </div>
                     <div class="setting-control">
-                        <select class="form-select">
+                        <select asp-for="SessionTimeoutMinutes" class="form-select">
                             <option value="15">15 phút</option>
-                            <option value="30" selected>30 phút</option>
+                            <option value="30">30 phút</option>
                             <option value="60">1 giờ</option>
                             <option value="120">2 giờ</option>
                             <option value="480">8 giờ</option>
@@ -549,9 +604,9 @@
                         <div class="setting-description">Yêu cầu mật khẩu phức tạp cho người dùng</div>
                     </div>
                     <div class="setting-control">
-                        <select class="form-select">
+                        <select asp-for="PasswordComplexityLevel" class="form-select">
                             <option value="low">Thấp (6+ ký tự)</option>
-                            <option value="medium" selected>Trung bình (8+ ký tự, số và chữ)</option>
+                            <option value="medium">Trung bình (8+ ký tự, số và chữ)</option>
                             <option value="high">Cao (12+ ký tự, số, chữ và ký tự đặc biệt)</option>
                         </select>
                     </div>
@@ -563,9 +618,9 @@
                         <div class="setting-description">Số lần đăng nhập sai tối đa trước khi khóa tài khoản</div>
                     </div>
                     <div class="setting-control">
-                        <select class="form-select">
+                        <select asp-for="MaxLoginFailures" class="form-select">
                             <option value="3">3 lần</option>
-                            <option value="5" selected>5 lần</option>
+                            <option value="5">5 lần</option>
                             <option value="10">10 lần</option>
                             <option value="unlimited">Không giới hạn</option>
                         </select>
@@ -578,9 +633,9 @@
                         <div class="setting-description">Thời gian khóa tài khoản sau khi đăng nhập sai quá nhiều</div>
                     </div>
                     <div class="setting-control">
-                        <select class="form-select">
+                        <select asp-for="AccountLockMinutes" class="form-select">
                             <option value="15">15 phút</option>
-                            <option value="30" selected>30 phút</option>
+                            <option value="30">30 phút</option>
                             <option value="60">1 giờ</option>
                             <option value="1440">24 giờ</option>
                         </select>
@@ -594,7 +649,7 @@
                     </div>
                     <div class="setting-control">
                         <label class="toggle-switch">
-                            <input type="checkbox" checked disabled>
+                            <input asp-for="ForceHttps" type="checkbox" disabled />
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
@@ -605,7 +660,7 @@
                     <div class="api-key-item">
                         <div class="api-key-info">
                             <div class="fw-semibold">Main API Key</div>
-                            <div class="api-key-value">sk_live_51K7***************************</div>
+                            <div class="api-key-value">@Model.MainApiKeyMasked</div>
                         </div>
                         <div class="d-flex gap-2">
                             <button type="button" class="btn btn-outline-primary btn-sm" onclick="regenerateApiKey('main')">
@@ -620,7 +675,7 @@
                     <div class="api-key-item">
                         <div class="api-key-info">
                             <div class="fw-semibold">Webhook API Key</div>
-                            <div class="api-key-value">wh_sec_***************************</div>
+                            <div class="api-key-value">@Model.WebhookApiKeyMasked</div>
                         </div>
                         <div class="d-flex gap-2">
                             <button type="button" class="btn btn-outline-primary btn-sm" onclick="regenerateApiKey('webhook')">
@@ -656,7 +711,35 @@
                 <i class="fas fa-bell me-2"></i>Cài đặt thông báo
             </h5>
 
-            <form id="notificationSettingsForm">
+            <form id="notificationSettingsForm"
+                  asp-action="Settings"
+                  asp-controller="Admin"
+                  asp-area="Admin"
+                  method="post">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" asp-for="SiteName" />
+                <input type="hidden" asp-for="SiteDescription" />
+                <input type="hidden" asp-for="ContactEmail" />
+                <input type="hidden" asp-for="ContactPhone" />
+                <input type="hidden" asp-for="ContactAddress" />
+                <input type="hidden" asp-for="TimeZone" />
+                <input type="hidden" asp-for="DefaultLanguage" />
+                <input type="hidden" asp-for="MaintenanceMode" />
+                <input type="hidden" asp-for="AllowNewRegistration" />
+                <input type="hidden" asp-for="Theme" />
+                <input type="hidden" asp-for="PrimaryColor" />
+                <input type="hidden" asp-for="FontFamily" />
+                <input type="hidden" asp-for="EnableDarkMode" />
+                <input type="hidden" asp-for="EnableAnimations" />
+                <input type="hidden" asp-for="Require2FAForAdmins" />
+                <input type="hidden" asp-for="EncryptSession" />
+                <input type="hidden" asp-for="SessionTimeoutMinutes" />
+                <input type="hidden" asp-for="PasswordComplexityLevel" />
+                <input type="hidden" asp-for="MaxLoginFailures" />
+                <input type="hidden" asp-for="AccountLockMinutes" />
+                <input type="hidden" asp-for="ForceHttps" />
+
                 <h6 class="fw-bold mb-3">Email Notifications</h6>
 
                 <div class="setting-item">
@@ -666,7 +749,7 @@
                     </div>
                     <div class="setting-control">
                         <label class="toggle-switch">
-                            <input type="checkbox" checked>
+                            <input asp-for="NotifyNewRegistration" type="checkbox" />
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
@@ -679,7 +762,7 @@
                     </div>
                     <div class="setting-control">
                         <label class="toggle-switch">
-                            <input type="checkbox" checked>
+                            <input asp-for="NotifyNewPayment" type="checkbox" />
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
@@ -692,7 +775,7 @@
                     </div>
                     <div class="setting-control">
                         <label class="toggle-switch">
-                            <input type="checkbox">
+                            <input asp-for="NotifyNewCourse" type="checkbox" />
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
@@ -705,7 +788,7 @@
                     </div>
                     <div class="setting-control">
                         <label class="toggle-switch">
-                            <input type="checkbox" checked>
+                            <input asp-for="NotifySystemError" type="checkbox" />
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
@@ -722,7 +805,7 @@
                     </div>
                     <div class="setting-control">
                         <label class="toggle-switch">
-                            <input type="checkbox" checked>
+                            <input asp-for="BrowserNotifications" type="checkbox" />
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
@@ -735,7 +818,7 @@
                     </div>
                     <div class="setting-control">
                         <label class="toggle-switch">
-                            <input type="checkbox">
+                            <input asp-for="NotificationSound" type="checkbox" />
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
@@ -751,7 +834,7 @@
                         <div class="setting-description">Máy chủ SMTP để gửi email</div>
                     </div>
                     <div class="setting-control">
-                        <input type="text" class="form-control" value="smtp.gmail.com">
+                        <input asp-for="SmtpServer" class="form-control" />
                     </div>
                 </div>
 
@@ -761,7 +844,7 @@
                         <div class="setting-description">Cổng kết nối SMTP</div>
                     </div>
                     <div class="setting-control">
-                        <input type="number" class="form-control" value="587">
+                        <input asp-for="SmtpPort" type="number" class="form-control" />
                     </div>
                 </div>
 
@@ -771,7 +854,7 @@
                         <div class="setting-description">Địa chỉ email gửi thông báo</div>
                     </div>
                     <div class="setting-control">
-                        <input type="email" class="form-control" value="noreply@onlinelearning.com">
+                        <input asp-for="NotificationFromEmail" type="email" class="form-control" />
                     </div>
                 </div>
 
@@ -794,7 +877,44 @@
                 <i class="fas fa-plug me-2"></i>Tích hợp bên thứ 3
             </h5>
 
-            <form id="integrationSettingsForm">
+            <form id="integrationSettingsForm"
+                  asp-action="Settings"
+                  asp-controller="Admin"
+                  asp-area="Admin"
+                  method="post">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" asp-for="SiteName" />
+                <input type="hidden" asp-for="SiteDescription" />
+                <input type="hidden" asp-for="ContactEmail" />
+                <input type="hidden" asp-for="ContactPhone" />
+                <input type="hidden" asp-for="ContactAddress" />
+                <input type="hidden" asp-for="TimeZone" />
+                <input type="hidden" asp-for="DefaultLanguage" />
+                <input type="hidden" asp-for="MaintenanceMode" />
+                <input type="hidden" asp-for="AllowNewRegistration" />
+                <input type="hidden" asp-for="Theme" />
+                <input type="hidden" asp-for="PrimaryColor" />
+                <input type="hidden" asp-for="FontFamily" />
+                <input type="hidden" asp-for="EnableDarkMode" />
+                <input type="hidden" asp-for="EnableAnimations" />
+                <input type="hidden" asp-for="Require2FAForAdmins" />
+                <input type="hidden" asp-for="EncryptSession" />
+                <input type="hidden" asp-for="SessionTimeoutMinutes" />
+                <input type="hidden" asp-for="PasswordComplexityLevel" />
+                <input type="hidden" asp-for="MaxLoginFailures" />
+                <input type="hidden" asp-for="AccountLockMinutes" />
+                <input type="hidden" asp-for="ForceHttps" />
+                <input type="hidden" asp-for="NotifyNewRegistration" />
+                <input type="hidden" asp-for="NotifyNewPayment" />
+                <input type="hidden" asp-for="NotifyNewCourse" />
+                <input type="hidden" asp-for="NotifySystemError" />
+                <input type="hidden" asp-for="BrowserNotifications" />
+                <input type="hidden" asp-for="NotificationSound" />
+                <input type="hidden" asp-for="SmtpServer" />
+                <input type="hidden" asp-for="SmtpPort" />
+                <input type="hidden" asp-for="NotificationFromEmail" />
+
                 <h6 class="fw-bold mb-3">Payment Gateways</h6>
 
                 <div class="setting-item">
@@ -805,7 +925,7 @@
                     <div class="setting-control">
                         <div class="d-flex gap-2">
                             <label class="toggle-switch">
-                                <input type="checkbox" checked>
+                                <input asp-for="EnableMomo" type="checkbox" />
                                 <span class="toggle-slider"></span>
                             </label>
                             <button type="button" class="btn btn-outline-secondary btn-sm" onclick="configurePayment('momo')">
@@ -823,7 +943,7 @@
                     <div class="setting-control">
                         <div class="d-flex gap-2">
                             <label class="toggle-switch">
-                                <input type="checkbox" checked>
+                                <input asp-for="EnableVnPay" type="checkbox" />
                                 <span class="toggle-slider"></span>
                             </label>
                             <button type="button" class="btn btn-outline-secondary btn-sm" onclick="configurePayment('vnpay')">
@@ -841,7 +961,7 @@
                     <div class="setting-control">
                         <div class="d-flex gap-2">
                             <label class="toggle-switch">
-                                <input type="checkbox">
+                                <input asp-for="EnableZaloPay" type="checkbox" />
                                 <span class="toggle-slider"></span>
                             </label>
                             <button type="button" class="btn btn-outline-secondary btn-sm" onclick="configurePayment('zalopay')">
@@ -862,9 +982,9 @@
                     </div>
                     <div class="setting-control">
                         <div class="d-flex gap-2">
-                            <input type="text" class="form-control" placeholder="G-XXXXXXXXXX" value="G-ABC123DEF4">
+                            <input asp-for="GoogleAnalyticsId" type="text" class="form-control" placeholder="G-XXXXXXXXXX" />
                             <label class="toggle-switch">
-                                <input type="checkbox" checked>
+                                <input type="checkbox" @(string.IsNullOrEmpty(Model.GoogleAnalyticsId) ? "" : "checked") disabled />
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
@@ -878,9 +998,9 @@
                     </div>
                     <div class="setting-control">
                         <div class="d-flex gap-2">
-                            <input type="text" class="form-control" placeholder="123456789012345">
+                            <input asp-for="FacebookPixelId" type="text" class="form-control" placeholder="123456789012345" />
                             <label class="toggle-switch">
-                                <input type="checkbox">
+                                <input type="checkbox" @(string.IsNullOrEmpty(Model.FacebookPixelId) ? "" : "checked") disabled />
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
@@ -894,9 +1014,9 @@
                     </div>
                     <div class="setting-control">
                         <div class="d-flex gap-2">
-                            <input type="text" class="form-control" placeholder="1234567">
+                            <input asp-for="HotjarSiteId" type="text" class="form-control" placeholder="1234567" />
                             <label class="toggle-switch">
-                                <input type="checkbox">
+                                <input type="checkbox" @(string.IsNullOrEmpty(Model.HotjarSiteId) ? "" : "checked") disabled />
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
@@ -915,7 +1035,7 @@
                     <div class="setting-control">
                         <div class="d-flex gap-2">
                             <label class="toggle-switch">
-                                <input type="checkbox">
+                                <input asp-for="EnableS3" type="checkbox" />
                                 <span class="toggle-slider"></span>
                             </label>
                             <button type="button" class="btn btn-outline-secondary btn-sm" onclick="configureStorage('s3')">
@@ -933,7 +1053,7 @@
                     <div class="setting-control">
                         <div class="d-flex gap-2">
                             <label class="toggle-switch">
-                                <input type="checkbox">
+                                <input asp-for="EnableGcs" type="checkbox" />
                                 <span class="toggle-slider"></span>
                             </label>
                             <button type="button" class="btn btn-outline-secondary btn-sm" onclick="configureStorage('gcs')">
@@ -955,7 +1075,7 @@
                     <div class="setting-control">
                         <div class="d-flex gap-2">
                             <label class="toggle-switch">
-                                <input type="checkbox">
+                                <input asp-for="EnableSlack" type="checkbox" />
                                 <span class="toggle-slider"></span>
                             </label>
                             <button type="button" class="btn btn-outline-secondary btn-sm" onclick="configureSlack()">
@@ -973,7 +1093,7 @@
                     <div class="setting-control">
                         <div class="d-flex gap-2">
                             <label class="toggle-switch">
-                                <input type="checkbox">
+                                <input asp-for="EnableDiscord" type="checkbox" />
                                 <span class="toggle-slider"></span>
                             </label>
                             <button type="button" class="btn btn-outline-secondary btn-sm" onclick="configureDiscord()">
@@ -998,83 +1118,44 @@
 
 @section Scripts {
     <script>
-        $(document).ready(function() {
-            // Load current settings
-            loadCurrentSettings();
-
-            // Form submissions
-            $('#generalSettingsForm').on('submit', function(e) {
-                e.preventDefault();
-                saveSettings('general');
-            });
-
-            $('#appearanceSettingsForm').on('submit', function(e) {
-                e.preventDefault();
-                saveSettings('appearance');
-            });
-
-            $('#securitySettingsForm').on('submit', function(e) {
-                e.preventDefault();
-                saveSettings('security');
-            });
-
-            $('#notificationSettingsForm').on('submit', function(e) {
-                e.preventDefault();
-                saveSettings('notifications');
-            });
-
-            $('#integrationSettingsForm').on('submit', function(e) {
-                e.preventDefault();
-                saveSettings('integrations');
-            });
-        });
-
-        function loadCurrentSettings() {
-            // Simulate loading current settings from server
-            console.log('Loading current settings...');
-        }
-
-        function saveSettings(type) {
-            showLoading();
-
-            setTimeout(() => {
-                hideLoading();
-                showSuccess(`Đã lưu cài đặt ${getSettingsTypeName(type)} thành công!`);
-                console.log(`Settings saved: ${type}`);
-            }, 1000);
-        }
-
-        function getSettingsTypeName(type) {
-            const names = {
-                general: 'chung',
-                appearance: 'giao diện',
-                security: 'bảo mật',
-                notifications: 'thông báo',
-                integrations: 'tích hợp'
-            };
-            return names[type] || type;
+        function getCsrfToken() {
+            return $('input[name="__RequestVerificationToken"]').first().val();
         }
 
         function toggleMaintenance(enabled) {
             const banner = $('#maintenanceBanner');
             const checkbox = $('#maintenanceMode');
 
-            if (enabled) {
-                banner.slideDown();
-                checkbox.prop('checked', true);
-                showWarning('Chế độ bảo trì đã được kích hoạt!');
-            } else {
-                banner.slideUp();
-                checkbox.prop('checked', false);
-                showSuccess('Chế độ bảo trì đã được tắt!');
-            }
+            $.ajax({
+                url: '/Admin/Admin/ToggleMaintenanceMode',
+                type: 'POST',
+                data: { enable: enabled },
+                headers: {
+                    'RequestVerificationToken': getCsrfToken()
+                },
+                success: function (response) {
+                    if (enabled) {
+                        banner.slideDown();
+                        checkbox.prop('checked', true);
+                        showWarning(response.message || 'Chế độ bảo trì đã được kích hoạt!');
+                    } else {
+                        banner.slideUp();
+                        checkbox.prop('checked', false);
+                        showSuccess(response.message || 'Chế độ bảo trì đã được tắt!');
+                    }
+                },
+                error: function () {
+                    checkbox.prop('checked', !enabled);
+                    showError('Lỗi khi cập nhật chế độ bảo trì');
+                }
+            });
         }
 
         function selectTheme(theme) {
             $('.theme-preview').removeClass('active');
             $(`.theme-preview[onclick="selectTheme('${theme}')"]`).addClass('active');
+            $('#selectedTheme').val(theme);
 
-            // Update color picker based on theme
             const colors = {
                 blue: '#3b82f6',
                 green: '#10b981',
@@ -1083,10 +1164,9 @@
                 red: '#ef4444'
             };
 
-            $('.color-picker').val(colors[theme]);
-            $('input[type="text"]').filter(function() {
-                return $(this).val().match(/^#[0-9a-fA-F]{6}$/);
-            }).val(colors[theme]);
+            const color = colors[theme] || '#3b82f6';
+            $('.color-picker').val(color);
+            $('input[name="PrimaryColor"]').val(color);
 
             showInfo(`Đã chọn theme ${theme}!`);
         }
@@ -1130,7 +1210,6 @@
         }
 
         function copyApiKey(keyType) {
-            // Simulate copying to clipboard
             navigator.clipboard.writeText('sk_live_51K7***************************').then(() => {
                 showSuccess('Đã copy API Key vào clipboard!');
             });
@@ -1347,18 +1426,14 @@
             return key;
         }
 
-        // Color picker sync
-        $('.color-picker').on('change', function() {
+        $(document).on('change', '.color-picker', function () {
             const color = $(this).val();
-            $(this).siblings('input[type="text"]').val(color);
+            $('input[name="PrimaryColor"]').val(color);
         });
 
-        $('input[type="text"]').filter(function() {
-            return $(this).val().match(/^#[0-9a-fA-F]{6}$/);
-        }).on('input', function() {
-            const color = $(this).val();
-            if (color.match(/^#[0-9a-fA-F]{6}$/)) {
-                $(this).siblings('.color-picker').val(color);
+        $(document).ready(function () {
+            if ('@Model.Theme' && '@Model.Theme'.length > 0) {
+                selectTheme('@Model.Theme');
             }
         });
     </script>

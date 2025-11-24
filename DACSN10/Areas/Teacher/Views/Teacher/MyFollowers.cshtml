@@ -2,6 +2,12 @@
 @{
     ViewData["Title"] = "Người theo dõi";
     Layout = "~/Areas/Teacher/Views/Shared/_TeacherLayout.cshtml";
+
+    int totalFollowers = ViewBag.TotalFollowers ?? Model?.Count ?? 0;
+    int newFollowers30Days = ViewBag.NewFollowers30Days ?? 0;
+    int enrolledFollowers = ViewBag.EnrolledFollowers ?? 0;
+    double growthPercent = ViewBag.GrowthPercent ?? 0.0;
+    double avgCourses = ViewBag.AvgCoursesPerFollower ?? 0.0;
 }
 
 @section Styles {
@@ -21,7 +27,7 @@
 
 <!-- Followers Header -->
 <div class="followers-header" data-aos="fade-up">
-    <div class="followers-count counter" data-target="@Model.Count">0</div>
+    <div class="followers-count counter" data-target="@totalFollowers">0</div>
     <div class="followers-subtitle">Người đang theo dõi bạn</div>
 </div>
 
@@ -31,7 +37,7 @@
         <div class="stat-icon-mini" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
             <i class="fas fa-user-plus"></i>
         </div>
-        <div class="stat-value-mini">@Model.Count(f => f.Follower.NgayDangKy >= DateTime.Now.AddDays(-30))</div>
+        <div class="stat-value-mini">@newFollowers30Days</div>
         <div class="stat-label-mini">Người theo dõi mới (30 ngày)</div>
     </div>
 
@@ -39,7 +45,9 @@
         <div class="stat-icon-mini" style="background: linear-gradient(135deg, #10b981, #059669);">
             <i class="fas fa-chart-line"></i>
         </div>
-        <div class="stat-value-mini">+15%</div>
+        <div class="stat-value-mini">
+            @(growthPercent >= 0 ? "+" : "")@growthPercent.ToString("F1")%
+        </div>
         <div class="stat-label-mini">Tăng trưởng tháng này</div>
     </div>
 
@@ -47,7 +55,7 @@
         <div class="stat-icon-mini" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
             <i class="fas fa-users"></i>
         </div>
-        <div class="stat-value-mini">@Model.Count(f => f.Follower.Enrollments?.Any() == true)</div>
+        <div class="stat-value-mini">@enrolledFollowers</div>
         <div class="stat-label-mini">Đã đăng ký khóa học</div>
     </div>
 
@@ -55,8 +63,8 @@
         <div class="stat-icon-mini" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
             <i class="fas fa-star"></i>
         </div>
-        <div class="stat-value-mini">4.8</div>
-        <div class="stat-label-mini">Đánh giá trung bình</div>
+        <div class="stat-value-mini">@avgCourses.ToString("F1")</div>
+        <div class="stat-label-mini">Số khóa học trung bình / follower</div>
     </div>
 </div>
 

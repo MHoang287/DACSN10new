@@ -10,7 +10,7 @@
 }
 
 @{
-	Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 }
 
 @section Breadcrumb {
@@ -19,6 +19,7 @@
 
 @section Styles {
     <style>
+        /* GIỮ NGUYÊN TOÀN BỘ CSS NHƯ FILE GỐC */
         .payment-card {
             background: white;
             border-radius: 12px;
@@ -194,6 +195,15 @@
                 border-radius: 50%;
                 background: var(--admin-primary);
             }
+
+        .bulk-actions {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+            display: none;
+        }
     </style>
 }
 
@@ -530,19 +540,15 @@
 @section Scripts {
     <script>
         $(document).ready(function() {
-            // Individual checkbox change
             $('.payment-checkbox').change(function() {
                 updateSelectedCount();
             });
 
-            // Load initial revenue summary
             loadRevenueSummary('today');
 
-            // Auto-refresh every 30 seconds for pending payments
             setInterval(function() {
                 if ($('.status-pill.active').text().includes('Chờ')) {
                     console.log('Checking for payment updates...');
-                    // Optionally reload the page or specific sections
                 }
             }, 30000);
         });
@@ -613,45 +619,29 @@
         }
 
         function loadRevenueSummary(period) {
-            // Update active button
             $('.revenue-summary .btn-group .btn').removeClass('active');
             $(`button[onclick="loadRevenueSummary('${period}')"]`).addClass('active');
 
-            // Simulate loading revenue data
             showLoading();
 
-            setTimeout(() => {
-                hideLoading();
+            $.get('@Url.Action("GetPaymentSummary", "Admin")', { period: period })
+                .done(function (data) {
+                    hideLoading();
 
-                // Update with sample data - in real app, this would be an AJAX call
-                const data = {
-                    today: {
-                        revenue: '1,250,000₫',
-                        transactions: 8,
-                        pending: '350,000₫',
-                        average: '156,250₫'
-                    },
-                    week: {
-                        revenue: '8,750,000₫',
-                        transactions: 42,
-                        pending: '1,200,000₫',
-                        average: '208,333₫'
-                    },
-                    month: {
-                        revenue: '25,300,000₫',
-                        transactions: 156,
-                        pending: '2,850,000₫',
-                        average: '162,179₫'
-                    }
-                };
+                    const totalRevenue = data.totalRevenue ?? data.TotalRevenue ?? 0;
+                    const totalTransactions = data.totalTransactions ?? data.TotalTransactions ?? 0;
+                    const pendingAmount = data.pendingAmount ?? data.PendingAmount ?? 0;
+                    const averageTransaction = data.averageTransaction ?? data.AverageTransaction ?? 0;
 
-                const periodData = data[period];
-                $('#totalRevenue').text(periodData.revenue);
-                $('#totalTransactions').text(periodData.transactions);
-                $('#pendingAmount').text(periodData.pending);
-                $('#averageTransaction').text(periodData.average);
-
-            }, 500);
+                    $('#totalRevenue').text(Number(totalRevenue).toLocaleString('vi-VN') + '₫');
+                    $('#totalTransactions').text(totalTransactions);
+                    $('#pendingAmount').text(Number(pendingAmount).toLocaleString('vi-VN') + '₫');
+                    $('#averageTransaction').text(Number(averageTransaction).toLocaleString('vi-VN') + '₫');
+                })
+                .fail(function () {
+                    hideLoading();
+                    showError('Không thể tải tổng quan doanh thu!');
+                });
         }
 
         function approvePayment(paymentId) {
@@ -722,7 +712,6 @@
                 }
             });
         }
-
 
         function rejectPayment(paymentId) {
             Swal.fire({

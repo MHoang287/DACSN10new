@@ -6,6 +6,8 @@
     var totalPages = ViewBag.TotalPages ?? 1;
     var status = ViewBag.Status ?? "";
     var search = ViewBag.Search ?? "";
+    // LẤY DICTIONARY DOANH THU TỪ ViewBag
+    var revenues = ViewBag.TeacherRevenue as IDictionary<string, decimal>;
 }
 
 @section Breadcrumb {
@@ -313,25 +315,7 @@
                         <div class="teacher-email">@teacher.Email</div>
 
                         <div class="rating-stars mt-2">
-                            @{
-                                var rating = new Random().Next(35, 50) / 10.0; // Simulate rating 3.5-5.0
-                            }
-                            @for (int i = 1; i <= 5; i++)
-                            {
-                                if (i <= rating)
-                                {
-                                    <i class="fas fa-star"></i>
-                                }
-                                else if (i - 0.5 <= rating)
-                                {
-                                    <i class="fas fa-star-half-alt"></i>
-                                }
-                                else
-                                {
-                                    <i class="far fa-star"></i>
-                                }
-                            }
-                            <span class="ms-1">(@rating.ToString("F1"))</span>
+                            <span class="badge bg-light text-dark">Chưa có dữ liệu đánh giá</span>
                         </div>
                     </div>
 
@@ -357,31 +341,31 @@
                             <div class="stat-item">
                                 <div class="stat-number">
                                     @{
-                                        var revenue = new Random().Next(1000000, 10000000); // Simulate revenue
+                                        decimal teacherRevenue = 0;
+                                        if (revenues != null && teacher.Id != null && revenues.ContainsKey(teacher.Id))
+                                        {
+                                            teacherRevenue = revenues[teacher.Id];
+                                        }
                                     }
-                                    @((revenue / 1000000.0).ToString("F1"))M
+                                    @((teacherRevenue / 1_000_000m).ToString("F1"))M
                                 </div>
                                 <div class="stat-label">Doanh thu</div>
                             </div>
                         </div>
 
-                        <!-- Performance Indicator -->
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <small class="text-muted">Hiệu suất tổng thể</small>
-                                <small class="fw-semibold">
-                                    @{
-                                        var performance = new Random().Next(65, 95);
-                                    }
-                                    @performance%
-                                </small>
+                                @{
+                                    var perf = (teacher.Courses?.Sum(c => c.Enrollments?.Count ?? 0) ?? 0) == 0 ? 0 : 100;
+                                }
+                                <small class="fw-semibold">@perf%</small>
                             </div>
                             <div class="performance-indicator">
-                                <div class="performance-bar" style="width: @performance%"></div>
+                                <div class="performance-bar" style="width: @perf%"></div>
                             </div>
                         </div>
 
-                        <!-- Teacher's Courses -->
                         @if (teacher.Courses != null && teacher.Courses.Any())
                         {
                             <div class="mb-3">
@@ -414,21 +398,19 @@
                             </div>
                         }
 
-                        <!-- Additional Info -->
                         <div class="mb-3">
                             <small class="text-muted">
                                 <i class="fas fa-calendar me-1"></i>Tham gia: @teacher.NgayDangKy.ToString("dd/MM/yyyy")
                             </small>
                             @if (!string.IsNullOrEmpty(teacher.PhoneNumber))
                             {
-                                <br>
+                                <br />
                                 <small class="text-muted">
                                     <i class="fas fa-phone me-1"></i>@teacher.PhoneNumber
                                 </small>
                             }
                         </div>
 
-                        <!-- Actions -->
                         <div class="teacher-actions">
                             <a href="/Admin/Admin/TeacherDetails/@teacher.Id"
                                class="btn btn-outline-primary btn-sm flex-fill">

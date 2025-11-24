@@ -63,6 +63,89 @@ namespace DACSN10.Controllers
 
         #endregion
 
+        #region Students & Followers
+
+        // GET: /Teacher/Teacher/MyStudents
+        [HttpGet]
+        public async Task<IActionResult> MyStudents(int page = 1, int pageSize = 20)
+        {
+            var teacherId = GetCurrentUserId();
+
+            // Enrollment thuộc các khóa học của giáo viên
+            var query = _context.Enrollments
+                .Include(e => e.User)
+                .Include(e => e.Course)
+                .Where(e => e.Course.UserID == teacherId && e.TrangThai == "Active")
+                .OrderByDescending(e => e.EnrollDate);
+
+            var totalEnrollments = await query.CountAsync();
+            var enrollments = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalPages = (int)Math.Ceiling((double)totalEnrollments / pageSize);
+
+            // Thống kê cho UI
+            ViewBag.NewStudents30Days = enrollments.Count(e => e.EnrollDate >= DateTime.Now.AddDays(-30));
+            ViewBag.NewStudents7Days = enrollments.Count(e => e.EnrollDate >= DateTime.Now.AddDays(-7));
+            ViewBag.CompletedOver80 = enrollments.Count(e => e.Progress >= 80);
+            ViewBag.AvgProgress = enrollments.Any()
+                ? enrollments.Average(e => e.Progress)
+                : 0;
+
+            return View(enrollments);
+        }
+
+        // GET: /Teacher/Teacher/MyFollowers
+        [HttpGet]
+        public async Task<IActionResult> MyFollowers()
+        {
+            var teacherId = GetCurrentUserId();
+
+            var followers = await _context.Follows
+                .Include(f => f.Follower)
+                .Include(f => f.FollowedTeacher)
+                .Where(f => f.FollowedTeacherID == teacherId)
+                .OrderByDescending(f => f.Follower.NgayDangKy)
+                .ToListAsync();
+
+            // Thống kê cho UI
+            ViewBag.TotalFollowers = followers.Count;
+            ViewBag.NewFollowers30Days = followers.Count(f => f.Follower.NgayDangKy >= DateTime.Now.AddDays(-30));
+            ViewBag.EnrolledFollowers = followers.Count(f => f.Follower.Enrollments != null &&
+                                                               f.Follower.Enrollments.Any(e => e.TrangThai == "Active"));
+
+            // Tăng trưởng tháng này dựa trên so sánh 30 ngày gần nhất với 30 ngày trước đó
+            var now = DateTime.Now;
+            var curStart = now.AddDays(-30);
+            var prevStart = now.AddDays(-60);
+            var curCount = followers.Count(f => f.Follower.NgayDangKy >= curStart);
+            var prevCount = followers.Count(f => f.Follower.NgayDangKy >= prevStart &&
+                                                 f.Follower.NgayDangKy < curStart);
+
+            double growth = 0;
+            if (prevCount > 0)
+                growth = (curCount - prevCount) * 100.0 / prevCount;
+            else if (curCount > 0)
+                growth = 100; // coi như tăng mạnh
+
+            ViewBag.GrowthPercent = growth;
+
+            // Trung bình số khóa học đã đăng ký của followers
+            double avgCourses = followers.Any()
+                ? followers.Average(f => (double)(f.Follower.Enrollments?.Count(e => e.TrangThai == "Active") ?? 0))
+                : 0;
+
+            ViewBag.AvgCoursesPerFollower = avgCourses;
+
+            return View(followers);
+        }
+
+        #endregion
+
         #region Course Management
 
         public async Task<IActionResult> MyCourses(int page = 1, int pageSize = 10)
@@ -1212,6 +1295,141 @@ namespace DACSN10.Controllers
             };
 
             ViewBag.Period = period; // để view đặt selected cho dropdown
+            return View(vm);
+        }
+
+        #endregion
+
+        #region Statistics
+
+        /// <summary>
+        /// Trang thống kê tổng quan cho giáo viên
+        /// URL: /Teacher/Teacher/Statistics
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> Statistics()
+        {
+            var teacherId = GetCurrentUserId();
+            var now = DateTime.Now;
+
+            // Lấy danh sách khóa học của giáo viên, kèm Enrollments & Payments
+            var courses = await _context.Courses
+                .Include(c => c.Enrollments)
+                .Include(c => c.Payments)
+                .Where(c => c.UserID == teacherId)
+                .ToListAsync();
+
+            // --- Tổng quan ---
+            var totalCourses = courses.Count;
+            var activeCourses = courses.Count(c => c.TrangThai == "Active");
+
+            var totalStudents = await _context.Enrollments
+                .Include(e => e.Course)
+                .CountAsync(e => e.Course.UserID == teacherId && e.TrangThai == "Active");
+
+            var totalRevenue = await _context.Payments
+                .Include(p => p.Course)
+                .Where(p => p.Course.UserID == teacherId && p.Status == PaymentStatus.Success)
+                .SumAsync(p => (decimal?)p.SoTien) ?? 0;
+
+            // Nếu chưa có bảng followers thì tạm để 0 (sau này bạn thay logic thật vào)
+            var followers = 0;
+
+            // --- Top khóa học ---
+            var topCourses = courses
+                .Select(c => new TopCourseStat
+                {
+                    CourseID = c.CourseID,
+                    TenKhoaHoc = c.TenKhoaHoc,
+                    StudentCount = c.Enrollments.Count(e => e.TrangThai == "Active"),
+                    Revenue = c.Payments
+                        .Where(p => p.Status == PaymentStatus.Success)
+                        .Sum(p => (decimal?)p.SoTien) ?? 0
+                })
+                .OrderByDescending(x => x.StudentCount)
+                .ThenByDescending(x => x.Revenue)
+                .Take(10)
+                .ToList();
+
+            // --- Doanh thu theo tháng: 6 tháng gần nhất (tính cả tháng hiện tại) ---
+            var firstMonth = new DateTime(now.Year, now.Month, 1).AddMonths(-5); // lùi 5 tháng
+            var rawRevenue = await _context.Payments
+                .Include(p => p.Course)
+                .Where(p => p.Course.UserID == teacherId
+                            && p.Status == PaymentStatus.Success
+                            && p.NgayThanhToan >= firstMonth)
+                .GroupBy(p => new { p.NgayThanhToan.Year, p.NgayThanhToan.Month })
+                .Select(g => new
+                {
+                    g.Key.Year,
+                    g.Key.Month,
+                    Revenue = g.Sum(p => p.SoTien)
+                })
+                .ToListAsync();
+
+            var revenueByMonth = new List<RevenuePoint>();
+            for (int i = 0; i < 6; i++)
+            {
+                var monthDate = firstMonth.AddMonths(i);
+                var item = rawRevenue
+                    .FirstOrDefault(x => x.Year == monthDate.Year && x.Month == monthDate.Month);
+
+                revenueByMonth.Add(new RevenuePoint
+                {
+                    Label = $"T{monthDate.Month}/{monthDate.Year % 100}",
+                    Revenue = item?.Revenue ?? 0
+                });
+            }
+
+            // --- Phân bố học viên ---
+            var enrollments = await _context.Enrollments
+                .Include(e => e.Course)
+                .Where(e => e.Course.UserID == teacherId)
+                .ToListAsync();
+
+            var distribution = new StudentDistribution
+            {
+                DangHoc = enrollments.Count(e => e.TrangThai == "Active" && e.Progress < 100),
+                HoanThanh = enrollments.Count(e => e.TrangThai == "Active" && e.Progress >= 100),
+                TamDung = enrollments.Count(e => e.TrangThai != "Active")
+            };
+
+            // --- CompletionRate ---
+            double completionRate = 0;
+            var activeEnrollments = enrollments.Where(e => e.TrangThai == "Active").ToList();
+            if (activeEnrollments.Any())
+            {
+                completionRate = activeEnrollments.Count(e => e.Progress >= 100) * 100.0 / activeEnrollments.Count;
+            }
+
+            // --- AverageRating từ QuizResult ---
+            var quizResults = await _context.QuizResults
+                .Include(qr => qr.Quiz).ThenInclude(q => q.Course)
+                .Where(qr => qr.Quiz.Course.UserID == teacherId)
+                .ToListAsync();
+
+            double averageQuizScore = quizResults.Any() ? quizResults.Average(qr => qr.Score) : 0;
+            double averageRating = Math.Round(averageQuizScore / 20.0, 1); // Score 0–100 -> rating 0–5
+
+            // --- AverageStudyHoursPerWeek ---
+            // Nếu bạn chưa có bảng log thời gian học, tạm để cứng 2.5; sau này sẽ thay bằng dữ liệu thật.
+            double averageHours = 2.5;
+
+            var vm = new TeacherStatisticsViewModel
+            {
+                TotalCourses = totalCourses,
+                ActiveCourses = activeCourses,
+                TotalStudents = totalStudents,
+                TotalRevenue = totalRevenue,
+                Followers = followers,
+                TopCourses = topCourses,
+                RevenueByMonth = revenueByMonth,
+                StudentDistribution = distribution,
+                CompletionRate = Math.Round(completionRate, 2),
+                AverageRating = averageRating,
+                AverageStudyHoursPerWeek = averageHours
+            };
+
             return View(vm);
         }
 

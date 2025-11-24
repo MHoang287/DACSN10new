@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿﻿
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
@@ -99,8 +100,9 @@
 
             <div class="nav-section">
                 <div class="nav-section-title">Khác</div>
+                <!-- Nút quay lại trang chủ chính -->
                 <div class="nav-item">
-                    <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">
+                    <a class="nav-link" href="@Url.Action("Index", "Home", new { area = "" })">
                         <i class="fas fa-home"></i>
                         <span>Về trang chủ</span>
                     </a>
@@ -123,7 +125,7 @@
                     <i class="fas fa-bars"></i>
                 </button>
 
-                <div class="search-box">
+                <div class="search-box ms-3">
                     <input type="text" placeholder="Tìm kiếm khóa học, học viên...">
                     <button type="submit">
                         <i class="fas fa-search"></i>
@@ -242,19 +244,19 @@
         // Show toast messages from TempData
         @if (TempData["Success"] != null)
         {
-            <text>toastr.success('@Html.Raw(TempData["Success"])');</text>
+                <text>toastr.success('@Html.Raw(TempData["Success"])');</text>
         }
         @if (TempData["Error"] != null)
         {
-            <text>toastr.error('@Html.Raw(TempData["Error"])');</text>
+                <text>toastr.error('@Html.Raw(TempData["Error"])');</text>
         }
         @if (TempData["Warning"] != null)
         {
-            <text>toastr.warning('@Html.Raw(TempData["Warning"])');</text>
+                <text>toastr.warning('@Html.Raw(TempData["Warning"])');</text>
         }
         @if (TempData["Info"] != null)
         {
-            <text>toastr.info('@Html.Raw(TempData["Info"])');</text>
+                <text>toastr.info('@Html.Raw(TempData["Info"])');</text>
         }
     </script>
 

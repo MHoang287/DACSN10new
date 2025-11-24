@@ -1,13 +1,28 @@
-﻿@{
+﻿@model DACSN10.Areas.Teacher.ViewModels.TeacherStatisticsViewModel
+@using System.Linq
+@using System.Text.Json
+
+@{
     ViewData["Title"] = "Thống kê";
     Layout = "~/Areas/Teacher/Views/Shared/_TeacherLayout.cshtml";
 
-    var stats = ViewBag.Stats;
-    var courseStats = ViewBag.CourseStats;
+    var stats = Model;
+    var courseStats = Model.TopCourses;
+
+    // Dữ liệu cho Chart.js
+    var revenueLabelsJson = JsonSerializer.Serialize(Model.RevenueByMonth.Select(r => r.Label));
+    var revenueDataJson = JsonSerializer.Serialize(Model.RevenueByMonth.Select(r => r.Revenue));
+
+    var studentDistJson = JsonSerializer.Serialize(new[] {
+        Model.StudentDistribution.DangHoc,
+        Model.StudentDistribution.HoanThanh,
+        Model.StudentDistribution.TamDung
+    });
 }
 
 @section Styles {
     <style>
+        /* Toàn bộ phần CSS giữ nguyên như file bạn đã gửi */
         .stats-overview {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -363,12 +378,10 @@
     <div class="chart-header">
         <h3 class="chart-title">
             <i class="fas fa-chart-line text-primary"></i>
-            Doanh thu theo thời gian
+            Doanh thu 6 tháng gần đây
         </h3>
         <div class="time-filter">
-            <button class="time-btn active" onclick="updateRevenueChart('week')">Tuần</button>
-            <button class="time-btn" onclick="updateRevenueChart('month')">Tháng</button>
-            <button class="time-btn" onclick="updateRevenueChart('year')">Năm</button>
+            <button class="time-btn active" onclick="updateRevenueChart(event)">Mặc định</button>
         </div>
     </div>
     <div class="chart-container">
@@ -460,7 +473,7 @@
                 <i class="fas fa-percentage"></i>
             </div>
             <div class="insight-title">Tỷ lệ hoàn thành</div>
-            <div class="insight-value">78%</div>
+            <div class="insight-value">@stats.CompletionRate.ToString("N0")%</div>
             <div class="insight-description">Tỷ lệ học viên hoàn thành khóa học trung bình</div>
         </div>
 
@@ -469,8 +482,8 @@
                 <i class="fas fa-star"></i>
             </div>
             <div class="insight-title">Đánh giá trung bình</div>
-            <div class="insight-value">4.5/5</div>
-            <div class="insight-description">Điểm đánh giá từ học viên</div>
+            <div class="insight-value">@stats.AverageRating.ToString("0.0")/5</div>
+            <div class="insight-description">Điểm đánh giá từ kết quả bài kiểm tra của học viên</div>
         </div>
 
         <div class="insight-card">
@@ -478,7 +491,7 @@
                 <i class="fas fa-clock"></i>
             </div>
             <div class="insight-title">Thời gian học TB</div>
-            <div class="insight-value">2.5h</div>
+            <div class="insight-value">@stats.AverageStudyHoursPerWeek.ToString("0.0")h</div>
             <div class="insight-description">Thời gian học trung bình mỗi tuần</div>
         </div>
     </div>
@@ -486,15 +499,19 @@
 
 @section Scripts {
     <script>
-        // Revenue Chart
+        const revenueLabels = @Html.Raw(revenueLabelsJson);
+        const revenueData = @Html.Raw(revenueDataJson);
+        const studentDistributionData = @Html.Raw(studentDistJson);
+
+        // Revenue Chart dùng dữ liệu thật
         const revenueCtx = document.getElementById('revenueChart').getContext('2d');
         const revenueChart = new Chart(revenueCtx, {
             type: 'line',
             data: {
-                labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'],
+                labels: revenueLabels,
                 datasets: [{
                     label: 'Doanh thu',
-                    data: [1200000, 1900000, 1500000, 2500000, 2200000, 3000000, 2800000],
+                    data: revenueData,
                     borderColor: '#3b82f6',
                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
                     borderWidth: 3,
@@ -506,15 +523,13 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        display: false
-                    }
+                    legend: { display: false }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
                         ticks: {
-                            callback: function(value) {
+                            callback: function (value) {
                                 return value.toLocaleString('vi-VN') + '₫';
                             }
                         }
@@ -523,14 +538,14 @@
             }
         });
 
-        // Student Distribution Chart
+        // Student Distribution Chart dùng dữ liệu thật
         const distributionCtx = document.getElementById('studentDistributionChart').getContext('2d');
         const distributionChart = new Chart(distributionCtx, {
             type: 'doughnut',
             data: {
                 labels: ['Đang học', 'Hoàn thành', 'Tạm dừng'],
                 datasets: [{
-                    data: [65, 25, 10],
+                    data: studentDistributionData,
                     backgroundColor: [
                         '#3b82f6',
                         '#10b981',
@@ -545,20 +560,18 @@
                 plugins: {
                     legend: {
                         position: 'bottom',
-                        labels: {
-                            padding: 15
-                        }
+                        labels: { padding: 15 }
                     }
                 }
             }
         });
 
-        function updateRevenueChart(period) {
-            $('.time-btn').removeClass('active');
-            event.target.classList.add('active');
-
-            // Update chart data based on period
-            toastr.info(`Đang cập nhật dữ liệu cho ${period}`);
+        function updateRevenueChart(evt) {
+            if (evt) {
+                document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+                evt.target.classList.add('active');
+            }
+            toastr.info('Đang hiển thị doanh thu 6 tháng gần đây (dữ liệu thật)');
         }
     </script>
 }

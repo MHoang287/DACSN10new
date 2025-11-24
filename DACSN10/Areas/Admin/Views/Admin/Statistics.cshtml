@@ -232,7 +232,9 @@
 <div class="row mb-4" data-aos="fade-up" data-aos-delay="100">
     <div class="col-xl-3 col-md-6 mb-3">
         <div class="metric-card">
-            <div class="metric-number text-primary" id="totalRevenue">25,350,000₫</div>
+            <div class="metric-number text-primary" id="totalRevenue">
+                @(((decimal)(ViewBag.TotalRevenue ?? 0)).ToString("N0"))₫
+            </div>
             <div class="metric-label">Tổng doanh thu</div>
             <div class="metric-change positive">
                 <i class="fas fa-arrow-up me-1"></i>+12.5% so với tháng trước
@@ -242,7 +244,9 @@
 
     <div class="col-xl-3 col-md-6 mb-3">
         <div class="metric-card">
-            <div class="metric-number text-success" id="totalEnrollments">1,247</div>
+            <div class="metric-number text-success" id="totalEnrollments">
+                @(ViewBag.TotalEnrollments ?? 0)
+            </div>
             <div class="metric-label">Lượt đăng ký</div>
             <div class="metric-change positive">
                 <i class="fas fa-arrow-up me-1"></i>+8.3% so với tháng trước
@@ -252,7 +256,9 @@
 
     <div class="col-xl-3 col-md-6 mb-3">
         <div class="metric-card">
-            <div class="metric-number text-warning" id="activeUsers">856</div>
+            <div class="metric-number text-warning" id="activeUsers">
+                @(ViewBag.ActiveUsers ?? 0)
+            </div>
             <div class="metric-label">Người dùng hoạt động</div>
             <div class="metric-change positive">
                 <i class="fas fa-arrow-up me-1"></i>+5.7% so với tháng trước
@@ -262,7 +268,9 @@
 
     <div class="col-xl-3 col-md-6 mb-3">
         <div class="metric-card">
-            <div class="metric-number text-info" id="completionRate">76.8%</div>
+            <div class="metric-number text-info" id="completionRate">
+                @(((double)(ViewBag.CompletionRate ?? 0.0)).ToString("F1"))%
+            </div>
             <div class="metric-label">Tỷ lệ hoàn thành</div>
             <div class="metric-change negative">
                 <i class="fas fa-arrow-down me-1"></i>-2.1% so với tháng trước
@@ -567,7 +575,6 @@
         });
 
         function changePeriod(period) {
-            // Update active button
             $('.period-btn').removeClass('active');
             $(`button[onclick="changePeriod('${period}')"]`).addClass('active');
 
@@ -603,13 +610,21 @@
         function loadStatistics(period, startDate = null, endDate = null) {
             showLoading();
 
-            // Simulate API call
-            setTimeout(() => {
+            $.get('@Url.Action("GetStatistics", "Admin")', {
+                period: period,
+                startDate: startDate,
+                endDate: endDate
+            })
+            .done(function (data) {
                 hideLoading();
-                updateMetrics(period);
-                updateCharts(period);
+                updateMetricsFromServer(data);
+                updateChartsFromServer(data);
                 showInfo(`Đã cập nhật dữ liệu cho ${getPeriodLabel(period)}`);
-            }, 1000);
+            })
+            .fail(function () {
+                hideLoading();
+                showError('Không thể tải dữ liệu thống kê!');
+            });
         }
 
         function getPeriodLabel(period) {
@@ -623,41 +638,16 @@
             return labels[period] || period;
         }
 
-        function updateMetrics(period) {
-            // Simulate different metrics based on period
-            const metrics = {
-                '7days': {
-                    revenue: '5,250,000₫',
-                    enrollments: 87,
-                    activeUsers: 234,
-                    completionRate: '82.3%'
-                },
-                '30days': {
-                    revenue: '25,350,000₫',
-                    enrollments: 1247,
-                    activeUsers: 856,
-                    completionRate: '76.8%'
-                },
-                '90days': {
-                    revenue: '68,750,000₫',
-                    enrollments: 3521,
-                    activeUsers: 1456,
-                    completionRate: '74.5%'
-                },
-                '1year': {
-                    revenue: '285,420,000₫',
-                    enrollments: 12847,
-                    activeUsers: 4326,
-                    completionRate: '71.2%'
-                }
-            };
+        function updateMetricsFromServer(data) {
+            const revenue = data.revenue ?? data.Revenue ?? 0;
+            const enrollments = data.enrollments ?? data.Enrollments ?? 0;
+            const activeUsers = data.activeUsers ?? data.ActiveUsers ?? 0;
+            const completionRate = data.completionRate ?? data.CompletionRate ?? 0;
 
-            const data = metrics[period] || metrics['30days'];
-
-            $('#totalRevenue').text(data.revenue);
-            $('#totalEnrollments').text(data.enrollments);
-            $('#activeUsers').text(data.activeUsers);
-            $('#completionRate').text(data.completionRate);
+            $('#totalRevenue').text(Number(revenue).toLocaleString('vi-VN') + '₫');
+            $('#totalEnrollments').text(enrollments);
+            $('#activeUsers').text(activeUsers);
+            $('#completionRate').text(parseFloat(completionRate).toFixed(1) + '%');
         }
 
         function initializeCharts() {
@@ -666,10 +656,10 @@
             charts.revenue = new Chart(revenueCtx, {
                 type: 'line',
                 data: {
-                    labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'],
+                    labels: [],
                     datasets: [{
                         label: 'Doanh thu (VNĐ)',
-                        data: [1200000, 1850000, 2100000, 1950000, 2400000, 2800000, 3200000],
+                        data: [],
                         borderColor: 'rgb(59, 130, 246)',
                         backgroundColor: 'rgba(59, 130, 246, 0.1)',
                         tension: 0.4,
@@ -686,7 +676,7 @@
                         y: {
                             beginAtZero: true,
                             ticks: {
-                                callback: function(value) {
+                                callback: function (value) {
                                     return (value / 1000000).toFixed(1) + 'M';
                                 }
                             }
@@ -695,7 +685,7 @@
                 }
             });
 
-            // User Activity Chart
+            // User Activity Chart (demo – có thể nâng cấp sau nếu cần)
             const userActivityCtx = document.getElementById('userActivityChart').getContext('2d');
             charts.userActivity = new Chart(userActivityCtx, {
                 type: 'doughnut',
@@ -706,9 +696,7 @@
                         backgroundColor: [
                             'rgba(59, 130, 246, 0.8)',
                             'rgba(16, 185, 129, 0.8)',
-                            'rgba(245, 158, 11, 0.8)',
-                            'rgba(139, 92, 246, 0.8)',
-                            'rgba(239, 68, 68, 0.8)'
+                            'rgba(245, 158, 11, 0.8)'
                         ],
                         borderRadius: 8,
                         borderWidth: 0
@@ -717,17 +705,12 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
                 }
             });
-        }
 
-            // Course Performance Chart
+            // Course Performance Chart (giữ nguyên demo)
             const coursePerformanceCtx = document.getElementById('coursePerformanceChart').getContext('2d');
             charts.coursePerformance = new Chart(coursePerformanceCtx, {
                 type: 'radar',
@@ -744,9 +727,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
+                    plugins: { legend: { display: false } },
                     scales: {
                         r: {
                             beginAtZero: true,
@@ -756,44 +737,43 @@
                 }
             });
 
-            // Traffic Source Chart
+            // Traffic Source Chart (demo)
             const trafficSourceCtx = document.getElementById('trafficSourceChart').getContext('2d');
-			charts.trafficSource = new Chart(trafficSourceCtx, {
-				type: 'bar',
-				data: {
-					labels: ['Organic', 'Direct', 'Referral', 'Social Media', 'Email'],
-					datasets: [{
-						label: 'Lượt truy cập',
-						data: [4500, 3200, 1800, 1500, 800],
-						backgroundColor: [
-							'rgba(59, 130, 246, 0.8)',
-							'rgba(16, 185, 129, 0.8)',
-							'rgba(245, 158, 11, 0.8)',
-							'rgba(139, 92, 246, 0.8)',
-							'rgba(239, 68, 68, 0.8)'
-						],
-						borderRadius: 8,
-						borderWidth: 0
-					}]
-				},
-				options: {
-					responsive: true,
-					maintainAspectRatio: false,
-					plugins: {
-						legend: { display: false }
-					},
-					scales: {
-						y: { beginAtZero: true }
-					}
-				}
-			});
-                            
-
-        function updateCharts(period) {
-            // Update chart data based on period
-            Object.values(charts).forEach(chart => {
-                chart.update();
+            charts.trafficSource = new Chart(trafficSourceCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Organic', 'Direct', 'Referral', 'Social Media', 'Email'],
+                    datasets: [{
+                        label: 'Lượt truy cập',
+                        data: [4500, 3200, 1800, 1500, 800],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(139, 92, 246, 0.8)',
+                            'rgba(239, 68, 68, 0.8)'
+                        ],
+                        borderRadius: 8,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
             });
+        }
+
+        function updateChartsFromServer(data) {
+            if (charts.revenue && data.dailyRevenue) {
+                charts.revenue.data.labels = data.dailyRevenue.labels;
+                charts.revenue.data.datasets[0].data = data.dailyRevenue.data;
+                charts.revenue.update();
+            }
+
+            // Các chart khác hiện đang demo nên chưa cập nhật theo dữ liệu server
         }
 
         function updateChart(chartType, interval) {
@@ -804,16 +784,14 @@
             const heatmapContainer = document.getElementById('activityHeatmap');
             const colors = ['#ebedf0', '#c6e48b', '#7bc96f', '#239a3b', '#196127'];
 
-            // Generate 30 days of activity data
+            heatmapContainer.innerHTML = '';
+
             for (let i = 0; i < 30; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'heatmap-cell';
-
-                // Random activity level (0-4)
                 const activity = Math.floor(Math.random() * 5);
                 cell.style.backgroundColor = colors[activity];
 
-                // Tooltip with date and activity
                 const date = new Date();
                 date.setDate(date.getDate() - (29 - i));
                 cell.title = `${date.toLocaleDateString('vi-VN')}: ${activity * 25}% hoạt động`;
@@ -824,11 +802,9 @@
 
         function exportReport(format) {
             showLoading();
-
             setTimeout(() => {
                 hideLoading();
                 showSuccess(`Đã tạo báo cáo ${format.toUpperCase()} thành công!`);
-                console.log(`Exporting report in ${format} format for period: ${currentPeriod}`);
             }, 2000);
         }
 
@@ -863,21 +839,16 @@
                 confirmButtonText: 'Lên lịch',
                 cancelButtonText: 'Hủy',
                 preConfirm: () => {
-                    const frequency = document.getElementById('reportFrequency').value;
-                    const format = document.getElementById('reportFormat').value;
                     const email = document.getElementById('reportEmail').value;
-
                     if (!email) {
                         Swal.showValidationMessage('Vui lòng nhập email nhận báo cáo!');
                         return false;
                     }
-
-                    return { frequency, format, email };
+                    return true;
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
                     showSuccess('Đã lên lịch báo cáo thành công!');
-                    console.log('Scheduled report:', result.value);
                 }
             });
         }
