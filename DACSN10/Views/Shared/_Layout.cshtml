@@ -285,33 +285,9 @@
                     <ul class="navbar-nav">
                         @if (User.Identity.IsAuthenticated)
                         {
-                            <li class="nav-item dropdown me-3">
-                                <a class="nav-link position-relative" href="#" id="notificationsDropdown"
-                                   role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-bell fa-lg"></i>
-                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notification-count">
-                                        0
-                                        <span class="visually-hidden">Thông báo chưa đọc</span>
-                                    </span>
-                                </a>
-                                <div class="dropdown-menu dropdown-menu-end notification-dropdown"
-                                     aria-labelledby="notificationsDropdown">
-                                    <div class="dropdown-header text-center py-3">
-                                        <h6 class="mb-0"><i class="fas fa-bell me-2"></i>Thông báo</h6>
-                                    </div>
-                                    <div class="notification-list" id="notification-list">
-                                        <div class="text-center p-3 text-muted">
-                                            <i class="fas fa-inbox fa-2x mb-2"></i>
-                                            <p class="mb-0">Không có thông báo mới</p>
-                                        </div>
-                                    </div>
-                                    <div class="dropdown-footer text-center py-3">
-                                        <a href="#" class="text-decoration-none fw-medium" onclick="markAllAsRead()">
-                                            Đánh dấu tất cả đã đọc
-                                        </a>
-                                    </div>
-                                </div>
-                            </li>
+                            @* ✅ NOTIFICATION BELL - UPDATED WITH FULL FUNCTIONALITY *@
+                            @await Html.PartialAsync("_NotificationPartial")
+
 
                             <li class="nav-item dropdown">
                                 <a class="nav-link d-flex align-items-center" href="#" id="userDropdown"
@@ -608,408 +584,626 @@
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script>
+            let currentAction = '';
+            let teacherCourses = [];
+            const NOTIF_API_BASE = '/Api/Notifications';
+            const DISPLAY_NAME = '@(User.Identity?.Name ?? "Teacher")';
+            const CLAIM_APP_USER_ID = '@(User.FindFirst("AppUserId")?.Value ?? "")';
+            const LIVE_API_BASE = '/spring';
 
-    <script>
-        let currentAction = '';
-        let teacherCourses = [];
+            function parseNumeric(val) { if (!val) return NaN; const n = Number(val); return Number.isFinite(n) ? n : NaN; }
 
-        const DISPLAY_NAME = '@(User.Identity?.Name ?? "Teacher")';
-        const CLAIM_APP_USER_ID = '@(User.FindFirst("AppUserId")?.Value ?? "")';
-        const LIVE_API_BASE = '/spring';
+            async function createOrGetRoom(teacherId) {
+                const resp = await fetch(`${LIVE_API_BASE}/api/rooms`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ teacherId })
+                });
+                if (!resp.ok) throw new Error('Không tạo được phòng: ' + resp.status);
+                return await resp.json();
+            }
 
-        function parseNumeric(val) { if (!val) return NaN; const n = Number(val); return Number.isFinite(n) ? n : NaN; }
+            async function startLivestreamFromLayout() {
+                try {
+                    let teacherId = parseNumeric(CLAIM_APP_USER_ID);
+                    if (!Number.isFinite(teacherId)) {
+                        const input = prompt('Nhập TeacherId (số) để tạo/đi vào phòng live:', '');
+                        teacherId = parseNumeric(input);
+                        if (!Number.isFinite(teacherId)) return;
+                    }
+                    await createOrGetRoom(teacherId);
+                    const userIdNum = parseNumeric(CLAIM_APP_USER_ID);
+                    const userId = Number.isFinite(userIdNum) ? userIdNum : 0;
+                    const url = `/Live/Teacher?teacherId=${teacherId}&userId=${userId}&displayName=${encodeURIComponent(DISPLAY_NAME)}`;
+                    window.location.href = url;
+                } catch (e) { console.error(e); alert(e.message || e); }
+            }
 
-        async function createOrGetRoom(teacherId) {
-            const resp = await fetch(`${LIVE_API_BASE}/api/rooms`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ teacherId })
-            });
-            if (!resp.ok) throw new Error('Không tạo được phòng: ' + resp.status);
-            return await resp.json();
-        }
+            async function openStudentViewerFromLayout() {
+                try {
+                    let teacherId = parseNumeric(CLAIM_APP_USER_ID);
+                    if (!Number.isFinite(teacherId)) {
+                        const input = prompt('Nhập TeacherId (số) để mở trang xem live:', '');
+                        teacherId = parseNumeric(input);
+                        if (!Number.isFinite(teacherId)) return;
+                    }
+                    const room = await createOrGetRoom(teacherId);
+                    const userIdNum = parseNumeric(CLAIM_APP_USER_ID);
+                    const userId = Number.isFinite(userIdNum) ? userIdNum : 0;
+                    const url = `/Live/Student?roomId=${room.roomId}&userId=${userId}&displayName=${encodeURIComponent('Student')}`;
+                    window.location.href = url;
+                } catch (e) { console.error(e); alert(e.message || e); }
+            }
 
-        async function startLivestreamFromLayout() {
-            try {
-                let teacherId = parseNumeric(CLAIM_APP_USER_ID);
-                if (!Number.isFinite(teacherId)) {
-                    const input = prompt('Nhập TeacherId (số) để tạo/đi vào phòng live:', '');
-                    teacherId = parseNumeric(input);
-                    if (!Number.isFinite(teacherId)) return;
-                }
-                await createOrGetRoom(teacherId);
-                const userIdNum = parseNumeric(CLAIM_APP_USER_ID);
-                const userId = Number.isFinite(userIdNum) ? userIdNum : 0;
-                const url = `/Live/Teacher?teacherId=${teacherId}&userId=${userId}&displayName=${encodeURIComponent(DISPLAY_NAME)}`;
-                window.location.href = url;
-            } catch (e) { console.error(e); alert(e.message || e); }
-        }
+                $(document).ready(function() {
+                    initializeLayout();
 
-        async function openStudentViewerFromLayout() {
-            try {
-                let teacherId = parseNumeric(CLAIM_APP_USER_ID);
-                if (!Number.isFinite(teacherId)) {
-                    const input = prompt('Nhập TeacherId (số) để mở trang xem live:', '');
-                    teacherId = parseNumeric(input);
-                    if (!Number.isFinite(teacherId)) return;
-                }
-                const room = await createOrGetRoom(teacherId);
-                const userIdNum = parseNumeric(CLAIM_APP_USER_ID);
-                const userId = Number.isFinite(userIdNum) ? userIdNum : 0;
-                const url = `/Live/Student?roomId=${room.roomId}&userId=${userId}&displayName=${encodeURIComponent('Student')}`;
-                window.location.href = url;
-            } catch (e) { console.error(e); alert(e.message || e); }
-        }
+                    // ===== Notifications =====
+                    // tải số chưa đọc + gán event cho chuông và nút "đánh dấu tất cả đã đọc"
+                    initNotificationUI();
 
-        $(document).ready(function() {
-            initializeLayout();
-            loadNotifications();
-            updateProgress();
+                    updateProgress();
+
+                    @if (User.IsInRole("Teacher"))
+                    {
+                            <text>loadTeacherCourses();</text>
+                    }
+                });
+
+            function initializeLayout() {
+                $(window).scroll(function() { if ($(this).scrollTop() > 100) { $('#scrollToTop').addClass('show'); } else { $('#scrollToTop').removeClass('show'); } });
+                $('#scrollToTop').click(function(e) { e.preventDefault(); $('html, body').animate({scrollTop: 0}, 500); });
+                $('#courseSearchInput').on('input', function() { const searchTerm = $(this).val().toLowerCase(); filterCourses(searchTerm); });
+                $('.alert').each(function() { const alert = $(this); setTimeout(function() { alert.fadeOut('slow'); }, 5000); });
+            }
+
             @if (User.IsInRole("Teacher"))
             {
-                <text>loadTeacherCourses();</text>
-            }
-        });
-
-        function initializeLayout() {
-            $(window).scroll(function() { if ($(this).scrollTop() > 100) { $('#scrollToTop').addClass('show'); } else { $('#scrollToTop').removeClass('show'); } });
-            $('#scrollToTop').click(function(e) { e.preventDefault(); $('html, body').animate({scrollTop: 0}, 500); });
-            $('#courseSearchInput').on('input', function() { const searchTerm = $(this).val().toLowerCase(); filterCourses(searchTerm); });
-            $('.alert').each(function() { const alert = $(this); setTimeout(function() { alert.fadeOut('slow'); }, 5000); });
-        }
-
-        @if (User.IsInRole("Teacher"))
-        {
-            <text>
-                function showCourseSelectionModal(action) {
-                    currentAction = action;
-                    const modal = new bootstrap.Modal(document.getElementById('courseSelectionModal'));
-                    const modalTitle = document.getElementById('courseSelectionModalLabel');
-                    const iconClass = getActionIcon(action);
-                    const actionText = getActionText(action);
-                    modalTitle.innerHTML = `<i class="${iconClass} me-2"></i>${actionText}`;
-                    displayCourses();
-                    modal.show();
-                }
-                function loadTeacherCourses() {
-                    $.ajax({ url: '/Teacher/Teacher/GetMyCourses', type: 'GET',
-                        success: function(data) { teacherCourses = data; updateCourseCount(); },
-                        error: function() { console.error('Failed to load teacher courses'); }
-                    });
-                }
-                function displayCourses() {
-                    const courseList = $('#courseList'); courseList.empty();
-                    if (teacherCourses.length === 0) {
-                        courseList.html(`
-                            <div class="alert alert-info text-center">
-                                <i class="fas fa-info-circle fa-2x mb-2"></i>
-                                <h6>Chưa có khóa học</h6>
-                                <p class="mb-0">Bạn chưa tạo khóa học nào. <a href="/Teacher/Teacher/CreateCourse">Tạo khóa học đầu tiên</a></p>
-                            </div>`);
-                        return;
-                    }
-                    teacherCourses.forEach(course => {
-                        const statusBadge = getStatusBadge(course.trangThai);
-                        const studentCount = course.studentCount || 0;
-                        const card = $(`
-                            <div class="course-card" data-course-name="${(course.tenKhoaHoc || '').toLowerCase()}">
-                                <div class="card mb-3 course-selection-card" onclick="selectCourse(${course.courseID}, '${course.tenKhoaHoc}')">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-start">
-                                            <div class="flex-grow-1">
-                                                <h6 class="card-title mb-1">${course.tenKhoaHoc}</h6>
-                                                <p class="card-text text-muted small mb-2">${course.moTa || 'Không có mô tả'}</p>
-                                                <div class="d-flex gap-2 flex-wrap">
-                                                    ${statusBadge}
-                                                    <span class="badge bg-info">${studentCount} học viên</span>
-                                                    <span class="badge bg-secondary">${formatDate(course.ngayTao)}</span>
+                    <text>
+                        function showCourseSelectionModal(action) {
+                            currentAction = action;
+                            const modal = new bootstrap.Modal(document.getElementById('courseSelectionModal'));
+                            const modalTitle = document.getElementById('courseSelectionModalLabel');
+                            const iconClass = getActionIcon(action);
+                            const actionText = getActionText(action);
+                            modalTitle.innerHTML = `<i class="${iconClass} me-2"></i>${actionText}`;
+                            displayCourses();
+                            modal.show();
+                        }
+                        function loadTeacherCourses() {
+                            $.ajax({ url: '/Teacher/Teacher/GetMyCourses', type: 'GET',
+                                success: function(data) { teacherCourses = data; updateCourseCount(); },
+                                error: function() { console.error('Failed to load teacher courses'); }
+                            });
+                        }
+                        function displayCourses() {
+                            const courseList = $('#courseList'); courseList.empty();
+                            if (teacherCourses.length === 0) {
+                                courseList.html(`
+                                    <div class="alert alert-info text-center">
+                                        <i class="fas fa-info-circle fa-2x mb-2"></i>
+                                        <h6>Chưa có khóa học</h6>
+                                        <p class="mb-0">Bạn chưa tạo khóa học nào. <a href="/Teacher/Teacher/CreateCourse">Tạo khóa học đầu tiên</a></p>
+                                    </div>`);
+                                return;
+                            }
+                            teacherCourses.forEach(course => {
+                                const statusBadge = getStatusBadge(course.trangThai);
+                                const studentCount = course.studentCount || 0;
+                                const card = $(`
+                                    <div class="course-card" data-course-name="${(course.tenKhoaHoc || '').toLowerCase()}">
+                                        <div class="card mb-3 course-selection-card" onclick="selectCourse(${course.courseID}, '${course.tenKhoaHoc}')">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <div class="flex-grow-1">
+                                                        <h6 class="card-title mb-1">${course.tenKhoaHoc}</h6>
+                                                        <p class="card-text text-muted small mb-2">${course.moTa || 'Không có mô tả'}</p>
+                                                        <div class="d-flex gap-2 flex-wrap">
+                                                            ${statusBadge}
+                                                            <span class="badge bg-info">${studentCount} học viên</span>
+                                                            <span class="badge bg-secondary">${formatDate(course.ngayTao)}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-end"><i class="fas fa-chevron-right text-muted"></i></div>
                                                 </div>
                                             </div>
-                                            <div class="text-end"><i class="fas fa-chevron-right text-muted"></i></div>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>`);
-                        courseList.append(card);
-                    });
-                }
-                function selectCourse(courseId, courseName) {
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('courseSelectionModal'));
-                    modal.hide();
-                    showLoading(`Đang chuyển đến ${getActionText(currentAction).toLowerCase()}...`);
-                    let url = '';
-                    switch(currentAction) {
-                        case 'lessons': url = `/Teacher/Teacher/CourseLessons/${courseId}`; break;
-                        case 'quiz': url = `/Teacher/Teacher/CourseQuizzes/${courseId}`; break;
-                        case 'assignment': url = `/Teacher/Teacher/CourseAssignments/${courseId}`; break;
-                        case 'students': url = `/Teacher/Teacher/CourseStudents/${courseId}`; break;
-                        case 'submissions': url = `/Teacher/Teacher/CourseSubmissions/${courseId}`; break;
-                        default: hideLoading(); showToast('error', 'Hành động không hợp lệ'); return;
-                    }
-                    setTimeout(() => { window.location.href = url; }, 500);
-                }
-                function showCourseStatsModal() {
-                    const modal = new bootstrap.Modal(document.getElementById('courseStatsModal'));
-                    loadCourseStats(); modal.show();
-                }
-                function loadCourseStats() {
-                    const content = $('#courseStatsContent');
-                    content.html(`<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Đang tải thống kê...</p></div>`);
-                    $.ajax({ url: '/Teacher/Teacher/GetAllCourseStats', type: 'GET',
-                        success: function(data) { displayCourseStats(data); },
-                        error: function() {
-                            content.html(`<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>Không thể tải thống kê khóa học.</div>`);
+                                    </div>`);
+                                courseList.append(card);
+                            });
                         }
-                    });
-                }
-                function displayCourseStats(stats) {
-                    const content = $('#courseStatsContent');
-                    content.html(`<div class="row"><div class="col-md-6"><canvas id="courseChart"></canvas></div><div class="col-md-6"><canvas id="studentChart"></canvas></div></div>`);
-                }
-                function filterCourses(searchTerm) {
-                    $('.course-card').each(function() {
-                        const courseName = $(this).data('course-name') || '';
-                        if (courseName.includes(searchTerm)) { $(this).show(); } else { $(this).hide(); }
-                    });
-                }
-                function updateCourseCount() { const activeCount = teacherCourses.filter(c => c.trangThai === 'Active').length; }
-            </text>
-        }
+                        function selectCourse(courseId, courseName) {
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('courseSelectionModal'));
+                            modal.hide();
+                            showLoading(`Đang chuyển đến ${getActionText(currentAction).toLowerCase()}...`);
+                            let url = '';
+                            switch(currentAction) {
+                                case 'lessons': url = `/Teacher/Teacher/CourseLessons/${courseId}`; break;
+                                case 'quiz': url = `/Teacher/Teacher/CourseQuizzes/${courseId}`; break;
+                                case 'assignment': url = `/Teacher/Teacher/CourseAssignments/${courseId}`; break;
+                                case 'students': url = `/Teacher/Teacher/CourseStudents/${courseId}`; break;
+                                case 'submissions': url = `/Teacher/Teacher/CourseSubmissions/${courseId}`; break;
+                                default: hideLoading(); showToast('error', 'Hành động không hợp lệ'); return;
+                            }
+                            setTimeout(() => { window.location.href = url; }, 500);
+                        }
+                        function showCourseStatsModal() {
+                            const modal = new bootstrap.Modal(document.getElementById('courseStatsModal'));
+                            loadCourseStats(); modal.show();
+                        }
+                        function loadCourseStats() {
+                            const content = $('#courseStatsContent');
+                            content.html(`<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Đang tải thống kê...</p></div>`);
+                            $.ajax({ url: '/Teacher/Teacher/GetAllCourseStats', type: 'GET',
+                                success: function(data) { displayCourseStats(data); },
+                                error: function() {
+                                    content.html(`<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>Không thể tải thống kê khóa học.</div>`);
+                                }
+                            });
+                        }
+                        function displayCourseStats(stats) {
+                            const content = $('#courseStatsContent');
+                            content.html(`<div class="row"><div class="col-md-6"><canvas id="courseChart"></canvas></div><div class="col-md-6"><canvas id="studentChart"></canvas></div></div>`);
+                        }
+                        function filterCourses(searchTerm) {
+                            $('.course-card').each(function() {
+                                const courseName = $(this).data('course-name') || '';
+                                if (courseName.includes(searchTerm)) { $(this).show(); } else { $(this).hide(); }
+                            });
+                        }
+                        function updateCourseCount() { const activeCount = teacherCourses.filter(c => c.trangThai === 'Active').length; }
+                    </text>
+            }
 
-        function getActionIcon(action) {
-            const icons = { 'lessons': 'fas fa-play', 'quiz': 'fas fa-question-circle', 'assignment': 'fas fa-clipboard-list', 'students': 'fas fa-users', 'submissions': 'fas fa-file-upload' };
-            return icons[action] || 'fas fa-book';
-        }
-        function getActionText(action) {
-            const texts = { 'lessons': 'Quản lý bài học', 'quiz': 'Quản lý bài kiểm tra', 'assignment': 'Quản lý bài tập', 'students': 'Học viên theo khóa học', 'submissions': 'Bài nộp học viên' };
-            return texts[action] || 'Chọn khóa học';
-        }
-        function getStatusBadge(status) {
-            const badges = {
-                'Active': '<span class="badge bg-success">Đang hoạt động</span>',
-                'Pending': '<span class="badge bg-warning">Chờ duyệt</span>',
-                'Closed': '<span class="badge bg-secondary">Đã đóng</span>',
-                'Draft': '<span class="badge bg-info">Nháp</span>',
-                'Ready': '<span class="badge bg-info">READY</span>',
-                'LIVE': '<span class="badge bg-danger">LIVE</span>'
-            };
-            return badges[status] || '<span class="badge bg-light">Không xác định</span>';
-        }
-        function formatDate(dateString) { const date = new Date(dateString); return date.toLocaleDateString('vi-VN'); }
-        function showLoading(message = 'Đang xử lý...') { $('#loading-spinner').show(); $('#loading-spinner .fw-medium').text(message); }
-        function hideLoading() { $('#loading-spinner').hide(); }
-        function showToast(type, message, title = 'OnlineLearning') {
-            const toast = $('#liveToast'); const toastIcon = $('.toast-icon');
-            const configs = { 'success': { icon: 'linear-gradient(135deg,#43e97b,#38f9d7)'}, 'error': { icon: 'linear-gradient(135deg,#f5576c,#f093fb)'},
-                              'warning': { icon: 'linear-gradient(135deg,#f59e0b,#fbbf24)'}, 'info': { icon: 'linear-gradient(135deg,#4facfe,#00f2fe)'} };
-            const config = configs[type] || configs['info']; toastIcon.css('background', config.icon);
-            $('#toastTitle').text(title); $('#toastMessage').text(message); $('#toastTime').text('Bây giờ'); new bootstrap.Toast(toast[0]).show();
-        }
-        function loadNotifications() { $.get('/Api/Notifications/GetUnread', updateNotifications); }
-        function updateNotifications(notifications) {
-            const badge = $('#notification-count'); const list = $('#notification-list');
-            if (!notifications || notifications.length === 0) { badge.hide(); list.html(`<div class="text-center p-3 text-muted"><i class="fas fa-inbox fa-2x mb-2"></i><p class="mb-0">Không có thông báo mới</p></div>`); return; }
-            badge.text(notifications.length).show(); list.empty();
-            notifications.forEach(notification => {
-                const timeAgo = getTimeAgo(notification.createdAt); const iconClass = getNotificationIcon(notification.type); const bgClass = getNotificationBg(notification.type);
-                list.append(`
-                    <a href="#" class="dropdown-item notification-item ${notification.isRead ? '' : 'unread'}" data-id="${notification.id}">
-                        <div class="notification-icon ${bgClass}"><i class="${iconClass} text-white"></i></div>
-                        <div class="notification-content"><div class="notification-text">${notification.message}</div><div class="notification-time">${timeAgo}</div></div>
-                    </a>`);
-            });
-        }
-        function getNotificationIcon(type) {
-            const icons = { 'course':'fas fa-book','assignment':'fas fa-clipboard-list','quiz':'fas fa-question-circle','payment':'fas fa-credit-card','system':'fas fa-cog' };
-            return icons[type] || 'fas fa-bell';
-        }
-        function getNotificationBg(type) {
-            const backgrounds = { 'course':'bg-info','assignment':'bg-warning','quiz':'bg-primary','payment':'bg-success','system':'bg-secondary' };
-            return backgrounds[type] || 'bg-info';
-        }
-        function getTimeAgo(dateString) {
-            const date = new Date(dateString); const now = new Date(); const diff = (now - date) / 1000;
-            if (diff < 60) return 'Vừa xong'; if (diff < 3600) return `${Math.floor(diff/60)} phút trước`; if (diff < 86400) return `${Math.floor(diff/3600)} giờ trước`;
-            return `${Math.floor(diff/86400)} ngày trước`;
-        }
-        function markAllAsRead() { $.post('/Api/Notifications/MarkAllAsRead', () => { loadNotifications(); showToast('success', 'Đã đánh dấu tất cả thông báo là đã đọc'); }); }
-        function updateProgress() { const bar = $('.progress-bar'); if (bar.length) { setTimeout(() => { bar.css('width', '25%').attr('aria-valuenow', 25); }, 1000); } }
-        function showSettings() { showToast('info', 'Tính năng cài đặt đang được phát triển'); }
-        function validateForm(formId) {
-            const form = $(`#${formId}`); let isValid = true;
-            form.find('input[required], select[required], textarea[required]').each(function(){ if (!$(this).val()) { $(this).addClass('is-invalid'); isValid = false; } else { $(this).removeClass('is-invalid'); }});
-            return isValid;
-        }
-        function submitFormWithLoading(formId, msg = 'Đang xử lý...') { if (!validateForm(formId)) { showToast('error','Vui lòng điền đầy đủ thông tin bắt buộc'); return false; } showLoading(msg); return true; }
-        $(document).keydown(function(e){ if((e.ctrlKey||e.metaKey)&&e.keyCode===75){e.preventDefault();$('.search-form input').focus();} if(e.keyCode===27){$('.modal.show').modal('hide');} });
-        $(document).ajaxError(function(event, xhr){ hideLoading(); if(xhr.status===401){ showToast('error','Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'); setTimeout(()=>{ window.location.href='/Identity/Account/Login'; },2000);} else if(xhr.status===403){ showToast('error','Bạn không có quyền thực hiện hành động này.'); } else if(xhr.status>=500){ showToast('error','Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.'); } });
+            function getActionIcon(action) {
+                const icons = { 'lessons': 'fas fa-play', 'quiz': 'fas fa-question-circle', 'assignment': 'fas fa-clipboard-list', 'students': 'fas fa-users', 'submissions': 'fas fa-file-upload' };
+                return icons[action] || 'fas fa-book';
+            }
+            function getActionText(action) {
+                const texts = { 'lessons': 'Quản lý bài học', 'quiz': 'Quản lý bài kiểm tra', 'assignment': 'Quản lý bài tập', 'students': 'Học viên theo khóa học', 'submissions': 'Bài nộp học viên' };
+                return texts[action] || 'Chọn khóa học';
+            }
+            function getStatusBadge(status) {
+                const badges = {
+                    'Active': '<span class="badge bg-success">Đang hoạt động</span>',
+                    'Pending': '<span class="badge bg-warning">Chờ duyệt</span>',
+                    'Closed': '<span class="badge bg-secondary">Đã đóng</span>',
+                    'Draft': '<span class="badge bg-info">Nháp</span>',
+                    'Ready': '<span class="badge bg-info">READY</span>',
+                    'LIVE': '<span class="badge bg-danger">LIVE</span>'
+                };
+                return badges[status] || '<span class="badge bg-light">Không xác định</span>';
+            }
+            function formatDate(dateString) { const date = new Date(dateString); return date.toLocaleDateString('vi-VN'); }
+            function showLoading(message = 'Đang xử lý...') { $('#loading-spinner').show(); $('#loading-spinner .fw-medium').text(message); }
+            function hideLoading() { $('#loading-spinner').hide(); }
+            function showToast(type, message, title = 'OnlineLearning') {
+                const toast = $('#liveToast'); const toastIcon = $('.toast-icon');
+                const configs = { 'success': { icon: 'linear-gradient(135deg,#43e97b,#38f9d7)'}, 'error': { icon: 'linear-gradient(135deg,#f5576c,#f093fb)'},
+                                  'warning': { icon: 'linear-gradient(135deg,#f59e0b,#fbbf24)'}, 'info': { icon: 'linear-gradient(135deg,#4facfe,#00f2fe)'} };
+                const config = configs[type] || configs['info']; toastIcon.css('background', config.icon);
+                $('#toastTitle').text(title); $('#toastMessage').text(message); $('#toastTime').text('Bây giờ'); new bootstrap.Toast(toast[0]).show();
+            }
+                    // ================== NOTIFICATIONS (MỚI) ==================
 
-        // ===== Student Join Live (rooms with accurate viewerCount) =====
-        const CURRENT_USER_NAME = '@(User.Identity?.Name ?? "Student")'.replace(/'/g, "\\'");
-        const CLAIM_APP_USER_ID_FOR_STUDENT = '@(User.FindFirst("AppUserId")?.Value ?? "")';
-        const ACTIVE_ROOMS_ENDPOINT = `${LIVE_API_BASE}/api/rooms/active`;
+        function initNotificationUI() {
+            // tải badge ngay khi load trang
+            loadUnreadCount();
 
-        function openStudentJoinModal() {
-            try {
-                const modalEl = document.getElementById('joinLiveModal');
-                if (!modalEl) { alert('Không tìm thấy cửa sổ vào livestream.'); return; }
-                const nameInput = document.getElementById('joinDisplayName');
-                if (nameInput && !nameInput.value) nameInput.value = CURRENT_USER_NAME;
-                const roomInput = document.getElementById('joinRoomId');
-                if (roomInput) roomInput.value = '';
-                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                modal.show();
-                const activeTabBtn = document.querySelector('#joinTabs .nav-link.active');
-                if (activeTabBtn?.id === 'tabActive-tab') loadActiveRooms();
-                setTimeout(() => roomInput?.focus(), 150);
-            } catch (e) { console.error(e); }
-        }
+            // mỗi 30s cập nhật lại badge
+            setInterval(loadUnreadCount, 30000);
 
-        function parseGuidFromText(text) {
-            if (!text) return null;
-            const match = text.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);
-            return match ? match[0] : null;
-        }
-        function toNumericOrZero(val) { const n = Number(val); return Number.isFinite(n) ? n : 0; }
+            // khi bấm chuông -> load danh sách
+            const dropdownBtn = document.getElementById('notificationDropdown');
+            if (dropdownBtn) {
+                dropdownBtn.addEventListener('click', function () {
+                    loadNotifications();
+                });
+            }
 
-        function joinStudentLive() {
-            const roomField = document.getElementById('joinRoomId');
-            const nameField = document.getElementById('joinDisplayName');
-            const raw = (roomField?.value || '').trim();
-            const displayName = (nameField?.value || '').trim() || 'Student';
-
-            const roomId = parseGuidFromText(raw);
-            if (!roomId) { alert('Vui lòng nhập mã phòng hợp lệ (GUID) hoặc dán link mời có chứa roomId.'); roomField?.focus(); return; }
-            const userId = toNumericOrZero(CLAIM_APP_USER_ID_FOR_STUDENT);
-            const url = `/Live/Student?roomId=${roomId}&userId=${userId}&displayName=${encodeURIComponent(displayName)}`;
-            window.location.href = url;
-        }
-
-        const $list = () => document.getElementById('activeRoomsList');
-        const $loading = () => document.getElementById('activeRoomsLoading');
-        const $empty = () => document.getElementById('activeRoomsEmpty');
-
-        function showLoadingActiveRooms(show) { if ($loading()) $loading().style.display = show ? '' : 'none'; }
-        function showEmptyActiveRooms(show) { if ($empty()) $empty().style.display = show ? '' : 'none'; }
-        function clearActiveRooms() { if ($list()) $list().innerHTML = ''; }
-
-        function mapRoom(r) {
-            return {
-                roomId: r.roomId || r.id || '',
-                roomCode: r.roomCode || '',
-                teacherId: r.teacherId ?? null,
-                startedAt: r.startedAt || r.updatedAt || r.createdAt || null,
-                viewerCount: r.viewerCount ?? 0
-            };
-        }
-
-        function formatTimeAgo(iso) {
-            try { if (!iso) return ''; const d = new Date(iso); const diff = (Date.now() - d.getTime())/1000;
-                if (diff < 60) return 'vừa xong'; if (diff < 3600) return `${Math.floor(diff/60)} phút trước`;
-                if (diff < 86400) return `${Math.floor(diff/3600)} giờ trước`; return d.toLocaleString('vi-VN');
-            } catch { return ''; }
-        }
-
-        function renderActiveRooms(items) {
-            clearActiveRooms();
-            if (!items || !items.length) { showEmptyActiveRooms(true); return; }
-            showEmptyActiveRooms(false);
-
-            const frag = document.createDocumentFragment();
-            items.forEach(src => {
-                const r = mapRoom(src);
-                if (!r.roomId) return;
-                const a = document.createElement('a');
-                a.href = '#';
-                a.className = 'list-group-item list-group-item-action d-flex align-items-center justify-content-between';
-                a.innerHTML = `
-                    <div class="me-3">
-                        <div class="fw-semibold">Phòng trực tiếp</div>
-                        <div class="small text-muted">👨‍🏫 GV ID: ${r.teacherId ?? 'N/A'} · 👀 ${r.viewerCount} đang xem · ⏱ ${formatTimeAgo(r.startedAt)}</div>
-                        <div class="small text-muted">ID: <code>${r.roomId}</code>${r.roomCode ? ` · Code: <code>${r.roomCode}</code>` : ''}</div>
-                    </div>
-                    <button class="btn btn-sm btn-primary">Vào xem</button>
-                `;
-                a.addEventListener('click', (e) => { e.preventDefault(); joinByRoomId(r.roomId); });
-                a.querySelector('button')?.addEventListener('click', (e) => { e.preventDefault(); joinByRoomId(r.roomId); });
-                frag.appendChild(a);
-            });
-            $list()?.appendChild(frag);
-        }
-
-        async function fetchActiveRooms(query = '') {
-            const url = query ? `${ACTIVE_ROOMS_ENDPOINT}?q=${encodeURIComponent(query)}` : ACTIVE_ROOMS_ENDPOINT;
-            const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
-            if (!resp.ok) throw new Error(`GET ${url} -> ${resp.status}`);
-            const data = await resp.json();
-            return Array.isArray(data) ? data : (data.items || data.rooms || data.data || []);
-        }
-
-        let __activeRoomsTimer = null;
-        async function loadActiveRooms(query = '') {
-            try {
-                showLoadingActiveRooms(true);
-                renderActiveRooms([]);
-                const list = await fetchActiveRooms(query);
-                renderActiveRooms(list);
-            } catch (e) {
-                console.warn('Active rooms load failed:', e);
-                renderActiveRooms([]); showEmptyActiveRooms(true);
-                if ($list()) {
-                    const div = document.createElement('div');
-                    div.className = 'alert alert-warning mt-2';
-                    div.innerHTML = `<i class="fas fa-circle-exclamation me-2"></i>Không thể tải danh sách phòng đang phát.`;
-                    $list().appendChild(div);
-                }
-            } finally {
-                showLoadingActiveRooms(false);
+            // nút "Đánh dấu tất cả đã đọc"
+            const markAllBtn = document.getElementById('markAllReadBtn');
+            if (markAllBtn) {
+                markAllBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    markAllAsRead();
+                });
             }
         }
 
-        function debounce(fn, wait = 400) { let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); }; }
+        // --- Badge số chưa đọc ---
 
-        function joinByRoomId(roomId) {
-            const nameField = document.getElementById('joinDisplayName');
-            const displayName = (nameField?.value || CURRENT_USER_NAME || 'Student').trim();
-            if (!roomId) return;
-            const userId = toNumericOrZero(CLAIM_APP_USER_ID_FOR_STUDENT);
-            const url = `/Live/Student?roomId=${roomId}&userId=${userId}&displayName=${encodeURIComponent(displayName)}`;
-            window.location.href = url;
+        function loadUnreadCount() {
+            fetch(`${NOTIF_API_BASE}/GetUnread`)
+                .then(r => r.json())
+                .then(res => {
+                    if (res && res.success) {
+                        updateBadge(res.count || 0);
+                    }
+                })
+                .catch(err => console.error('Error load unread count:', err));
         }
 
-        window.openStudentJoinModal = openStudentJoinModal;
+        function updateBadge(count) {
+            const badge = document.getElementById('notificationBadge');
+            if (!badge) return;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('btnJoinLive')?.addEventListener('click', joinStudentLive);
-            document.getElementById('joinRoomId')?.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); joinStudentLive(); } });
-            document.getElementById('joinDisplayName')?.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); joinStudentLive(); } });
-            document.getElementById('tabActive-tab')?.addEventListener('shown.bs.tab', () => {
-                loadActiveRooms();
-                clearInterval(__activeRoomsTimer);
-                __activeRoomsTimer = setInterval(() => {
-                    const isActiveTab = document.getElementById('tabActive')?.classList.contains('active') ||
-                        document.getElementById('tabActive-tab')?.classList.contains('active');
-                    if (isActiveTab) loadActiveRooms(document.getElementById('activeRoomsSearch')?.value || '');
-                }, 10000); // refresh mỗi 10s
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // --- Danh sách thông báo trong dropdown ---
+
+        function loadNotifications() {
+            const list = document.getElementById('notificationList');
+            if (!list) return;
+
+            // hiển thị spinner trong dropdown
+            list.innerHTML =
+                '<div class="text-center py-4">' +
+                    '<div class="spinner-border spinner-border-sm text-primary" role="status">' +
+                        '<span class="visually-hidden">Đang tải...</span>' +
+                    '</div>' +
+                '</div>';
+
+            fetch(`${NOTIF_API_BASE}/GetNotifications?pageSize=10&pageNumber=1`)
+                .then(r => r.json())
+                .then(res => {
+                    const notifications = Array.isArray(res) ? res : (res.data || []);
+                    displayNotifications(notifications);
+                })
+                .catch(err => {
+                    console.error('Error load notifications:', err);
+                    list.innerHTML =
+                        '<div class="notification-empty">' +
+                            '<i class="fas fa-exclamation-triangle"></i>' +
+                            '<p>Lỗi khi tải thông báo</p>' +
+                        '</div>';
+                });
+        }
+
+        function displayNotifications(notifications) {
+            const list = document.getElementById('notificationList');
+            if (!list) return;
+
+            if (!Array.isArray(notifications) || notifications.length === 0) {
+                list.innerHTML =
+                    '<div class="notification-empty">' +
+                        '<i class="fas fa-bell"></i>' +
+                        '<p>Bạn chưa có thông báo nào</p>' +
+                    '</div>';
+                return;
+            }
+
+            let html = '';
+
+            notifications.forEach(n => {
+                // hỗ trợ cả camelCase & PascalCase từ backend
+                const id      = n.notificationID ?? n.NotificationID;
+                const type    = n.type ?? n.Type;
+                const link    = n.link ?? n.Link ?? '';
+                const title   = n.title ?? n.Title ?? '';
+                const message = n.message ?? n.Message ?? '';
+                const timeAgo = n.timeAgo ?? n.TimeAgo ?? '';
+                const isRead  = n.isRead ?? n.IsRead;
+
+                const iconClass = getNotificationIconClass(type);
+                const unreadCls = isRead ? '' : 'unread';
+
+                html += `
+                    <div class="notification-item ${unreadCls}" data-id="${id}" data-link="${link}">
+                        <div class="notification-wrapper">
+                            <div class="notification-icon ${iconClass}">
+                                ${getNotificationIcon(type)}
+                            </div>
+                            <div class="notification-content">
+                                <div class="notification-title">${title}</div>
+                                <div class="notification-message">${message}</div>
+                                <div class="notification-time">
+                                    <i class="far fa-clock"></i> ${timeAgo}
+                                </div>
+                                <div class="notification-actions">
+                                    ${!isRead ? `
+                                        <button class="notification-action mark-read" onclick="markAsRead(event, ${id})">
+                                            <i class="fas fa-check"></i> Đánh dấu đã xem
+                                        </button>` : ''
+                                    }
+                                    <button class="notification-action delete" onclick="deleteNotification(event, ${id})">
+                                        <i class="fas fa-trash"></i> Xóa
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
             });
 
-            const debounced = debounce((e) => loadActiveRooms(e.target.value || ''), 400);
-            document.getElementById('activeRoomsSearch')?.addEventListener('input', debounced);
-            document.getElementById('activeRoomsRefresh')?.addEventListener('click', () => {
-                const q = document.getElementById('activeRoomsSearch')?.value || '';
-                loadActiveRooms(q);
-            });
+            list.innerHTML = html;
 
-            const modalEl = document.getElementById('joinLiveModal');
-            modalEl?.addEventListener('shown.bs.modal', () => {
-                const activeTabBtn = document.querySelector('#joinTabs .nav-link.active');
-                if (activeTabBtn?.id === 'tabActive-tab') loadActiveRooms();
+            // click cả item để đi tới link (trừ khi click nút)
+            document.querySelectorAll('.notification-item').forEach(item => {
+                item.addEventListener('click', function (e) {
+                    if (e.target.closest('.notification-actions')) return; // bấm nút thì không navigate
+
+                    const id   = this.dataset.id;
+                    const link = this.dataset.link;
+                    if (!link) return;
+
+                    fetch(`${NOTIF_API_BASE}/MarkAsRead`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(parseInt(id))
+                    }).finally(() => {
+                        window.location.href = link;
+                    });
+                });
             });
-            modalEl?.addEventListener('hidden.bs.modal', () => { clearInterval(__activeRoomsTimer); });
-        });
-    </script>
+        }
+
+        function markAsRead(event, notificationId) {
+            event.stopPropagation();
+
+            fetch(`${NOTIF_API_BASE}/MarkAsRead`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(notificationId)
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res && res.success) {
+                    showToast('success', 'Đã đánh dấu là đã xem');
+                    loadUnreadCount();
+                    loadNotifications();
+                }
+            })
+            .catch(err => console.error('Error mark as read:', err));
+        }
+
+        function deleteNotification(event, notificationId) {
+            event.stopPropagation();
+
+            if (!confirm('Bạn có chắc muốn xóa thông báo này?')) return;
+
+            fetch(`${NOTIF_API_BASE}/Delete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(notificationId)
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res && res.success) {
+                    showToast('success', 'Đã xóa thông báo');
+                    loadUnreadCount();
+                    loadNotifications();
+                }
+            })
+            .catch(err => console.error('Error delete notification:', err));
+        }
+
+        function markAllAsRead() {
+            fetch(`${NOTIF_API_BASE}/MarkAllAsRead`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res && res.success) {
+                    showToast('success', 'Đã đánh dấu tất cả là đã xem');
+                    loadUnreadCount();
+                    loadNotifications();
+                }
+            })
+            .catch(err => console.error('Error markAllAsRead:', err));
+        }
+
+        // icon cho từng loại thông báo
+        function getNotificationIconClass(type) {
+            const iconMap = {
+                'NewLesson': 'new-lesson',
+                'NewQuiz': 'new-quiz',
+                'NewCourse': 'new-course',
+                'LiveStream': 'live-stream',
+                'EnrollmentSuccess': 'enrollment'
+            };
+            return iconMap[type] || 'new-lesson';
+        }
+
+        function getNotificationIcon(type) {
+            const iconMap = {
+                'NewLesson': '<i class="fas fa-book-open"></i>',
+                'NewQuiz': '<i class="fas fa-clipboard-question"></i>',
+                'NewCourse': '<i class="fas fa-graduation-cap"></i>',
+                'LiveStream': '<i class="fas fa-video"></i>',
+                'EnrollmentSuccess': '<i class="fas fa-check-circle"></i>'
+            };
+            return iconMap[type] || '<i class="fas fa-bell"></i>';
+        }
+        // ================== END NOTIFICATIONS ==================
+
+            function updateProgress() { const bar = $('.progress-bar'); if (bar.length) { setTimeout(() => { bar.css('width', '25%').attr('aria-valuenow', 25); }, 1000); } }
+            function showSettings() { showToast('info', 'Tính năng cài đặt đang được phát triển'); }
+            function validateForm(formId) {
+                const form = $(`#${formId}`); let isValid = true;
+                form.find('input[required], select[required], textarea[required]').each(function(){ if (!$(this).val()) { $(this).addClass('is-invalid'); isValid = false; } else { $(this).removeClass('is-invalid'); }});
+                return isValid;
+            }
+            function submitFormWithLoading(formId, msg = 'Đang xử lý...') { if (!validateForm(formId)) { showToast('error','Vui lòng điền đầy đủ thông tin bắt buộc'); return false; } showLoading(msg); return true; }
+            $(document).keydown(function(e){ if((e.ctrlKey||e.metaKey)&&e.keyCode===75){e.preventDefault();$('.search-form input').focus();} if(e.keyCode===27){$('.modal.show').modal('hide');} });
+            $(document).ajaxError(function(event, xhr){ hideLoading(); if(xhr.status===401){ showToast('error','Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'); setTimeout(()=>{ window.location.href='/Identity/Account/Login'; },2000);} else if(xhr.status===403){ showToast('error','Bạn không có quyền thực hiện hành động này.'); } else if(xhr.status>=500){ showToast('error','Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.'); } });
+
+            // ===== Student Join Live (rooms with accurate viewerCount) =====
+            const CURRENT_USER_NAME = '@(User.Identity?.Name ?? "Student")'.replace(/'/g, "\\'");
+            const CLAIM_APP_USER_ID_FOR_STUDENT = '@(User.FindFirst("AppUserId")?.Value ?? "")';
+            const ACTIVE_ROOMS_ENDPOINT = `${LIVE_API_BASE}/api/rooms/active`;
+
+            function openStudentJoinModal() {
+                try {
+                    const modalEl = document.getElementById('joinLiveModal');
+                    if (!modalEl) { alert('Không tìm thấy cửa sổ vào livestream.'); return; }
+                    const nameInput = document.getElementById('joinDisplayName');
+                    if (nameInput && !nameInput.value) nameInput.value = CURRENT_USER_NAME;
+                    const roomInput = document.getElementById('joinRoomId');
+                    if (roomInput) roomInput.value = '';
+                    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    modal.show();
+                    const activeTabBtn = document.querySelector('#joinTabs .nav-link.active');
+                    if (activeTabBtn?.id === 'tabActive-tab') loadActiveRooms();
+                    setTimeout(() => roomInput?.focus(), 150);
+                } catch (e) { console.error(e); }
+            }
+
+            function parseGuidFromText(text) {
+                if (!text) return null;
+                const match = text.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);
+                return match ? match[0] : null;
+            }
+            function toNumericOrZero(val) { const n = Number(val); return Number.isFinite(n) ? n : 0; }
+
+            function joinStudentLive() {
+                const roomField = document.getElementById('joinRoomId');
+                const nameField = document.getElementById('joinDisplayName');
+                const raw = (roomField?.value || '').trim();
+                const displayName = (nameField?.value || '').trim() || 'Student';
+
+                const roomId = parseGuidFromText(raw);
+                if (!roomId) { alert('Vui lòng nhập mã phòng hợp lệ (GUID) hoặc dán link mời có chứa roomId.'); roomField?.focus(); return; }
+                const userId = toNumericOrZero(CLAIM_APP_USER_ID_FOR_STUDENT);
+                const url = `/Live/Student?roomId=${roomId}&userId=${userId}&displayName=${encodeURIComponent(displayName)}`;
+                window.location.href = url;
+            }
+
+            const $list = () => document.getElementById('activeRoomsList');
+            const $loading = () => document.getElementById('activeRoomsLoading');
+            const $empty = () => document.getElementById('activeRoomsEmpty');
+
+            function showLoadingActiveRooms(show) { if ($loading()) $loading().style.display = show ? '' : 'none'; }
+            function showEmptyActiveRooms(show) { if ($empty()) $empty().style.display = show ? '' : 'none'; }
+            function clearActiveRooms() { if ($list()) $list().innerHTML = ''; }
+
+            function mapRoom(r) {
+                return {
+                    roomId: r.roomId || r.id || '',
+                    roomCode: r.roomCode || '',
+                    teacherId: r.teacherId ?? null,
+                    startedAt: r.startedAt || r.updatedAt || r.createdAt || null,
+                    viewerCount: r.viewerCount ?? 0
+                };
+            }
+
+            function formatTimeAgo(iso) {
+                try { if (!iso) return ''; const d = new Date(iso); const diff = (Date.now() - d.getTime())/1000;
+                    if (diff < 60) return 'vừa xong'; if (diff < 3600) return `${Math.floor(diff/60)} phút trước`;
+                    if (diff < 86400) return `${Math.floor(diff/3600)} giờ trước`; return d.toLocaleString('vi-VN');
+                } catch { return ''; }
+            }
+
+            function renderActiveRooms(items) {
+                clearActiveRooms();
+                if (!items || !items.length) { showEmptyActiveRooms(true); return; }
+                showEmptyActiveRooms(false);
+
+                const frag = document.createDocumentFragment();
+                items.forEach(src => {
+                    const r = mapRoom(src);
+                    if (!r.roomId) return;
+                    const a = document.createElement('a');
+                    a.href = '#';
+                    a.className = 'list-group-item list-group-item-action d-flex align-items-center justify-content-between';
+                    a.innerHTML = `
+                        <div class="me-3">
+                            <div class="fw-semibold">Phòng trực tiếp</div>
+                            <div class="small text-muted">👨‍🏫 GV ID: ${r.teacherId ?? 'N/A'} · 👀 ${r.viewerCount} đang xem · ⏱ ${formatTimeAgo(r.startedAt)}</div>
+                            <div class="small text-muted">ID: <code>${r.roomId}</code>${r.roomCode ? ` · Code: <code>${r.roomCode}</code>` : ''}</div>
+                        </div>
+                        <button class="btn btn-sm btn-primary">Vào xem</button>
+                    `;
+                    a.addEventListener('click', (e) => { e.preventDefault(); joinByRoomId(r.roomId); });
+                    a.querySelector('button')?.addEventListener('click', (e) => { e.preventDefault(); joinByRoomId(r.roomId); });
+                    frag.appendChild(a);
+                });
+                $list()?.appendChild(frag);
+            }
+
+            async function fetchActiveRooms(query = '') {
+                const url = query ? `${ACTIVE_ROOMS_ENDPOINT}?q=${encodeURIComponent(query)}` : ACTIVE_ROOMS_ENDPOINT;
+                const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                if (!resp.ok) throw new Error(`GET ${url} -> ${resp.status}`);
+                const data = await resp.json();
+                return Array.isArray(data) ? data : (data.items || data.rooms || data.data || []);
+            }
+
+            let __activeRoomsTimer = null;
+            async function loadActiveRooms(query = '') {
+                try {
+                    showLoadingActiveRooms(true);
+                    renderActiveRooms([]);
+                    const list = await fetchActiveRooms(query);
+                    renderActiveRooms(list);
+                } catch (e) {
+                    console.warn('Active rooms load failed:', e);
+                    renderActiveRooms([]); showEmptyActiveRooms(true);
+                    if ($list()) {
+                        const div = document.createElement('div');
+                        div.className = 'alert alert-warning mt-2';
+                        div.innerHTML = `<i class="fas fa-circle-exclamation me-2"></i>Không thể tải danh sách phòng đang phát.`;
+                        $list().appendChild(div);
+                    }
+                } finally {
+                    showLoadingActiveRooms(false);
+                }
+            }
+
+            function debounce(fn, wait = 400) { let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); }; }
+
+            function joinByRoomId(roomId) {
+                const nameField = document.getElementById('joinDisplayName');
+                const displayName = (nameField?.value || CURRENT_USER_NAME || 'Student').trim();
+                if (!roomId) return;
+                const userId = toNumericOrZero(CLAIM_APP_USER_ID_FOR_STUDENT);
+                const url = `/Live/Student?roomId=${roomId}&userId=${userId}&displayName=${encodeURIComponent(displayName)}`;
+                window.location.href = url;
+            }
+
+            window.openStudentJoinModal = openStudentJoinModal;
+
+            document.addEventListener('DOMContentLoaded', () => {
+                document.getElementById('btnJoinLive')?.addEventListener('click', joinStudentLive);
+                document.getElementById('joinRoomId')?.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); joinStudentLive(); } });
+                document.getElementById('joinDisplayName')?.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); joinStudentLive(); } });
+                document.getElementById('tabActive-tab')?.addEventListener('shown.bs.tab', () => {
+                    loadActiveRooms();
+                    clearInterval(__activeRoomsTimer);
+                    __activeRoomsTimer = setInterval(() => {
+                        const isActiveTab = document.getElementById('tabActive')?.classList.contains('active') ||
+                            document.getElementById('tabActive-tab')?.classList.contains('active');
+                        if (isActiveTab) loadActiveRooms(document.getElementById('activeRoomsSearch')?.value || '');
+                    }, 10000); // refresh mỗi 10s
+                });
+
+                const debounced = debounce((e) => loadActiveRooms(e.target.value || ''), 400);
+                document.getElementById('activeRoomsSearch')?.addEventListener('input', debounced);
+                document.getElementById('activeRoomsRefresh')?.addEventListener('click', () => {
+                    const q = document.getElementById('activeRoomsSearch')?.value || '';
+                    loadActiveRooms(q);
+                });
+
+                const modalEl = document.getElementById('joinLiveModal');
+                modalEl?.addEventListener('shown.bs.modal', () => {
+                    const activeTabBtn = document.querySelector('#joinTabs .nav-link.active');
+                    if (activeTabBtn?.id === 'tabActive-tab') loadActiveRooms();
+                });
+                modalEl?.addEventListener('hidden.bs.modal', () => { clearInterval(__activeRoomsTimer); });
+            });
+        </script>
 
     @RenderSection("Scripts", required: false)
     @await Html.PartialAsync("_ChatWidget")
     <script src="~/js/site.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/js/notifications.js"></script>
 </body>
 </html>

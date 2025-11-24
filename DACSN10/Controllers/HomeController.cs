@@ -1,20 +1,24 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using DACSN10.Models;
+﻿using DACSN10.Models;
+using DACSN10.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace DACSN10.Controllers
 {
     public class HomeController : Controller
     {
+        private readonly INotificationService _notificationService;
         private readonly AppDbContext _context;
         private readonly ILogger<HomeController> _logger;
 
-        public HomeController(AppDbContext context, ILogger<HomeController> logger)
+        public HomeController(AppDbContext context, ILogger<HomeController> logger, INotificationService notificationService)
         {
             _context = context;
             _logger = logger;
+            _notificationService = notificationService;
         }
 
         public async Task<IActionResult> Index()
@@ -301,6 +305,180 @@ namespace DACSN10.Controllers
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
+
+        #region Test Notification Actions (CHỈ DÙNG ĐỂ DEBUG - XÓA SAU KHI TEST XONG)
+
+        /// <summary>
+        /// TEST ACTION: Tạo 1 notification test
+        /// URL: /Home/TestNotification
+        /// </summary>
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> TestNotification()
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Content("❌ ERROR: User chưa login. Vui lòng login trước!", "text/plain");
+                }
+
+                // Tạo test notification
+                await _notificationService.CreateNotificationAsync(
+                    userId: userId,
+                    title: "🧪 Test Notification",
+                    message: "Đây là thông báo test để verify hệ thống hoạt động! Nếu bạn thấy được thông báo này thì hệ thống đã hoạt động tốt.",
+                    type: NotificationType.NewLesson,
+                    relatedId: "1",
+                    link: "/Home/Index"
+                );
+
+                return Content(@"
+✅ SUCCESS! Test notification đã được tạo!
+
+📋 Bây giờ hãy:
+1. Xem icon notification bell (🔔) trên navbar
+2. Badge phải hiển thị số 1 (hoặc tăng lên 1)
+3. Click vào bell để xem dropdown
+4. Phải thấy notification: '🧪 Test Notification'
+5. Click vào notification đó để test navigation
+
+🎉 Nếu tất cả hoạt động đúng → Hệ thống OK!
+
+📍 Để tạo thêm notification test, reload lại trang này:
+   /Home/TestNotification
+                ", "text/plain");
+            }
+            catch (Exception ex)
+            {
+                return Content($@"
+❌ ERROR khi tạo test notification!
+
+Chi tiết lỗi:
+{ex.Message}
+
+Stack trace:
+{ex.StackTrace}
+
+🔍 Các nguyên nhân có thể:
+1. INotificationService chưa được đăng ký trong Program.cs
+2. Bảng Notifications chưa được tạo (chưa chạy migration)
+3. Lỗi trong NotificationService code
+4. Database connection lỗi
+
+📖 Xem file: TROUBLESHOOTING_LOADING.md để debug
+                ", "text/plain");
+            }
+        }
+
+        /// <summary>
+        /// TEST ACTION: Tạo nhiều notifications với các types khác nhau
+        /// URL: /Home/TestMultipleNotifications
+        /// </summary>
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> TestMultipleNotifications()
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Content("❌ ERROR: User chưa login!", "text/plain");
+                }
+
+                // Tạo 5 notifications với các types khác nhau
+                var notifications = new[]
+                {
+                    new { Title = "📚 Bài học mới", Message = "Giáo viên X vừa đăng bài học 'Giới thiệu Python'", Type = NotificationType.NewLesson },
+                    new { Title = "📝 Bài kiểm tra mới", Message = "Quiz 'JavaScript Basics' đã sẵn sàng", Type = NotificationType.NewQuiz },
+                    new { Title = "🎓 Khóa học mới", Message = "Khóa học 'Web Development 2024' vừa được ra mắt", Type = NotificationType.NewCourse },
+                    new { Title = "🔴 Live Stream", Message = "Giáo viên Y đang live: 'Advanced React Patterns'", Type = NotificationType.LiveStream },
+                    new { Title = "✅ Đăng ký thành công", Message = "Bạn đã đăng ký khóa học 'Node.js Master' thành công!", Type = NotificationType.EnrollmentSuccess }
+                };
+
+                foreach (var notif in notifications)
+                {
+                    await _notificationService.CreateNotificationAsync(
+                        userId: userId,
+                        title: notif.Title,
+                        message: notif.Message,
+                        type: notif.Type,
+                        relatedId: null,
+                        link: "/Home/Index"
+                    );
+                }
+
+                return Content(@"
+✅ SUCCESS! Đã tạo 5 test notifications với các loại khác nhau!
+
+📋 Bây giờ hãy:
+1. Xem notification bell - badge phải hiển thị số 5
+2. Click vào bell
+3. Phải thấy 5 notifications với icons khác nhau:
+   📚 Màu xanh dương (NewLesson)
+   📝 Màu cam (NewQuiz)
+   🎓 Màu xanh lá (NewCourse)
+   🔴 Màu hồng (LiveStream)
+   ✅ Màu tím (EnrollmentSuccess)
+
+🎨 Test các tính năng:
+- Click vào từng notification
+- Đánh dấu một notification là đã đọc
+- Đánh dấu tất cả đã đọc
+- Xem timestamp ('vừa xong', '5 phút trước', etc.)
+- Vào trang /Notification/Index để xem trang quản lý đầy đủ
+
+🎉 Nếu tất cả hoạt động đúng → Perfect!
+                ", "text/plain");
+            }
+            catch (Exception ex)
+            {
+                return Content($"❌ ERROR: {ex.Message}\n\n{ex.StackTrace}", "text/plain");
+            }
+        }
+
+        /// <summary>
+        /// TEST ACTION: Đánh dấu tất cả notifications đã đọc
+        /// URL: /Home/ClearTestNotifications
+        /// </summary>
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> ClearTestNotifications()
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Content("❌ ERROR: User chưa login!", "text/plain");
+                }
+
+                // Đánh dấu tất cả đã đọc
+                await _notificationService.MarkAllAsReadAsync(userId);
+
+                return Content(@"
+✅ SUCCESS! Đã đánh dấu tất cả notifications là đã đọc!
+
+📋 Bây giờ:
+- Badge trên notification bell phải về 0
+- Tất cả notifications trong dropdown phải không có dấu chấm xanh
+
+💡 Để xóa hoàn toàn (không chỉ đánh dấu đã đọc):
+   Vào /Notification/Index và xóa từng notification
+                ", "text/plain");
+            }
+            catch (Exception ex)
+            {
+                return Content($"❌ ERROR: {ex.Message}\n\n{ex.StackTrace}", "text/plain");
+            }
+        }
+
+        #endregion
 
         #region Private Helper Methods
 

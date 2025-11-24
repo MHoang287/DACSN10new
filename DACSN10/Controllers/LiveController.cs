@@ -1,4 +1,5 @@
 ﻿using DACSN10.Models;
+using DACSN10.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -16,15 +17,17 @@ namespace DACSN10.Controllers
     [Authorize]
     public class LiveController : Controller
     {
+        private readonly INotificationService _notificationService;
         private readonly IHttpClientFactory _clientFactory;
         private readonly UserManager<User> _userManager;
         private readonly ILogger<LiveController> _logger;
 
-        public LiveController(IHttpClientFactory clientFactory, UserManager<User> userManager, ILogger<LiveController> logger)
+        public LiveController(IHttpClientFactory clientFactory, UserManager<User> userManager, ILogger<LiveController> logger, INotificationService notificationService)
         {
             _clientFactory = clientFactory;
             _userManager = userManager;
             _logger = logger;
+            _notificationService = notificationService;
         }
 
         // Teacher starts a livestream (create room if not exists, then join as TEACHER)

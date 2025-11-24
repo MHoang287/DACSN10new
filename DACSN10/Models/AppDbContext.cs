@@ -24,7 +24,8 @@ namespace DACSN10.Models
         public DbSet<Quiz> Quizzes { get; set; }
         public DbSet<Question> Questions { get; set; }
         public DbSet<QuizResult> QuizResults { get; set; }
-        public DbSet<CourseFollow> CourseFollows { get; set; } // Thêm mới
+        public DbSet<CourseFollow> CourseFollows { get; set; }
+        public DbSet<Notification> Notifications { get; set; } // Thêm mới
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -172,6 +173,22 @@ namespace DACSN10.Models
                 .WithMany()
                 .HasForeignKey(cf => cf.CourseID)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Cấu hình cho Notification
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.User)
+                .WithMany()
+                .HasForeignKey(n => n.UserID)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Notification>()
+                .HasIndex(n => n.UserID);
+
+            modelBuilder.Entity<Notification>()
+                .HasIndex(n => new { n.UserID, n.IsRead });
+
+            modelBuilder.Entity<Notification>()
+                .HasIndex(n => n.CreatedAt);
         }
     }
 }

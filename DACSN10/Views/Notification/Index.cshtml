@@ -1,0 +1,551 @@
+﻿@{
+    ViewData["Title"] = "Quản lý thông báo";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-bell"></i> Tất cả thông báo
+                        </h4>
+                        <div>
+                            <button class="btn btn-sm btn-light" id="markAllReadBtn">
+                                <i class="fas fa-check-double"></i> Đánh dấu tất cả đã đọc
+                            </button>
+                            <button class="btn btn-sm btn-danger" id="deleteAllBtn">
+                                <i class="fas fa-trash"></i> Xóa tất cả
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-0">
+                    <div class="notification-filter p-3 border-bottom">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-primary active" data-filter="all">
+                                Tất cả
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" data-filter="unread">
+                                Chưa đọc
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" data-filter="read">
+                                Đã đọc
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="notificationList" class="notification-full-list">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Đang tải...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-3 text-center" id="loadMoreSection" style="display: none;">
+                        <button class="btn btn-outline-primary btn-sm" id="loadMoreBtn">
+                            <i class="fas fa-chevron-down"></i> Tải thêm
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .notification-filter {
+        background: #f8f9fa;
+    }
+
+    .notification-full-list {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+
+    .notification-full-item {
+        padding: 15px 20px;
+        border-bottom: 1px solid #e9ecef;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+
+        .notification-full-item:hover {
+            background: #f8f9fa;
+        }
+
+        .notification-full-item.unread {
+            background: linear-gradient(to right, #e7f3ff 0%, #fff 100%);
+            border-left: 3px solid #007bff;
+        }
+
+    .notification-meta {
+        display: flex;
+        align-items: start;
+        gap: 15px;
+    }
+
+    .notification-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+
+        .notification-icon-wrapper.new-lesson {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .notification-icon-wrapper.new-quiz {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .notification-icon-wrapper.new-course {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .notification-icon-wrapper.live-stream {
+            background: #fce4ec;
+            color: #c2185b;
+        }
+
+        .notification-icon-wrapper.enrollment {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+    .notification-body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .notification-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 5px;
+    }
+
+    .notification-title {
+        font-weight: 600;
+        font-size: 15px;
+        color: #333;
+    }
+
+    .notification-time {
+        font-size: 12px;
+        color: #999;
+        white-space: nowrap;
+    }
+
+    .notification-message {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 8px;
+        line-height: 1.5;
+    }
+
+    .notification-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .notification-action {
+        padding: 5px 10px;
+        font-size: 12px;
+        border-radius: 4px;
+        border: 1px solid;
+        background: transparent;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .notification-action.mark-read {
+            border-color: #28a745;
+            color: #28a745;
+        }
+
+            .notification-action.mark-read:hover {
+                background: #28a745;
+                color: white;
+            }
+
+        .notification-action.view {
+            border-color: #007bff;
+            color: #007bff;
+        }
+
+            .notification-action.view:hover {
+                background: #007bff;
+                color: white;
+            }
+
+        .notification-action.delete {
+            border-color: #dc3545;
+            color: #dc3545;
+        }
+
+            .notification-action.delete:hover {
+                background: #dc3545;
+                color: white;
+            }
+
+    .empty-state {
+        padding: 60px 20px;
+        text-align: center;
+        color: #999;
+    }
+
+        .empty-state i {
+            font-size: 64px;
+            color: #ddd;
+            margin-bottom: 20px;
+        }
+
+        .empty-state h5 {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+    /* Scrollbar styling */
+    .notification-full-list::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .notification-full-list::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    .notification-full-list::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 4px;
+    }
+
+        .notification-full-list::-webkit-scrollbar-thumb:hover {
+            background: #999;
+        }
+</style>
+
+<script>
+    const PAGE_NOTIF_API = "/Notification";   // ĐÚNG với NotificationController
+
+    let currentPage   = 1;
+    let currentFilter = "all";
+    let isLoading     = false;
+
+    document.addEventListener("DOMContentLoaded", () => {
+        initNotificationPage();
+    });
+
+    function initNotificationPage() {
+        // load trang đầu tiên
+        loadNotifications(true);
+
+        // filter buttons
+        document.querySelectorAll("[data-filter]").forEach(btn => {
+            btn.addEventListener("click", function () {
+                document.querySelectorAll("[data-filter]").forEach(b => b.classList.remove("active"));
+                this.classList.add("active");
+
+                currentFilter = this.dataset.filter; // all | unread | read
+                currentPage   = 1;
+
+                loadNotifications(true);
+            });
+        });
+
+        // mark all
+        const markAllBtn = document.getElementById("markAllReadBtn");
+        if (markAllBtn) {
+            markAllBtn.addEventListener("click", e => {
+                e.preventDefault();
+                markAllAsRead();
+            });
+        }
+
+        // delete all (hiện tại chỉ thông báo “đang phát triển”)
+        const delAllBtn = document.getElementById("deleteAllBtn");
+        if (delAllBtn) {
+            delAllBtn.addEventListener("click", e => {
+                e.preventDefault();
+                deleteAllNotifications();
+            });
+        }
+
+        // load more
+        const loadMoreBtn = document.getElementById("loadMoreBtn");
+        if (loadMoreBtn) {
+            loadMoreBtn.addEventListener("click", () => {
+                currentPage++;
+                loadNotifications(false, true);
+            });
+        }
+    }
+
+    // =================== LOAD LIST ===================
+
+    function loadNotifications(reset = false, append = false) {
+        if (isLoading) return;
+        isLoading = true;
+
+        const list = document.getElementById("notificationList");
+        const loadMoreSection = document.getElementById("loadMoreSection");
+
+        if (reset) {
+            list.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>`;
+            if (loadMoreSection) loadMoreSection.style.display = "none";
+        }
+
+        fetch(`${PAGE_NOTIF_API}/GetNotifications?pageSize=20&pageNumber=${currentPage}`)
+            .then(r => r.json())
+            .then(res => {
+                console.log("GetNotifications result:", res);
+
+                if (!res || !res.success) {
+                    list.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-bell-slash"></i>
+                            <h5>Không thể tải thông báo</h5>
+                        </div>`;
+                    return;
+                }
+
+                let data = Array.isArray(res.data) ? res.data : [];
+
+                // filter
+                data = data.filter(n => {
+                    const isRead = n.isRead ?? n.IsRead;
+                    if (currentFilter === "unread") return !isRead;
+                    if (currentFilter === "read")   return  isRead;
+                    return true;
+                });
+
+                displayFullNotifications(data, reset || !append);
+
+                // xử lý nút "Tải thêm"
+                if (res.data.length < 20) {
+                    if (loadMoreSection) loadMoreSection.style.display = "none";
+                } else {
+                    if (loadMoreSection) loadMoreSection.style.display = "block";
+                }
+            })
+            .catch(err => {
+                console.error("Error GetNotifications:", err);
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h5>Có lỗi xảy ra</h5>
+                    </div>`;
+            })
+            .finally(() => {
+                isLoading = false;
+            });
+    }
+
+    // =================== RENDER ===================
+
+    function displayFullNotifications(notifications, reset = true) {
+        const list = document.getElementById("notificationList");
+
+        if (!notifications || notifications.length === 0) {
+            if (reset) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-bell"></i>
+                        <h5>Không có thông báo nào</h5>
+                        <p>Bạn sẽ nhận được thông báo khi có hoạt động mới</p>
+                    </div>`;
+            }
+            return;
+        }
+
+        let html = reset ? "" : list.innerHTML;
+
+        notifications.forEach(n => {
+            // hỗ trợ cả PascalCase & camelCase
+            const id      = n.notificationID ?? n.NotificationID;
+            const type    = n.type ?? n.Type;
+            const title   = n.title ?? n.Title;
+            const message = n.message ?? n.Message;
+            const timeAgo = n.timeAgo ?? n.TimeAgo;
+            const link    = n.link ?? n.Link;
+            const isRead  = n.isRead ?? n.IsRead;
+
+            html += `
+                <div class="notification-full-item ${isRead ? "" : "unread"}" data-id="${id}">
+                    <div class="notification-meta">
+                        <div class="notification-icon-wrapper ${getNotificationIconClass(type)}">
+                            ${getNotificationIcon(type)}
+                        </div>
+
+                        <div class="notification-body">
+                            <div class="notification-title-row">
+                                <div class="notification-title">${title}</div>
+                                <div class="notification-time">
+                                    <i class="far fa-clock"></i> ${timeAgo}
+                                </div>
+                            </div>
+
+                            <div class="notification-message">${message}</div>
+
+                            <div class="notification-actions">
+                                ${!isRead ? `
+                                    <button class="notification-action mark-read"
+                                            onclick="markAsRead(event, ${id})">
+                                        <i class="fas fa-check"></i> Đánh dấu đã xem
+                                    </button>` : ""}
+
+                                ${link ? `
+                                    <button class="notification-action view"
+                                            onclick="viewNotification(event, '${link}', ${id})">
+                                        <i class="fas fa-external-link-alt"></i> Xem chi tiết
+                                    </button>` : ""}
+
+                                <button class="notification-action delete"
+                                        onclick="deleteNotification(event, ${id})">
+                                    <i class="fas fa-trash"></i> Xóa
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+        });
+
+        list.innerHTML = html;
+    }
+
+    // =================== ICONS ===================
+
+    function getNotificationIconClass(type) {
+        const map = {
+            "NewLesson": "new-lesson",
+            "NewQuiz": "new-quiz",
+            "NewCourse": "new-course",
+            "LiveStream": "live-stream",
+            "EnrollmentSuccess": "enrollment"
+        };
+        return map[type] || "new-lesson";
+    }
+
+    function getNotificationIcon(type) {
+        const map = {
+            "NewLesson": '<i class="fas fa-book-open"></i>',
+            "NewQuiz": '<i class="fas fa-clipboard-question"></i>',
+            "NewCourse": '<i class="fas fa-graduation-cap"></i>',
+            "LiveStream": '<i class="fas fa-video"></i>',
+            "EnrollmentSuccess": '<i class="fas fa-check-circle"></i>'
+        };
+        return map[type] || '<i class="fas fa-bell"></i>';
+    }
+
+    // =================== ACTIONS ===================
+
+    function markAsRead(e, id) {
+        e.stopPropagation();
+
+        fetch(`${PAGE_NOTIF_API}/MarkAsRead`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(id)
+        })
+        .then(r => r.json())
+        .then(res => {
+            console.log("MarkAsRead:", res);
+            if (res && res.success) {
+                loadNotifications(true);
+                Swal.fire("Thành công", "Đã đánh dấu là đã xem", "success");
+            }
+        });
+    }
+
+    function viewNotification(e, link, id) {
+        e.stopPropagation();
+
+        fetch(`${PAGE_NOTIF_API}/MarkAsRead`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(id)
+        }).finally(() => {
+            window.location.href = link;
+        });
+    }
+
+    function deleteNotification(e, id) {
+        e.stopPropagation();
+
+        Swal.fire({
+            title: "Xác nhận xóa?",
+            text: "Bạn có chắc muốn xóa thông báo này?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6",
+            confirmButtonText: "Xóa",
+            cancelButtonText: "Hủy"
+        }).then(result => {
+            if (!result.isConfirmed) return;
+
+            fetch(`${PAGE_NOTIF_API}/Delete`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(id)
+            })
+            .then(r => r.json())
+            .then(res => {
+                console.log("Delete:", res);
+                if (res && res.success) {
+                    loadNotifications(true);
+                    Swal.fire("Đã xóa!", "Thông báo đã được xóa.", "success");
+                }
+            });
+        });
+    }
+
+    function markAllAsRead() {
+        fetch(`${PAGE_NOTIF_API}/MarkAllAsRead`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+        })
+        .then(r => r.json())
+        .then(res => {
+            console.log("MarkAllAsRead:", res);
+            if (res && res.success) {
+                loadNotifications(true);
+                Swal.fire("Thành công", "Đã đánh dấu tất cả là đã xem", "success");
+            }
+        });
+    }
+
+    function deleteAllNotifications() {
+        Swal.fire({
+            title: "Xóa tất cả thông báo?",
+            text: "Hành động này không thể hoàn tác!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6",
+            confirmButtonText: "Xóa tất cả",
+            cancelButtonText: "Hủy"
+        }).then(result => {
+            if (result.isConfirmed) {
+                Swal.fire("Thông báo", "Chức năng đang được phát triển", "info");
+            }
+        });
+    }
+</script>
+
+    

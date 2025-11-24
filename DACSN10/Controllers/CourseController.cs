@@ -12,13 +12,15 @@ namespace DACSN10.Controllers
 {
     public class CourseController : Controller
     {
+        private readonly INotificationService _notificationService;
         private readonly AppDbContext _context;
         private readonly IEmailService _emailService;
 
-        public CourseController(AppDbContext context, IEmailService emailService)
+        public CourseController(AppDbContext context, IEmailService emailService, INotificationService notificationService)
         {
             _context = context;
             _emailService = emailService;
+            _notificationService = notificationService;
         }
 
         #region Public Course Views
@@ -390,7 +392,11 @@ namespace DACSN10.Controllers
 
                 // Send enrollment confirmation email
                 enrollment.Course = course;
-                await _emailService.SendEnrollmentConfirmationAsync(enrollment, user);
+                await _emailService.SendEnrollmentConfirmationAsync(
+                        user.Email,                     // to
+                        course.TenKhoaHoc,             // courseName
+                        course.User?.HoTen ?? "Giáo viên"   // teacherName
+                    );
 
                 await transaction.CommitAsync();
 

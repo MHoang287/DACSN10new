@@ -5,59 +5,343 @@
     ViewData["Title"] = "Đăng nhập";
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <section>
-            <form id="account" method="post" class="card shadow-sm p-4">
-                <h2 class="text-center mb-4">Đăng nhập hệ thống</h2>
-                <hr />
+<style>
+    .auth-wrapper {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .auth-wrapper::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        animation: backgroundMove 20s linear infinite;
+        opacity: 0.3;
+    }
+
+    
+
+    .auth-container {
+        display: flex;
+        max-width: 1000px;
+        width: 100%;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+        position: relative;
+        z-index: 1;
+    }
+
+    .auth-left {
+        flex: 1;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 60px 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        position: relative;
+    }
+
+    .auth-left::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+        opacity: 0.3;
+    }
+
+    .illustration {
+        width: 100%;
+        max-width: 350px;
+        margin-bottom: 30px;
+        animation: float 3s ease-in-out infinite;
+    }
+
+
+
+    .auth-left h2 {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 15px;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .auth-left p {
+        font-size: 16px;
+        opacity: 0.95;
+        line-height: 1.6;
+        text-align: center;
+    }
+
+    .auth-right {
+        flex: 1;
+        padding: 60px 50px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .auth-header {
+        margin-bottom: 40px;
+    }
+
+    .auth-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 10px;
+    }
+
+    .auth-header p {
+        color: #666;
+        font-size: 14px;
+    }
+
+    .form-group {
+        margin-bottom: 25px;
+        position: relative;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .form-control {
+        height: 50px;
+        border: 2px solid #e8e8e8;
+        border-radius: 10px;
+        padding: 12px 20px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+
+    .input-icon {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #999;
+    }
+
+    .btn-primary-custom {
+        height: 50px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        color: white;
+        width: 100%;
+    }
+
+    .btn-primary-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .divider {
+        display: flex;
+        align-items: center;
+        text-align: center;
+        margin: 30px 0;
+    }
+
+    .divider::before,
+    .divider::after {
+        content: '';
+        flex: 1;
+        border-bottom: 1px solid #e8e8e8;
+    }
+
+    .divider span {
+        padding: 0 15px;
+        color: #999;
+        font-size: 14px;
+    }
+
+    .social-login {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .btn-google {
+        flex: 1;
+        height: 50px;
+        background: white;
+        border: 2px solid #e8e8e8;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .btn-google:hover {
+        border-color: #db4437;
+        background: #db4437;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .form-check {
+        margin-bottom: 20px;
+    }
+
+    .form-check-input:checked {
+        background-color: #667eea;
+        border-color: #667eea;
+    }
+
+    .auth-footer {
+        text-align: center;
+        margin-top: 25px;
+    }
+
+    .auth-footer a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .auth-footer a:hover {
+        color: #764ba2;
+    }
+
+    .alert {
+        border-radius: 10px;
+        border: none;
+        padding: 15px 20px;
+        margin-bottom: 20px;
+    }
+
+    .text-danger {
+        font-size: 13px;
+        margin-top: 5px;
+        display: block;
+    }
+</style>
+
+<div class="auth-wrapper">
+    <div class="auth-container">
+        <div class="auth-left">
+            <svg class="illustration" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+                <!-- Online Learning Illustration -->
+                <circle cx="250" cy="250" r="200" fill="#ffffff" opacity="0.1" />
+                <rect x="120" y="150" width="260" height="180" rx="15" fill="#ffffff" opacity="0.95" />
+                <rect x="135" y="165" width="230" height="130" rx="10" fill="#667eea" opacity="0.3" />
+                <circle cx="250" cy="230" r="35" fill="#ffffff" />
+                <path d="M250 210 L250 250 M230 230 L270 230" stroke="#667eea" stroke-width="4" stroke-linecap="round" />
+                <rect x="150" y="310" width="70" height="8" rx="4" fill="#ffffff" opacity="0.8" />
+                <rect x="150" y="325" width="50" height="6" rx="3" fill="#ffffff" opacity="0.6" />
+                <rect x="280" y="310" width="70" height="8" rx="4" fill="#ffffff" opacity="0.8" />
+                <rect x="280" y="325" width="50" height="6" rx="3" fill="#ffffff" opacity="0.6" />
+                <circle cx="180" cy="380" r="25" fill="#ffffff" opacity="0.9" />
+                <circle cx="250" cy="380" r="25" fill="#ffffff" opacity="0.9" />
+                <circle cx="320" cy="380" r="25" fill="#ffffff" opacity="0.9" />
+            </svg>
+            <h2>Chào mừng trở lại!</h2>
+            <p>Đăng nhập để tiếp tục hành trình học tập của bạn</p>
+        </div>
+
+        <div class="auth-right">
+            <div class="auth-header">
+                <h1>Đăng nhập</h1>
+                <p>Nhập thông tin để truy cập tài khoản của bạn</p>
+            </div>
+
+            <form id="account" method="post">
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
-                <div class="form-floating mb-3">
-                    <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" />
-                    <label asp-for="Input.Email" class="form-label">Email</label>
+                <div class="form-group">
+                    <label asp-for="Input.Email" class="form-label">
+                        <i class="bi bi-envelope me-2"></i>Email
+                    </label>
+                    <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="your.email@example.com" />
                     <span asp-validation-for="Input.Email" class="text-danger"></span>
                 </div>
 
-                <div class="form-floating mb-3">
-                    <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" />
-                    <label asp-for="Input.Password" class="form-label">Mật khẩu</label>
+                <div class="form-group">
+                    <label asp-for="Input.Password" class="form-label">
+                        <i class="bi bi-lock me-2"></i>Mật khẩu
+                    </label>
+                    <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="••••••••" />
                     <span asp-validation-for="Input.Password" class="text-danger"></span>
                 </div>
 
-                <div class="form-check mb-3">
+                <div class="form-check">
                     <input class="form-check-input" asp-for="Input.RememberMe" />
                     <label class="form-check-label" asp-for="Input.RememberMe">
                         @Html.DisplayNameFor(m => m.Input.RememberMe)
                     </label>
                 </div>
 
-                <div class="mb-3">
-                    <button id="login-submit" type="submit" class="w-100 btn btn-primary btn-lg">Đăng nhập</button>
+                <button id="login-submit" type="submit" class="btn btn-primary-custom">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập
+                </button>
+
+                <div class="divider">
+                    <span>Hoặc đăng nhập với</span>
+                </div>
+
+                <div class="social-login">
+                    <button type="button" class="btn-google" onclick="document.getElementById('googleForm').submit();">
+                        <i class="bi bi-google"></i>
+                        Google
+                    </button>
                 </div>
             </form>
 
-            <div class="text-center mt-3 card shadow-sm p-4">
-                <p>Hoặc đăng nhập với:</p>
-                <form asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-                    <button type="submit" class="btn btn-danger" name="provider" value="Google" title="Đăng nhập bằng Google">
-                        <i class="bi bi-google me-2"></i>Google
-                    </button>
-                </form>
-            </div>
+            <form id="googleForm" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" style="display: none;">
+                <input type="hidden" name="provider" value="Google" />
+            </form>
 
-            <div class="text-center mt-3 card shadow-sm p-4">
+            <div class="auth-footer">
                 <p>
-                    <a id="forgot-password" asp-page="./ForgotPassword">Quên mật khẩu?</a>
+                    <a id="forgot-password" asp-page="./ForgotPassword">
+                        <i class="bi bi-key me-1"></i>Quên mật khẩu?
+                    </a>
                 </p>
-                <p>
-                    <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Đăng ký tài khoản mới</a>
+                <p class="mt-3">
+                    Chưa có tài khoản?
+                    <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Đăng ký ngay</a>
                 </p>
-                <p>
-                    <a id="resend-confirmation" asp-page="./ResendEmailConfirmation">Gửi lại email xác nhận</a>
+                <p class="mt-2">
+                    <a id="resend-confirmation" asp-page="./ResendEmailConfirmation">
+                        <i class="bi bi-envelope-check me-1"></i>Gửi lại email xác nhận
+                    </a>
                 </p>
             </div>
-        </section>
+        </div>
     </div>
 </div>
 

@@ -1,13 +1,14 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using DACSN10.Areas.Teacher.ViewModels;
 using DACSN10.Models;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
+using DACSN10.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using System.Text.RegularExpressions;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
-using DACSN10.Areas.Teacher.ViewModels;
+using System.Security.Claims;
+using System.Text.RegularExpressions;
 
 namespace DACSN10.Controllers
 {
@@ -17,11 +18,13 @@ namespace DACSN10.Controllers
     {
         private readonly AppDbContext _context;
         private readonly ILogger<TeacherController> _logger;
+        private readonly INotificationService _notificationService;
 
-        public TeacherController(AppDbContext context, ILogger<TeacherController> logger)
+        public TeacherController(AppDbContext context, ILogger<TeacherController> logger, INotificationService notificationService)
         {
             _context = context;
             _logger = logger;
+            _notificationService = notificationService;
         }
 
         #region Dashboard
@@ -434,7 +437,10 @@ namespace DACSN10.Controllers
                 _logger.LogInformation("=== CreateQuiz SUCCESS ===");
                 _logger.LogInformation("Created Quiz ID={QuizId}, Title={Title}, Questions={Count}",
                     newQuiz.QuizID, newQuiz.Title, questions.Count);
-
+                await _notificationService.NotifyNewQuizAsync(
+                        quizId: quiz.QuizID,
+                        courseId: quiz.CourseID
+                    );
                 TempData["Success"] = "Tạo bài kiểm tra thành công!";
                 return RedirectToAction("CourseQuizzes", new { courseId = quiz.CourseID });
             }
@@ -896,6 +902,10 @@ namespace DACSN10.Controllers
                 {
                     _context.Lessons.Add(lesson);
                     await _context.SaveChangesAsync();
+                    await _notificationService.NotifyNewLessonAsync(
+                        lessonId: lesson.LessonID,
+                        courseId: lesson.CourseID
+                    );
                     TempData["Success"] = "Tạo bài học thành công!";
                     return RedirectToAction("CourseLessons", new { courseId = lesson.CourseID });
                 }

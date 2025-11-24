@@ -29,7 +29,7 @@ builder.Services.AddRazorPages();
 
 // Đăng ký IEmailService -> EmailService (sửa lỗi DI)
 builder.Services.AddScoped<IEmailService, EmailService>();
-
+builder.Services.AddScoped<INotificationService, NotificationService>();
 // ---------- HttpClientFactory ----------
 builder.Services.AddHttpClient();
 builder.Services.AddHttpClient("LiveApi", (sp, client) =>

@@ -1,22 +1,25 @@
-using Microsoft.AspNetCore.Mvc;
 using DACSN10.Models;
+using DACSN10.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Logging;
 
 namespace DACSN10.Controllers
 {
     [Authorize]
     public class ExamController : Controller
     {
+        private readonly INotificationService _notificationService;
         private readonly AppDbContext _context;
         private readonly ILogger<ExamController> _logger;
 
-        public ExamController(AppDbContext context, ILogger<ExamController> logger)
+        public ExamController(AppDbContext context, ILogger<ExamController> logger, INotificationService notificationService)
         {
+            _notificationService = notificationService;
             _context = context;
             _logger = logger;
         }
