@@ -1,23 +1,212 @@
-﻿@page
+@page
 @model RegisterConfirmationModel
 @{
-    ViewData["Title"] = "Register confirmation";
+    Layout = null;
 }
 
-<h1>@ViewData["Title"]</h1>
-@{
-    if (@Model.DisplayConfirmAccountLink)
-    {
-<p>
-    This app does not currently have a real email sender registered, see <a href="https://aka.ms/aspaccountconf">these docs</a> for how to configure a real email sender.
-    Normally this would be emailed: <a id="confirm-link" href="@Model.EmailConfirmationUrl">Click here to confirm your account</a>
-</p>
-    }
-    else
-    {
-<p>
-        Please check your email to confirm your account.
-</p>
-    }
-}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Xác nhận đăng ký - OnlineLearning</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 50px 40px;
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+            font-size: 40px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .message {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .email-box {
+            background: #f5f7fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 25px;
+        }
+
+        .email-box strong {
+            color: #667eea;
+            font-size: 17px;
+        }
+
+        .info {
+            background: #fff9e6;
+            border-left: 4px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .info p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 14px 30px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-outline {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .links {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .links a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            margin: 0 10px;
+        }
+
+        .links a:hover {
+            text-decoration: underline;
+        }
+
+        @@media (max-width: 576px) {
+            .container {
+                padding: 40px 25px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            .btn {
+                display: block;
+                width: 100%;
+                margin: 8px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">📧</div>
+        
+        <h1>Đăng ký thành công!</h1>
+        
+        @if (Model.DisplayConfirmAccountLink)
+        {
+            <p class="message">
+                Tài khoản của bạn đã được tạo. Click vào nút bên dưới để xác nhận email.
+            </p>
+
+            <div class="email-box">
+                <strong>@Model.Email</strong>
+            </div>
+
+            <a href="@Model.EmailConfirmationUrl" class="btn btn-primary">✓ Xác nhận ngay</a>
+            
+            <div class="info">
+                <p><strong>Lưu ý:</strong> Trong môi trường development, email chưa được gửi thật. Click nút trên để xác nhận.</p>
+            </div>
+        }
+        else
+        {
+            <p class="message">
+                Vui lòng kiểm tra email để xác nhận tài khoản.
+            </p>
+
+            <div class="email-box">
+                <strong>@Model.Email</strong>
+            </div>
+
+            <div class="info">
+                <p>Không thấy email? Kiểm tra trong thư mục Spam hoặc click gửi lại bên dưới.</p>
+            </div>
+
+            <a href="/Identity/Account/ResendEmailConfirmation" class="btn btn-outline">📧 Gửi lại email</a>
+        }
+
+        <a href="/" class="btn btn-primary">🏠 Về trang chủ</a>
+
+        <div class="links">
+            <a href="/Identity/Account/Login">Đăng nhập</a>
+            <span style="color: #ddd;">|</span>
+            <a href="/">Trang chủ</a>
+        </div>
+    </div>
+</body>
+</html>

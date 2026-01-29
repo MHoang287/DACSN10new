@@ -1,8 +1,194 @@
-﻿@page
+@page
 @model ConfirmEmailModel
 @{
-    ViewData["Title"] = "Confirm email";
+    Layout = null;
+    var isSuccess = Model.StatusMessage?.Contains("Thank you") ?? false;
 }
 
-<h1>@ViewData["Title"]</h1>
-<partial name="_StatusMessage" model="Model.StatusMessage" />
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Xác nhận Email - OnlineLearning</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 50px 40px;
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+            font-size: 40px;
+        }
+
+        .icon.success {
+            background: #4caf50;
+        }
+
+        .icon.error {
+            background: #f44336;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .message {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .info {
+            background: #f5f7fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .info p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 14px 30px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-outline {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .links {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .links a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            margin: 0 10px;
+        }
+
+        .links a:hover {
+            text-decoration: underline;
+        }
+
+        @@media (max-width: 576px) {
+            .container {
+                padding: 40px 25px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            .btn {
+                display: block;
+                width: 100%;
+                margin: 8px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        @if (isSuccess)
+        {
+            <div class="icon success">✓</div>
+            <h1>Xác nhận thành công!</h1>
+            <p class="message">
+                Email của bạn đã được xác nhận. Bây giờ bạn có thể đăng nhập và bắt đầu học tập.
+            </p>
+            <a href="/Identity/Account/Login" class="btn btn-primary">🔐 Đăng nhập ngay</a>
+        }
+        else
+        {
+            <div class="icon error">✗</div>
+            <h1>Xác nhận thất bại</h1>
+            <p class="message">
+                @Model.StatusMessage
+            </p>
+            <div class="info">
+                <p>Link xác nhận có thể đã hết hạn hoặc không hợp lệ. Vui lòng thử gửi lại email xác nhận.</p>
+            </div>
+            <a href="/Identity/Account/ResendEmailConfirmation" class="btn btn-outline">📧 Gửi lại email</a>
+        }
+
+        <a href="/" class="btn btn-primary">🏠 Về trang chủ</a>
+
+        <div class="links">
+            <a href="/Identity/Account/Login">Đăng nhập</a>
+            <span style="color: #ddd;">|</span>
+            <a href="/Identity/Account/Register">Đăng ký</a>
+            <span style="color: #ddd;">|</span>
+            <a href="/">Trang chủ</a>
+        </div>
+    </div>
+</body>
+</html>
